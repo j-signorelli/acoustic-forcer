@@ -1,3 +1,6 @@
 [submodule "externals/cxxopts"]
 	path = externals/cxxopts
 	url = git@github.com:jarro2783/cxxopts.git
+[submodule "externals/toml11"]
+	path = externals/toml11
+	url = git@github.com:ToruNiina/toml11.git
