@@ -1,2 +1,2 @@
-# acoustic-forcer
-Planar acoustic wave forcing preCICE participant
+# Jabber
+Planar acoustic wave forcing preCICE participant.

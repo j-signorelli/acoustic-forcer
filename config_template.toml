@@ -1,0 +1,11 @@
+[Mode]
+Type="SingleWave"
+Amplitude=1e-2
+Frequency=100.0
+Angle=0.0
+Phase=0.0
+
+[preCICE]
+ParticipantName="AcousticForcer"
+ConfigFile="../precice-config.xml"
+MeshAccessRegion=[-0.01,1.01, -0.01,1.01]
