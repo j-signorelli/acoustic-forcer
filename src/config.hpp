@@ -9,7 +9,7 @@
 namespace jabber
 {
 
-/// Parsed config file information
+/// Parsed config file input
 class Config
 {
 public:
@@ -17,19 +17,29 @@ public:
    /// Base flow parameters
    struct BaseFlowMeta
    {
+      /// Density.
       double rho;
+
+      /// Pressure.
       double p;
+
+      /// Velocity (in x-direction).
       double U;
+
+      /// Specific heat ratio.
       double gamma;
    };
 
-   /// Single acoustic wave
+   /// Mode for a single acoustic wave.
    struct SingleWaveMeta
    {
+      /// Wave amplitude.
       double amp;
-      double freq;
-      double phase;
-      double angle; // wrt x-axis in xy-plane
+
+      /// Wave frequency (not angular).
+      double freq;  // not angular
+      double phase; // in deg.
+      double angle; // wrt x-axis in xy-plane, deg.
    };
    using ModeMeta = std::variant<SingleWaveMeta>;
 
@@ -49,6 +59,9 @@ private:
 
 public:
    Config(std::string config_file, std::ostream *out=nullptr);
+
+   BaseFlowMeta& BaseFlow() { return base_flow_; }
+   const BaseFlowMeta& BaseFlow() const { return base_flow_; }
 
    ModeMeta& Mode() { return mode_; }
    const ModeMeta& Mode() const { return mode_; }
