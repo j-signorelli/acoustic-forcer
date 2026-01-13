@@ -14,25 +14,36 @@ class Config
 {
 public:
 
+   /// Base flow parameters
+   struct BaseFlowMeta
+   {
+      double rho;
+      double p;
+      double U;
+      double gamma;
+   };
+
    /// Single acoustic wave
-   struct SingleWave
+   struct SingleWaveMeta
    {
       double amp;
       double freq;
       double phase;
-      double angle;
+      double angle; // wrt x-axis in xy-plane
    };
-   using ModeMeta = std::variant<SingleWave>;
+   using ModeMeta = std::variant<SingleWaveMeta>;
 
    /// Relevant preCICE information
    struct PreciceMeta
    {
       std::string participant_name;
       std::string config_file;
+      std::string fluid_mesh_name;
       std::vector<double> mesh_access_region;
    };
 
 private:
+   BaseFlowMeta base_flow_;
    ModeMeta mode_;
    PreciceMeta precice_;
 
@@ -45,9 +56,11 @@ public:
    PreciceMeta& Precice() { return precice_; }
    const PreciceMeta& Precice() const { return precice_; }
 
-   void PrintModeMeta(std::ostream &out);
-   
-   void PrintPreciceMeta(std::ostream &out);
+   void PrintBaseFlowMeta(std::ostream &out) const;
+
+   void PrintModeMeta(std::ostream &out) const;
+
+   void PrintPreciceMeta(std::ostream &out) const;
 };
 
 } // namespace jabber

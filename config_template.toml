@@ -1,3 +1,9 @@
+[BaseFlow]
+rho=0.110790417259
+p=1991.193014318490
+U=958.090507772702
+gamma=1.4
+
 [Mode]
 Type="SingleWave"
 Amplitude=1e-2
@@ -6,6 +12,7 @@ Angle=0.0
 Phase=0.0
 
 [preCICE]
-ParticipantName="AcousticForcer"
+ParticipantName="Jabber"
 ConfigFile="../precice-config.xml"
 MeshAccessRegion=[-0.01,1.01, -0.01,1.01]
+FluidMeshName="InletSponge"

@@ -4,11 +4,12 @@ add_library(libjabber)
 target_sources(libjabber
     PRIVATE 
         config.cpp
+        waves.cpp
     PUBLIC
         FILE_SET HEADERS
         FILES
             config.hpp
-            wave.hpp)
+            waves.hpp)
 
 # CMake automatically preprends "lib", so ensure that it is just "libjabber"
 set_target_properties(libjabber PROPERTIES OUTPUT_NAME "jabber")

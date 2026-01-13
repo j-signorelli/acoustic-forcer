@@ -1,2 +1,2 @@
 #include "config.hpp"
-#include "wave.hpp"
+#include "waves.hpp"
