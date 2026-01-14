@@ -36,6 +36,9 @@ private:
    /// Spatial dimension.
    const int dim_;
 
+   /// Number of points/coordinates of field.
+   const std::size_t num_pts;
+
    /// SoA coordinates to compute waves on, [dim][node].
    std::vector<std::vector<double>> coords_;
 
@@ -81,6 +84,9 @@ public:
 
    /// Get the spatial dimesion.
    int Dim() const { return dim_; }
+
+   /// Get the number of points/coordinates associated with this field.
+   int NumPoints() const { return num_pts };
 
    /// Get the number of waves.
    int NumWaves() const { return num_waves_; }
