@@ -50,6 +50,10 @@ Config::Config(std::string config_file, std::ostream *out)
       PrintSourceMeta(*out);
    }
 
+   // Parse compute fields of run
+   toml::value in_comp = file.at("Computation");
+   comp_.t0 = in_comp.at("t0").as_floating();
+
    // Parse preCICE related fields
    toml::value in_precice = file.at("preCICE");
    precice_.participant_name = in_precice.at("ParticipantName").as_string();
@@ -90,6 +94,12 @@ void Config::PrintSourceMeta(std::ostream &out) const
       out << "\tAngle:     " << wave.angle << std::endl;
       out << "\tPhase:     " << wave.phase << std::endl;
    }, source_);
+}
+
+void Config::PrintCompMeta(std::ostream &out) const
+{
+   out << "Computation" << std::endl;
+   out << "\tt0:   " << std::setprecision(14) << comp_.t0 << std::endl;
 }
 
 void Config::PrintPreciceMeta(std::ostream &out) const

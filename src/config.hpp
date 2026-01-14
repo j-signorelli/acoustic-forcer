@@ -131,6 +131,9 @@ public:
    /// Print the configured source metadata.
    void PrintSourceMeta(std::ostream &out) const;
 
+   /// Print the configured computation metadata.
+   void PrintCompMeta(std::ostream &out) const;
+
    /// Print the configured preCICE metadata.
    void PrintPreciceMeta(std::ostream &out) const;
 };
