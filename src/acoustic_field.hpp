@@ -134,10 +134,10 @@ public:
 
    /**
     * @brief Finalize the acoustic field, to be called after specifying all
-    * waves before \ref Evaluate().
+    * waves before \ref Compute().
     * 
     * @details This function evaluates any and all factors that remain
-    * constant across all waves, to reduce inner-loop FLOPs in \ref Evaluate().
+    * constant across all waves, to reduce inner-loop FLOPs in \ref Compute().
     * In particular, \ref k_dot_x_p_phi_ and \ref omega_.
     */
    void Finalize();
@@ -149,7 +149,7 @@ public:
     * @param p_prime    Output perturbation pressures, at coordinates specified
     *                   at construction.
     */
-   void Evaluate(double t, std::vector<double> &p_prime) const;
+   void Compute(double t, std::vector<double> &p_prime) const;
 };
 
 } // namespace jabber

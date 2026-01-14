@@ -92,4 +92,13 @@ void AcousticField::Finalize()
    }
 }
 
+void AcousticField::Compute(double t, std::vector<double> &p_prime) const
+{
+   // Compute p'=cos(k·x+φ+ωt)
+   for (int i = 0; i < NumWaves(); i++)
+   {
+      p_prime[i] = amplitude_[i]*std::cos(k_dot_x_p_phi_[i]+omega_[i]*t);
+   }
+}
+
 } // namespace jabber
