@@ -104,10 +104,10 @@ void AcousticField::Compute(double t, std::vector<double> &p_prime) const
    for (int w = 0; w < NumWaves(); w++)
    {
       double amp = amplitude_[w];
-      double om = omega_[w];
+      double omt = omega_[w]*t;
       for (int i = 0; i < NumPoints(); i++)
       {
-         p_prime[i] += amp*std::cos(k_dot_x_p_phi_[w*NumPoints() + i]+om*t);
+         p_prime[i] += amp*std::cos(k_dot_x_p_phi_[w*NumPoints() + i] - omt);
       }
    }
 }
