@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
    cxxopts::Options options("jabber", 
       "Planar acoustic wave forcer for flow simulations using preCICE.");
    options.add_options()
-      ("f,file", "Config file.", cxxopts::value<std::string>())
+      ("c,config", "Config file.", cxxopts::value<std::string>()),
       ("h,help", "Print usage information.");
    cxxopts::ParseResult result = options.parse(argc, argv);
    if (result.count("help"))
@@ -31,18 +31,20 @@ int main(int argc, char *argv[])
       std::cout << options.help() << std::endl;
       return 0;
    }
-   if (result.count("file") == 0)
+   if (result.count("config") == 0)
    {
       std::cout << "Error: no config file specified." << std::endl;
       return 1;
    }
    
    // Parse config file
-   std::string config_file = result["file"].as<std::string>();
+   std::string config_file = result["config"].as<std::string>();
    Config conf(config_file, &std::cout);
 
+   // Get the input metadata
    const Config::BaseFlowMeta &base_conf = conf.BaseFlow();
    const Config::SourceMeta &mode_conf = conf.Source();
+   const Config::CompMeta &comp_conf = conf.Comp();
    const Config::PreciceMeta &precice_conf = conf.Precice();
 
    // Initialize preCICE participant
@@ -89,7 +91,22 @@ int main(int argc, char *argv[])
 
    std::cout << "Done!" << std::endl;
    
+   std::vector<double> p_prime(vertex_size);
+   double time = comp_conf.t0;
+   double dt;
+
+   // Compute acoustic forcing
+   while (participant.isCouplingOngoing())
+   {
+      dt = participant.getMaxTimeStepSize();
+      field.Compute(time, p_prime);
+      participant.writeData(precice_conf.fluid_mesh_name, "p'", vertex_ids,
+                                 p_prime);
+      participant.advance(dt);
+      time += dt;
+   }
    
+   participant.finalize();
 
    return 0;
 }
