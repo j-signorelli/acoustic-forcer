@@ -73,31 +73,41 @@ void AcousticField::GetWave(int i, Wave &w) const
 
 void AcousticField::Finalize()
 {
-   k_dot_x_p_phi_.resize(NumWaves(), 0.0);
+   k_dot_x_p_phi_.resize(NumWaves()*NumPoints(), 0.0);
    omega_.resize(NumWaves());
 
    // Compute k·x+φ
-   for (int d = 0; d < Dim(); d++)
+   for (int w = 0; w < NumWaves(); w++)
    {
-      for (int i = 0; i < NumWaves(); i++)
+      for (int d = 0; d < Dim(); d++)
       {
-         k_dot_x_p_phi_[i] += k_[d][i]*coords_[d][i];
+         for (int i = 0; i < NumPoints(); i++)
+         {
+            k_dot_x_p_phi_[w*NumPoints() + i] += k_[d][w]*coords_[d][i];
+         }
       }
    }
 
    // Compute ω=2πf
-   for (int i = 0; i < NumWaves(); i++)
+   for (int w = 0; w < NumWaves(); w++)
    {
-      omega_[i] += 2*M_PI*frequency_[i];
+      omega_[w] = 2*M_PI*frequency_[w];
    }
 }
 
 void AcousticField::Compute(double t, std::vector<double> &p_prime) const
 {
+   p_prime.assign(NumPoints(), 0.0);
+
    // Compute p'=cos(k·x+φ+ωt)
-   for (int i = 0; i < NumWaves(); i++)
+   for (int w = 0; w < NumWaves(); w++)
    {
-      p_prime[i] = amplitude_[i]*std::cos(k_dot_x_p_phi_[i]+omega_[i]*t);
+      double amp = amplitude_[w];
+      double om = omega_[w];
+      for (int i = 0; i < NumPoints(); i++)
+      {
+         p_prime[i] += amp*std::cos(k_dot_x_p_phi_[w*NumPoints() + i]+om*t);
+      }
    }
 }
 

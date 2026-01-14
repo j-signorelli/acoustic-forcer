@@ -58,16 +58,21 @@ private:
    std::vector<std::vector<double>> k_;
 
    /**
-    * @brief k·x+φ term computed once for each wave in \ref Finalize().
-    * Pre-computing this before calls to \ref Compute() is required, as it
-    * reduces inner-loop FLOPs.
+    * @brief k·x+φ term computed in \ref Finalize() once for each wave and
+    * point.
+    * 
+    * @details Pre-computing this before calls to \ref Compute() is required, 
+    * as it reduces redundant inner-loop FLOPs. Size is \ref NumWaves() * 
+    * \ref NumPoints(). This is a flattened array is ordered as [wave][point].
     */
    std::vector<double> k_dot_x_p_phi_;
 
    /**
-    * @brief ω=2πf coefficient computed once for each wave in \ref Finalize().
-    * Pre-computing this before calls to \ref Compute() is required, as it
-    * reduces inner-loop FLOPs.
+    * @brief ω=2πf coefficient computed in \ref Finalize() once for each wave
+    * and point.
+    * 
+    * @details Pre-computing this before calls to \ref Compute() is required, 
+    * as it reduces redundant inner-loop FLOPs. Size is \ref NumWaves().
     */
    std::vector<double> omega_;
    
