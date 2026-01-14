@@ -7,14 +7,14 @@ namespace jabber
 
 AcousticField::AcousticField(int dim, const std::vector<double> coords)
 : dim_(dim),
-  num_pts(dim_*coords.size()),
+  num_pts(coords.size()/dim_),
   coords_(dim_),
   k_(dim)
 {
    // Store the coordinates in an SoA-style
-   for (int d = 0; d < dim_; d++)
+   for (int d = 0; d < Dim(); d++)
    {
-      coords_[d].resize(num_pts);
+      coords_[d].resize(NumPoints());
       for (int i = 0; i < NumPoints(); i++)
       {
          coords_[d][i] = coords[i*Dim() + d];
@@ -57,6 +57,7 @@ void AcousticField::AddWave(const Wave &w)
    {
       k_[d].push_back(w.k[d]);
    }
+   num_waves_++;
 }
 
 void AcousticField::GetWave(int i, Wave &w) const
