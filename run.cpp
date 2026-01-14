@@ -50,6 +50,8 @@ int main(int argc, char *argv[])
    // Initialize preCICE participant
    precice::Participant participant(precice_conf.participant_name,
                                     precice_conf.config_file, 0, 1);
+   participant.setMeshAccessRegion(precice_conf.fluid_mesh_name,
+                                    precice_conf.mesh_access_region);
    participant.initialize();
 
    // Get mesh information from fluid participant
