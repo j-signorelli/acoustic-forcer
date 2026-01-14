@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
    Config conf(config_file, &std::cout);
 
    const Config::BaseFlowMeta &base_conf = conf.BaseFlow();
-   const Config::ModeMeta &mode_conf = conf.Mode();
+   const Config::SourceMeta &mode_conf = conf.Source();
    const Config::PreciceMeta &precice_conf = conf.Precice();
 
    // Initialize preCICE participant
@@ -58,41 +58,36 @@ int main(int argc, char *argv[])
    participant.getMeshVertexIDsAndCoordinates(precice_conf.fluid_mesh_name,
                                               vertex_ids, coords);
 
-   // Assemble Waves object based on config mode
-   std::cout << "Assembling waves... ";
+   // Assemble AcousticField object based on config mode
+   std::cout << "Assembling acoustic field data... ";
    AcousticField field(dim, coords);
 
    std::visit(
    [&](const Config::SingleWaveMeta &w)
    {
-      waves.SetNumWaves(1);
-      waves.Amplitude(0) = w.amp;
-      waves.Frequency(0) = w.freq;
-      waves.Phase(0) = w.phase;
+      Wave wave{w.amp, w.freq, w.phase};
+      wave.k.resize(dim,0.0);
 
-      // Compute wavenumber vector given angle
+      // Compute wavenumber vector, given angle
       double cos_theta = std::cos(w.angle*M_PI/180.0);
       double sin_theta = std::sin(w.angle*M_PI/180.0);
       double c = std::sqrt(base_conf.gamma*base_conf.p/base_conf.rho);
 
-      waves.WaveNumber(0,0) = w.freq*2*M_PI*cos_theta/
-                              (base_conf.U*sin_theta + c);
+      wave.k[0] = w.freq*2*M_PI*cos_theta/(base_conf.U*sin_theta + c);
       if (dim > 1)
       {
-         waves.WaveNumber(1,0) = w.freq*2*M_PI*sin_theta/
-                                 (base_conf.U*sin_theta + c);
+         wave.k[1] = w.freq*2*M_PI*sin_theta/(base_conf.U*sin_theta + c);
       }
-      if (dim == 3)
-      {
-         waves.WaveNumber(2,0) = 0.0;
-      }                         
+      
+      field.AddWave(wave);
       
    }, mode_conf);
 
-   // Finalize waves computation
-   waves.Finalize();
+   // Finalize field initialization
+   field.Finalize();
 
    std::cout << "Done!" << std::endl;
+   
    
 
    return 0;

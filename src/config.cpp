@@ -26,19 +26,19 @@ Config::Config(std::string config_file, std::ostream *out)
       PrintBaseFlowMeta(*out);
    }
 
-   // Parse the mode of run
-   toml::value in_mode = file.at("Mode");
-   std::string mode_type = in_mode.at("Type").as_string();
+   // Parse the acoustic source of run
+   toml::value in_source = file.at("Source");
+   std::string mode_type = in_source.at("Type").as_string();
    if (mode_type == "SingleWave")
    {
       SingleWaveMeta meta;
 
-      meta.amp = in_mode.at("Amplitude").as_floating();
-      meta.freq = in_mode.at("Frequency").as_floating();
-      meta.angle = in_mode.at("Angle").as_floating();
-      meta.phase = in_mode.at("Phase").as_floating();
+      meta.amp = in_source.at("Amplitude").as_floating();
+      meta.freq = in_source.at("Frequency").as_floating();
+      meta.angle = in_source.at("Angle").as_floating();
+      meta.phase = in_source.at("Phase").as_floating();
 
-      mode_ = meta;
+      source_ = meta;
    }
    else
    {
@@ -46,7 +46,7 @@ Config::Config(std::string config_file, std::ostream *out)
    }
    if (out)
    {
-      PrintModeMeta(*out);
+      PrintSourceMeta(*out);
    }
 
    // Parse preCICE related fields
@@ -77,9 +77,9 @@ void Config::PrintBaseFlowMeta(std::ostream &out) const
                                                                << std::endl;
 }
 
-void Config::PrintModeMeta(std::ostream &out) const
+void Config::PrintSourceMeta(std::ostream &out) const
 {
-   out << "Mode" << std::endl;
+   out << "Source" << std::endl;
    std::visit(
    [&out](const SingleWaveMeta &wave)
    {
@@ -88,7 +88,7 @@ void Config::PrintModeMeta(std::ostream &out) const
       out << "\tFrequency: " << wave.freq << std::endl;
       out << "\tAngle:     " << wave.angle << std::endl;
       out << "\tPhase:     " << wave.phase << std::endl;
-   }, mode_);
+   }, source_);
 }
 
 void Config::PrintPreciceMeta(std::ostream &out) const

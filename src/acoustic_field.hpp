@@ -9,10 +9,17 @@ namespace jabber
 /// Intermediary helper-struct for initializing waves in AcousticField.
 struct Wave
 {
+   /// Wave amplitude, p'.
    double amplitude;
+
+   /// Wave frequency, f.
    double frequency;
+
+   /// Wave phase, φ.
    double phase;
-   std::vector<double> wave_number_vec;
+
+   /// Wavenumber vector, k.
+   std::vector<double> k;
 };
 
 /**
@@ -45,14 +52,21 @@ private:
    std::vector<double> phase_;
 
    /// SoA of all wave wave-number vectors, [dim][wave].
-   std::vector<std::vector<double>> wave_number_;
+   std::vector<std::vector<double>> k_;
 
    /**
     * @brief k·x+φ term computed once for each wave in \ref Finalize().
-    * Pre-computing this before calls to \ref Compute() reduces inner-loop
-    * FLOPs.
+    * Pre-computing this before calls to \ref Compute() is required, as it
+    * reduces inner-loop FLOPs.
     */
-   std::vector<double> factor_;
+   std::vector<double> k_dot_x_p_phi_;
+
+   /**
+    * @brief ω=2πf coefficient computed once for each wave in \ref Finalize().
+    * Pre-computing this before calls to \ref Compute() is required, as it
+    * reduces inner-loop FLOPs.
+    */
+   std::vector<double> omega_;
    
 public:
    /**
@@ -85,20 +99,50 @@ public:
    /// Add a Wave to the acoustic field.
    void AddWave(const Wave &w);
    
+   /// Get copy of Wave data from acoustic field.
+   void GetWave(int i, Wave &w) const;
+
+   /// Get reference to amplitude of wave \p i.
    double& Amplitude(int i) { return amplitude_[i]; }
+
+   /// Get const reference to amplitude of wave \p i.
    const double& Amplitude(int i) const { return amplitude_[i]; }
 
+   /// Get reference to frequency of wave \p i.
    double& Frequency(int i) { return frequency_[i]; }
+
+   /// Get const reference to frequency of wave \p i.
    const double& Frequency(int i) const { return frequency_[i]; }
 
+   /// Get reference to phase of wave \p i.
    double& Phase(int i) { return phase_[i]; }
+
+   /// Get const reference to phase of wave \p i.
    const double& Phase(int i) const { return phase_[i]; }
 
-   double& WaveNumber(int d, int i) { return wave_number_[d][i]; }
-   const double& WaveNumber(int d, int i) const { return wave_number_[d][i]; }
+   /// Get reference to wavenumber vector component \p d of wave \p i.
+   double& WaveNumber(int d, int i) { return k_[d][i]; }
 
+   /// Get const reference to wavenumber vector component \p d of wave \p i.
+   const double& WaveNumber(int d, int i) const { return k_[d][i]; }
+
+   /**
+    * @brief Finalize the acoustic field, to be called after specifying all
+    * waves before \ref Evaluate().
+    * 
+    * @details This function evaluates any and all factors that remain
+    * constant across all waves, to reduce inner-loop FLOPs in \ref Evaluate().
+    * In particular, \ref k_dot_x_p_phi_ and \ref omega_.
+    */
    void Finalize();
 
+   /**
+    * @brief Compute the acoustic field at time \p t.
+    * 
+    * @param t          Time.
+    * @param p_prime    Output perturbation pressures, at coordinates specified
+    *                   at construction.
+    */
    void Evaluate(double t, std::vector<double> &p_prime) const;
 };
 

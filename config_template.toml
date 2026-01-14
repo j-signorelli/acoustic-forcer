@@ -4,12 +4,15 @@ p=1991.193014318490
 U=958.090507772702
 gamma=1.4
 
-[Mode]
+[Source]
 Type="SingleWave"
 Amplitude=1e-2
 Frequency=100.0
 Angle=0.0
 Phase=0.0
+
+[Computation]
+ConstantZ=true
 
 [preCICE]
 ParticipantName="Jabber"
