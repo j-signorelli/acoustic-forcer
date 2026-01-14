@@ -12,7 +12,8 @@ Angle=0.0
 Phase=0.0
 
 [Computation]
-ConstantZ=true
+t0=0.0
+ConstantZ=false
 
 [preCICE]
 ParticipantName="Jabber"

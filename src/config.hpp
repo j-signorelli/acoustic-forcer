@@ -49,11 +49,24 @@ public:
    /// All souce meta options.
    using SourceMeta = std::variant<SingleWaveMeta>;
 
+
+   /// Struct for computation metadata.
+   struct CompMeta
+   {
+      double t0;
+      bool constant_z = false;
+   };
+
    /// Struct for preCICE metadata.
    struct PreciceMeta
    {
+      /// Jabber participant name.
       std::string participant_name;
+
+      /// Address to preCICE config file.
       std::string config_file;
+
+      /// Name of mesh to get coordinates from for computation onto.
       std::string fluid_mesh_name;
 
       /**
@@ -70,6 +83,9 @@ private:
 
    /// Input source metadata.
    SourceMeta source_;
+
+   /// Input computation metadata.
+   CompMeta comp_;
 
    /// Input preCICE metadata.
    PreciceMeta precice_;
@@ -96,6 +112,12 @@ public:
 
    /// Get const reference to source metadata.
    const SourceMeta& Source() const { return source_; }
+
+   /// Get reference to computation metadata.
+   CompMeta& Comp() { return comp_; }
+
+   /// Get const reference to computation metadata.
+   const CompMeta& Comp() const { return comp_; }
 
    /// Get reference to preCICE metadata.
    PreciceMeta& Precice() { return precice_; }
