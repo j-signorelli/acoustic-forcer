@@ -4,7 +4,8 @@
 
 #include <iomanip>
 
-// Helper type for the std::visit (https://en.cppreference.com/w/cpp/utility/variant/visit)
+// Helper type for the std::visit
+// (https://en.cppreference.com/w/cpp/utility/variant/visit)
 template<class... Ts>
 struct overloads : Ts... { using Ts::operator()...; };
 
