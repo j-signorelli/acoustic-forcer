@@ -1,0 +1,22 @@
+[BaseFlow]
+rho=0.110790417259
+p=1991.193014318490
+U=958.090507772702
+gamma=1.4
+
+[Source]
+Type="SingleWave"
+Amplitude=10.0
+Frequency=800.0
+Angle=30.0
+Phase=0.0
+
+[Computation]
+t0=0.0
+
+[preCICE]
+ParticipantName="Jabber"
+ConfigFile="../precice-config.xml"
+MeshAccessRegion=[-0.01,1.01, -0.01,1.01]
+FluidMeshName="Square"
+

@@ -1,1 +1,3 @@
 build/
+tests/*/jabber/precice*
+tests/*/dummy/precice*
