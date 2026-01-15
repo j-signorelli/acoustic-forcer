@@ -15,7 +15,7 @@ class Config
 public:
 
    /// Struct for base flow parameters
-   struct BaseFlowMeta
+   struct BaseFlowParams
    {
       /// Density.
       double rho;
@@ -30,8 +30,8 @@ public:
       double gamma;
    };
 
-   /// Struct for source metadata of single acoustic wave.
-   struct SingleWaveMeta
+   /// Struct for source parameters of single acoustic wave.
+   struct SingleWaveParams
    {
       /// Wave amplitude.
       double amp;
@@ -49,20 +49,21 @@ public:
       bool slow;
    };
 
-   /// All souce meta options.
-   using SourceMeta = std::variant<SingleWaveMeta>;
+   /// All souce parameter options.
+   using SourceParams = std::variant<SingleWaveParams>;
 
 
-   /// Struct for computation metadata.
-   struct CompMeta
+   /// Struct for computation parameters.
+   struct CompParams
    {
+      /// Initial time.
       double t0;
-      bool constant_z = false;
    };
 
-   /// Struct for preCICE metadata.
-   struct PreciceMeta
+   /// Struct for preCICE parameters.
+   struct PreciceParams
    {
+
       /// Jabber participant name.
       std::string participant_name;
 
@@ -81,17 +82,17 @@ public:
 
 private:
 
-   /// Input base flow metadata.
-   BaseFlowMeta base_flow_;
+   /// Input base flow parameters.
+   BaseFlowParams base_flow_;
 
-   /// Input source metadata.
-   SourceMeta source_;
+   /// Input source parameters.
+   SourceParams source_;
 
-   /// Input computation metadata.
-   CompMeta comp_;
+   /// Input computation parameters.
+   CompParams comp_;
 
-   /// Input preCICE metadata.
-   PreciceMeta precice_;
+   /// Input preCICE parameters.
+   PreciceParams precice_;
 
 public:
 
@@ -104,41 +105,41 @@ public:
     */
    Config(std::string config_file, std::ostream *out=nullptr);
 
-   /// Get reference to base flow metadata.
-   BaseFlowMeta& BaseFlow() { return base_flow_; }
+   /// Get reference to base flow parameters.
+   BaseFlowParams& BaseFlow() { return base_flow_; }
 
-   /// Get const reference to base flow metadata.
-   const BaseFlowMeta& BaseFlow() const { return base_flow_; }
+   /// Get const reference to base flow parameters.
+   const BaseFlowParams& BaseFlow() const { return base_flow_; }
 
-   /// Get reference to source metadata.
-   SourceMeta& Source() { return source_; }
+   /// Get reference to source parameters.
+   SourceParams& Source() { return source_; }
 
-   /// Get const reference to source metadata.
-   const SourceMeta& Source() const { return source_; }
+   /// Get const reference to source parameters.
+   const SourceParams& Source() const { return source_; }
 
-   /// Get reference to computation metadata.
-   CompMeta& Comp() { return comp_; }
+   /// Get reference to computation parameters.
+   CompParams& Comp() { return comp_; }
 
-   /// Get const reference to computation metadata.
-   const CompMeta& Comp() const { return comp_; }
+   /// Get const reference to computation parameters.
+   const CompParams& Comp() const { return comp_; }
 
-   /// Get reference to preCICE metadata.
-   PreciceMeta& Precice() { return precice_; }
+   /// Get reference to preCICE parameters.
+   PreciceParams& Precice() { return precice_; }
 
-   /// Get const reference to preCICE metadata.
-   const PreciceMeta& Precice() const { return precice_; }
+   /// Get const reference to preCICE parameters.
+   const PreciceParams& Precice() const { return precice_; }
 
-   /// Print the configured base flow metadata.
-   void PrintBaseFlowMeta(std::ostream &out) const;
+   /// Print the configured base flow parameters.
+   void PrintBaseFlowParams(std::ostream &out) const;
 
-   /// Print the configured source metadata.
-   void PrintSourceMeta(std::ostream &out) const;
+   /// Print the configured source parameters.
+   void PrintSourceParams(std::ostream &out) const;
 
-   /// Print the configured computation metadata.
-   void PrintCompMeta(std::ostream &out) const;
+   /// Print the configured computation parameters.
+   void PrintCompParams(std::ostream &out) const;
 
-   /// Print the configured preCICE metadata.
-   void PrintPreciceMeta(std::ostream &out) const;
+   /// Print the configured preCICE parameters.
+   void PrintPreciceParams(std::ostream &out) const;
 };
 
 } // namespace jabber
