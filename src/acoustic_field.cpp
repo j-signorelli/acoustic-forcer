@@ -7,7 +7,7 @@ namespace jabber
 
 AcousticField::AcousticField(int dim, const std::vector<double> coords)
 : dim_(dim),
-  num_pts(coords.size()/dim_),
+  num_pts_(coords.size()/dim_),
   coords_(dim_),
   k_(dim)
 {
@@ -100,7 +100,7 @@ void AcousticField::Compute(double t, std::vector<double> &p_prime) const
 {
    p_prime.assign(NumPoints(), 0.0);
 
-   // Compute p'=cos(k·x+φ+ωt)
+   // Compute p'=cos(k·x+φ-ωt)
    for (int w = 0; w < NumWaves(); w++)
    {
       double amp = amplitude_[w];
