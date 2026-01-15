@@ -5,88 +5,166 @@
 #include <string>
 #include <variant>
 #include <iostream>
-
+#include <cstdint>
+#include <array>
 namespace jabber
 {
 
-/// Parsed config file input
-class Config
+namespace config
 {
-public:
 
-   /// Struct for base flow parameters
-   struct BaseFlowParams
-   {
-      /// Density.
-      double rho;
+// ----------------------------------------------------------------------------
+/// Struct for base flow parameters
+struct BaseFlowParams
+{
+   /// Density.
+   double rho;
 
-      /// Pressure.
-      double p;
+   /// Pressure.
+   double p;
 
-      /// Velocity (in x-direction).
-      double U;
+   /// Velocity (in x-direction).
+   double U;
 
-      /// Specific heat ratio.
-      double gamma;
-   };
+   /// Specific heat ratio.
+   double gamma;
+};
 
-   /// Struct for source parameters of single acoustic wave.
-   struct SingleWaveParams
-   {
-      /// Wave amplitude.
-      double amp;
+// ----------------------------------------------------------------------------
 
-      /// Wave frequency (not angular).
-      double freq;
+/// Source options.
+enum class SourceOption : std::uint8_t
+{
+   SingleWave,
+   Size
+};
 
-      /// Phase, in deg.
-      double phase;
+/// Strings associated with SourceOption enumerators.
+static constexpr std::array<std::string_view, 
+                           static_cast<std::size_t>(SourceOption::Size)>
+SourceNames = 
+{
+   "SingleWave"      // Source::SingleWave
+};
 
-      /// Planar wave angle, w.r.t. x-axis in xy-plane.
-      double angle;
+template<SourceOption s>
+struct SourceParams;
 
-      /// True if wave is "slow", false if "fast".
-      bool slow;
-   };
+/// Struct for source parameters of single acoustic wave.
+template<>
+struct SourceParams<SourceOption::SingleWave>
+{
+   /// Wave amplitude.
+   double amp;
 
-   /// All souce parameter options.
-   using SourceParams = std::variant<SingleWaveParams>;
+   /// Wave frequency (not angular).
+   double freq;
 
+   /// Phase, in deg.
+   double phase;
 
-   /// Struct for computation parameters.
-   struct CompParams
-   {
-      /// Initial time.
-      double t0;
-   };
+   /// Planar wave angle, w.r.t. x-axis in xy-plane.
+   double angle;
 
-   /// Struct for preCICE parameters.
-   struct PreciceParams
-   {
+   /// True if wave is "slow", false if "fast".
+   bool slow;
+};
 
-      /// Jabber participant name.
-      std::string participant_name;
+/// All souce parameter options.
+using SourceParamsVariant 
+   = std::variant<SourceParams<SourceOption::SingleWave>>;
 
-      /// Address to preCICE config file.
-      std::string config_file;
+// ----------------------------------------------------------------------------
 
-      /// Name of mesh to get coordinates from for computation onto.
-      std::string fluid_mesh_name;
+/// Data options to compute + write.
+enum class DataOption : std::uint8_t
+{
+   PressurePerturbation,
+   Density,
+   Momentum,
+   Energy,
+   Size
+};
 
-      /**
-       * @brief Mesh access region, defined according to 
-       * precice::Participant::setMeshAccessRegion()
-       */
-      std::vector<double> mesh_access_region;
-   };
+/// Strings associated with Data enumerators.
+static constexpr std::array<std::string_view, 
+                              static_cast<std::size_t>(DataOption::Size)>
+DataNames = 
+{
+   "p'",    // Data::PressurePerturbation
+   "rho",   // Data::Density
+   "rhoV",  // Data::Momentum
+   "rhoE"   // Data::Energy
+};
 
-private:
+// ----------------------------------------------------------------------------
+
+/// Nondimensionalization options.
+enum class NondimensionalOption : std::uint8_t
+{
+   None,
+   PlasCom2,
+   Size
+};
+
+/// Strings associated with Nondimensionalization enumerators.
+static constexpr std::array<std::string_view, 
+                        static_cast<std::size_t>(NondimensionalOption::Size)>
+NondimensionalNames = 
+{
+   "None",      // Nondimensionalization::None
+   "PlasCom2"   // Nondimensionalization::PlasCom2
+};
+
+// ----------------------------------------------------------------------------
+
+/// Struct for computation parameters.
+struct CompParams
+{  
+
+   /// Initial time.
+   double t0;
+
+   /// Data to compute + write.
+   std::vector<DataOption> data;
+
+   /// Data nondimensionalization.
+   NondimensionalOption non_dim;
+};
+// ----------------------------------------------------------------------------
+
+/// Struct for preCICE parameters.
+struct PreciceParams
+{
+
+   /// Jabber participant name.
+   std::string participant_name;
+
+   /// Address to preCICE config file.
+   std::string config_file;
+
+   /// Name of mesh to get coordinates from for computation onto.
+   std::string fluid_mesh_name;
+
+   /**
+    * @brief Mesh access region, defined according to 
+    * precice::Participant::setMeshAccessRegion()
+    */
+   std::vector<double> mesh_access_region;
+};
+
+// ----------------------------------------------------------------------------
+
+/// Parsed config file input
+class ConfigInput
+{
+protected:
 
    /// Input base flow parameters.
    BaseFlowParams base_flow_;
 
    /// Input source parameters.
-   SourceParams source_;
+   SourceParamsVariant source_;
 
    /// Input computation parameters.
    CompParams comp_;
@@ -96,15 +174,6 @@ private:
 
 public:
 
-   /**
-    * @brief Construct a new Config object.
-    * 
-    * @param config_file      TOML config file to parse.
-    * @param out              [Optional] ostream to write parsed config file
-    *                         to (verbose processing).
-    */
-   Config(std::string config_file, std::ostream *out=nullptr);
-
    /// Get reference to base flow parameters.
    BaseFlowParams& BaseFlow() { return base_flow_; }
 
@@ -112,10 +181,10 @@ public:
    const BaseFlowParams& BaseFlow() const { return base_flow_; }
 
    /// Get reference to source parameters.
-   SourceParams& Source() { return source_; }
+   SourceParamsVariant& Source() { return source_; }
 
    /// Get const reference to source parameters.
-   const SourceParams& Source() const { return source_; }
+   const SourceParamsVariant& Source() const { return source_; }
 
    /// Get reference to computation parameters.
    CompParams& Comp() { return comp_; }
@@ -141,6 +210,22 @@ public:
    /// Print the configured preCICE parameters.
    void PrintPreciceParams(std::ostream &out) const;
 };
+
+/// Parsed TOML config file input.
+class TOMLConfigInput : public ConfigInput
+{
+public:
+   /**
+    * @brief Construct a new TOMLConfigInput object.
+    * 
+    * @param config_file      TOML config file to parse.
+    * @param out              [Optional] ostream to write parsed config file
+    *                         to (verbose processing).
+    */
+   TOMLConfigInput(std::string config_file, std::ostream *out=nullptr);
+};
+
+} // namespace config
 
 } // namespace jabber
 

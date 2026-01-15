@@ -6,6 +6,7 @@
 #include <cmath>
 
 using namespace jabber;
+using namespace jabber::config;
 
 // Helper type for the std::visit
 // (https://en.cppreference.com/w/cpp/utility/variant/visit)
@@ -39,13 +40,13 @@ int main(int argc, char *argv[])
    
    // Parse config file
    std::string config_file = result["config"].as<std::string>();
-   Config conf(config_file, &std::cout);
+   TOMLConfigInput conf(config_file, &std::cout);
 
    // Get the input metadata
-   const Config::BaseFlowParams &base_conf = conf.BaseFlow();
-   const Config::SourceParams &mode_conf = conf.Source();
-   const Config::CompParams &comp_conf = conf.Comp();
-   const Config::PreciceParams &precice_conf = conf.Precice();
+   const BaseFlowParams &base_conf = conf.BaseFlow();
+   const SourceParamsVariant &source_conf = conf.Source();
+   const CompParams &comp_conf = conf.Comp();
+   const PreciceParams &precice_conf = conf.Precice();
 
    // Initialize preCICE participant
    precice::Participant participant(precice_conf.participant_name,
@@ -68,7 +69,7 @@ int main(int argc, char *argv[])
    AcousticField field(dim, coords);
 
    std::visit(
-   [&](const Config::SingleWaveParams &w)
+   [&](const SourceParams<SourceOption::SingleWave> &w)
    {
       Wave wave{w.amp, w.freq, w.phase};
       wave.k.resize(dim,0.0);
@@ -88,7 +89,7 @@ int main(int argc, char *argv[])
       
       field.AddWave(wave);
       
-   }, mode_conf);
+   }, source_conf);
 
    // Finalize field initialization
    field.Finalize();
@@ -100,8 +101,6 @@ int main(int argc, char *argv[])
    // p' must always be computed
    std::vector<double> p_prime(vertex_size);
    std::vector<double> rho, rhoV, rhoE;
-
-
 
    double time = comp_conf.t0;
    double dt;

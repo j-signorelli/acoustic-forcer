@@ -14,7 +14,8 @@ Slow=true
 
 [Computation]
 t0=0.0
-ConstantZ=false
+Data=["rho1", "rhoV", "rhoE"]
+Nondimensionalization="None"
 
 [preCICE]
 ParticipantName="Jabber"
