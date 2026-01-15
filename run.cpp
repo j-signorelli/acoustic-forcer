@@ -78,10 +78,12 @@ int main(int argc, char *argv[])
       double sin_theta = std::sin(w.angle*M_PI/180.0);
       double c = std::sqrt(base_conf.gamma*base_conf.p/base_conf.rho);
 
-      wave.k[0] = w.freq*2*M_PI*cos_theta/(base_conf.U*sin_theta + c);
+      double denom = base_conf.U*cos_theta + (w.slow ? -c : c);
+
+      wave.k[0] = w.freq*2*M_PI*cos_theta/denom;
       if (dim > 1)
       {
-         wave.k[1] = w.freq*2*M_PI*sin_theta/(base_conf.U*sin_theta + c);
+         wave.k[1] = w.freq*2*M_PI*sin_theta/denom;
       }
       
       field.AddWave(wave);

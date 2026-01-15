@@ -10,6 +10,7 @@ Amplitude=1e-2
 Frequency=100.0
 Angle=0.0
 Phase=0.0
+Slow=true
 
 [Computation]
 t0=0.0

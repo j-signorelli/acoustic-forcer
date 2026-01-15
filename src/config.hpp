@@ -44,6 +44,9 @@ public:
 
       /// Planar wave angle, w.r.t. x-axis in xy-plane.
       double angle;
+
+      /// True if wave is "slow", false if "fast".
+      bool slow;
    };
 
    /// All souce meta options.

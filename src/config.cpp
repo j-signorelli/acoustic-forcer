@@ -12,6 +12,9 @@ struct overloads : Ts... { using Ts::operator()...; };
 namespace jabber
 {
 
+static constexpr std::string_view TRUE = "true";
+static constexpr std::string_view FALSE = "false";
+
 Config::Config(std::string config_file, std::ostream *out)
 {
    toml::value file = toml::parse(config_file);
@@ -38,7 +41,8 @@ Config::Config(std::string config_file, std::ostream *out)
       meta.freq = in_source.at("Frequency").as_floating();
       meta.angle = in_source.at("Angle").as_floating();
       meta.phase = in_source.at("Phase").as_floating();
-
+      meta.slow = in_source.at("Slow").as_boolean();
+      
       source_ = meta;
    }
    else
@@ -93,6 +97,7 @@ void Config::PrintSourceMeta(std::ostream &out) const
       out << "\tFrequency: " << wave.freq << std::endl;
       out << "\tAngle:     " << wave.angle << std::endl;
       out << "\tPhase:     " << wave.phase << std::endl;
+      out << "\tSlow:      " << (wave.slow ? TRUE : FALSE) << std::endl;
    }, source_);
 }
 
