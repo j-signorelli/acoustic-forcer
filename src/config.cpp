@@ -27,7 +27,7 @@ Config::Config(std::string config_file, std::ostream *out)
    base_flow_.gamma = in_base_flow.at("gamma").as_floating();
    if (out)
    {
-      PrintBaseFlowMeta(*out);
+      PrintBaseFlowParams(*out);
    }
 
    // Parse the acoustic source of run
@@ -35,7 +35,7 @@ Config::Config(std::string config_file, std::ostream *out)
    std::string mode_type = in_source.at("Type").as_string();
    if (mode_type == "SingleWave")
    {
-      SingleWaveMeta meta;
+      SingleWaveParams meta;
 
       meta.amp = in_source.at("Amplitude").as_floating();
       meta.freq = in_source.at("Frequency").as_floating();
@@ -51,12 +51,13 @@ Config::Config(std::string config_file, std::ostream *out)
    }
    if (out)
    {
-      PrintSourceMeta(*out);
+      PrintSourceParams(*out);
    }
 
    // Parse compute fields of run
    toml::value in_comp = file.at("Computation");
    comp_.t0 = in_comp.at("t0").as_floating();
+   comp_.data = toml::get<std::vector<std::string>>(in_comp.at("Data"));
 
    // Parse preCICE related fields
    toml::value in_precice = file.at("preCICE");
@@ -67,7 +68,7 @@ Config::Config(std::string config_file, std::ostream *out)
                                           in_precice.at("MeshAccessRegion"));
    if (out)
    {
-      PrintPreciceMeta(*out);
+      PrintPreciceParams(*out);
    }
 
    if (out)
@@ -76,7 +77,7 @@ Config::Config(std::string config_file, std::ostream *out)
    }
 }
 
-void Config::PrintBaseFlowMeta(std::ostream &out) const
+void Config::PrintBaseFlowParams(std::ostream &out) const
 {
    out << "Base Flow" << std::endl;
    out << "\trho:   " << std::setprecision(14) << base_flow_.rho << std::endl;
@@ -86,11 +87,11 @@ void Config::PrintBaseFlowMeta(std::ostream &out) const
                                                                << std::endl;
 }
 
-void Config::PrintSourceMeta(std::ostream &out) const
+void Config::PrintSourceParams(std::ostream &out) const
 {
    out << "Source" << std::endl;
    std::visit(
-   [&out](const SingleWaveMeta &wave)
+   [&out](const SingleWaveParams &wave)
    {
       out << "\tType:      SingleWave" << std::endl;
       out << "\tAmplitude: " << wave.amp << std::endl;
@@ -101,13 +102,13 @@ void Config::PrintSourceMeta(std::ostream &out) const
    }, source_);
 }
 
-void Config::PrintCompMeta(std::ostream &out) const
+void Config::PrintCompParams(std::ostream &out) const
 {
    out << "Computation" << std::endl;
    out << "\tt0:   " << std::setprecision(14) << comp_.t0 << std::endl;
 }
 
-void Config::PrintPreciceMeta(std::ostream &out) const
+void Config::PrintPreciceParams(std::ostream &out) const
 {
    out << "preCICE" << std::endl;
    out << "\tParticipant Name:   " << precice_.participant_name << std::endl;

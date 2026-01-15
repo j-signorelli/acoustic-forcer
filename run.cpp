@@ -42,10 +42,10 @@ int main(int argc, char *argv[])
    Config conf(config_file, &std::cout);
 
    // Get the input metadata
-   const Config::BaseFlowMeta &base_conf = conf.BaseFlow();
-   const Config::SourceMeta &mode_conf = conf.Source();
-   const Config::CompMeta &comp_conf = conf.Comp();
-   const Config::PreciceMeta &precice_conf = conf.Precice();
+   const Config::BaseFlowParams &base_conf = conf.BaseFlow();
+   const Config::SourceParams &mode_conf = conf.Source();
+   const Config::CompParams &comp_conf = conf.Comp();
+   const Config::PreciceParams &precice_conf = conf.Precice();
 
    // Initialize preCICE participant
    precice::Participant participant(precice_conf.participant_name,
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
    AcousticField field(dim, coords);
 
    std::visit(
-   [&](const Config::SingleWaveMeta &w)
+   [&](const Config::SingleWaveParams &w)
    {
       Wave wave{w.amp, w.freq, w.phase};
       wave.k.resize(dim,0.0);
@@ -95,7 +95,14 @@ int main(int argc, char *argv[])
 
    std::cout << "Done!" << std::endl;
    
+   // Initialize data vectors
+
+   // p' must always be computed
    std::vector<double> p_prime(vertex_size);
+   std::vector<double> rho, rhoV, rhoE;
+
+
+
    double time = comp_conf.t0;
    double dt;
 
@@ -104,6 +111,8 @@ int main(int argc, char *argv[])
    {
       dt = participant.getMaxTimeStepSize();
       field.Compute(time, p_prime);
+
+
       participant.writeData(precice_conf.fluid_mesh_name, "p'", vertex_ids,
                                  p_prime);
       participant.advance(dt);
