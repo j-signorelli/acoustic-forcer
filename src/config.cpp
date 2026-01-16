@@ -94,9 +94,9 @@ TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
                                           SourceNames.end(), mode_type);
    if (it != SourceNames.end())
    {
-      SourceOption source = static_cast<SourceOption>(it-SourceNames.end());
+      SourceOption source_op = static_cast<SourceOption>(it-SourceNames.begin());
 
-      if (source == SourceOption::SingleWave)
+      if (source_op == SourceOption::SingleWave)
       {
          SourceParams<SourceOption::SingleWave> meta;
 
@@ -107,6 +107,10 @@ TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
          meta.slow = in_source.at("Slow").as_boolean();
 
          source_ = meta;
+      }
+      else
+      {
+         throw std::logic_error("Error reading Source.Type");
       }
    }
    else
