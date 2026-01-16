@@ -91,7 +91,7 @@ public:
    int Dim() const { return dim_; }
 
    /// Get the number of points/coordinates associated with this field.
-   int NumPoints() const { return num_pts_; }
+   std::size_t NumPoints() const { return num_pts_; }
 
    /// Get the number of waves.
    int NumWaves() const { return num_waves_; }

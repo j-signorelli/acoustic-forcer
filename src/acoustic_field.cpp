@@ -80,11 +80,12 @@ void AcousticField::Finalize()
    // Compute k·x+φ
    for (int w = 0; w < NumWaves(); w++)
    {
+      std::size_t w_offset = w*NumPoints();
       for (int d = 0; d < Dim(); d++)
       {
-         for (int i = 0; i < NumPoints(); i++)
+         for (std::size_t i = 0; i < NumPoints(); i++)
          {
-            k_dot_x_p_phi_[w*NumPoints() + i] += k_[d][w]*coords_[d][i];
+            k_dot_x_p_phi_[w_offset + i] += k_[d][w]*coords_[d][i];
          }
       }
    }
@@ -105,9 +106,10 @@ void AcousticField::Compute(double t, std::vector<double> &p_prime) const
    {
       double amp = amplitude_[w];
       double omt = omega_[w]*t;
-      for (int i = 0; i < NumPoints(); i++)
+      std::size_t w_offset = w*NumPoints();
+      for (std::size_t i = 0; i < NumPoints(); i++)
       {
-         p_prime[i] += amp*std::cos(k_dot_x_p_phi_[w*NumPoints() + i] - omt);
+         p_prime[i] += amp*std::cos(k_dot_x_p_phi_[w_offset + i] - omt);
       }
    }
 }
