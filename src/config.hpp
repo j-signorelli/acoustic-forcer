@@ -32,10 +32,16 @@ struct BaseFlowParams
 
 // ----------------------------------------------------------------------------
 
-/// Source options.
+/// Acoustic source options.
 enum class SourceOption : std::uint8_t
 {
+   /// Single acoustic wave.
    SingleWave,
+
+   /// Spectrum of N acoustic waves.
+   WaveSpectrum,
+
+   /// Number of SourceOptions
    Size
 };
 
@@ -44,7 +50,8 @@ static constexpr std::array<std::string_view,
                            static_cast<std::size_t>(SourceOption::Size)>
 SourceNames = 
 {
-   "SingleWave"      // Source::SingleWave
+   "SingleWave",      // SourceOption::SingleWave
+   "WaveSpectrum",    // SourceOption::WaveSpectrum
 };
 
 template<SourceOption s>
@@ -76,13 +83,22 @@ using SourceParamsVariant
 
 // ----------------------------------------------------------------------------
 
-/// Data options to compute + write.
+/// Data options to compute *and* write to preCICE.
 enum class DataOption : std::uint8_t
 {
+   /// Pressure perturbation, p'. 
    PressurePerturbation,
+
+   /// Density, ρ.
    Density,
+
+   /// Momentum, ρu.
    Momentum,
+
+   /// Energy, ρE.
    Energy,
+
+   /// Number of DataOptions.
    Size
 };
 
@@ -99,11 +115,16 @@ DataNames =
 
 // ----------------------------------------------------------------------------
 
-/// Nondimensionalization options.
+/// Nondimensionalization options to apply before sending to preCICE.
 enum class NondimensionalOption : std::uint8_t
 {
+   /// No nondimensionalization.
    None,
+
+   /// Nondimensionalize using same method as in PlasCom2.
    PlasCom2,
+
+   /// Number of NondimensionalOptions.
    Size
 };
 
@@ -112,8 +133,8 @@ static constexpr std::array<std::string_view,
                         static_cast<std::size_t>(NondimensionalOption::Size)>
 NondimensionalNames = 
 {
-   "None",      // Nondimensionalization::None
-   "PlasCom2"   // Nondimensionalization::PlasCom2
+   "None",      // NondimensionalOption::None
+   "PlasCom2"   // NondimensionalOption::PlasCom2
 };
 
 // ----------------------------------------------------------------------------
