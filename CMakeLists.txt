@@ -15,6 +15,12 @@ add_subdirectory(externals/cxxopts)
 add_subdirectory(externals/toml11)
 add_subdirectory(src)
 
+option(JABBER_BUILD_DOCS "Build Jabber documentation w/ Doxygen." OFF)
+if (JABBER_BUILD_DOCS)
+    add_subdirectory(docs)
+endif()
+
+
 message(STATUS "Install directory: ${CMAKE_INSTALL_PREFIX}")
 
 add_executable(jabber run.cpp)
