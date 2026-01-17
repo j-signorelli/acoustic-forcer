@@ -18,6 +18,31 @@ struct overloads : Ts... { using Ts::operator()...; };
 /// Print Jabber banner
 void PrintBanner(std::ostream &out);
 
+/**
+ * @brief Compute  bool slow,wavenumber vector \p k for an angled disturbance
+ * in the xy-plane in freestream \f$U_\infty\f$ in the x-direction.
+ * 
+ * @details Specifically, evaluate
+ * \f[
+ * \alpha=\frac{2\pi f\cos(\theta)}{U_\infty\cos(\theta)\pm c_\infty},
+ * \f]
+ * and
+ * \f[
+ * \beta=\frac{2\pi f\sin(\theta)}{U_\infty\cos(\theta)\pm c_\infty}
+ * \f]
+ * for \f$\vec{k}=\left[\alpha,\beta,0\right]\f$.
+ * 
+ * @param dim           Spatial dimension.
+ * @param theta         Wave angle in degrees w.r.t x-axis. CCW positive.
+ * @param u_infty       Freestream velocity.
+ * @param c_infty       Freestream speed of sound.
+ * @param freq          Frequency (not angular).
+ * @param slow          true if slow, false if fast.        
+ * @returns k           Wavenumber vector.
+ */
+void ComputeWavenumber(int dim, double theta, double u_infty, double c_infty,
+                        double freq, bool slow, std::vector<double> &k);
+
 int main(int argc, char *argv[])
 {
    PrintBanner(std::cout);
@@ -70,32 +95,26 @@ int main(int argc, char *argv[])
    std::cout << "Assembling acoustic field data... ";
    AcousticField field(dim, coords);
 
+   std::vector<Wave> all_waves;
+   
+   double c_infty = std::sqrt(base_conf.gamma*base_conf.p/base_conf.rho);
+
    std::visit(
    overloads
    {
-   [&](const SourceParams<SourceOption::SingleWave> &w)
+   [&](const SourceParams<SourceOption::SingleWave> &params_wave)
    {
-      Wave wave{w.amp, w.freq, w.phase};
-      wave.k.resize(dim,0.0);
-
-      // Compute wavenumber vector, given angle
-      double cos_theta = std::cos(w.angle*M_PI/180.0);
-      double sin_theta = std::sin(w.angle*M_PI/180.0);
-      double c = std::sqrt(base_conf.gamma*base_conf.p/base_conf.rho);
-
-      double denom;//= base_conf.U*cos_theta + (w.slow ? -c : c);
-
-      wave.k[0] = w.freq*2*M_PI*cos_theta/denom;
-      if (dim > 1)
-      {
-         wave.k[1] = w.freq*2*M_PI*sin_theta/denom;
-      }
+      Wave wave{params_wave.amp, params_wave.freq, params_wave.phase};
       
-      field.AddWave(wave);
-      
+      bool slow = (params_wave.speed == SpeedOption::Slow ? true : false);
+      ComputeWavenumber(dim, params_wave.angle, base_conf.U, c_infty, 
+                        params_wave.freq, slow, wave.k);
+
+      all_waves.emplace_back(wave);
    },
    [&](const SourceParams<SourceOption::WaveSpectrum> &waves)
    {
+      
    }
    }, source_conf);
 
@@ -173,4 +192,21 @@ void PrintBanner(std::ostream &out)
       \-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/)";
 
    out << banner << std::endl << std::endl;
+}
+
+void ComputeWavenumber(int dim, double theta, double u_infty, double c_infty,
+                        double freq, bool slow, std::vector<double> &k)
+{
+   k.resize(dim, 0.0);
+
+   double cos_theta = std::cos(theta*M_PI/180.0);
+   double sin_theta = std::sin(theta*M_PI/180.0);
+
+   double denom = u_infty*cos_theta + (slow ? -c_infty : c_infty);
+
+   k[0] = freq*2*M_PI*cos_theta/denom;
+   if (dim > 1)
+   {
+      k[1] = freq*2*M_PI*sin_theta/denom;
+   }
 }
