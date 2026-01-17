@@ -1,3 +1,4 @@
 build/
+tests/*/precice-run
 tests/*/jabber/precice*
 tests/*/dummy/precice*
