@@ -1,4 +1,4 @@
-#include "config.hpp"
+#include "config_input.hpp"
 
 #include <toml.hpp>
 
@@ -10,9 +10,7 @@
 template<class... Ts>
 struct overloads : Ts... { using Ts::operator()...; };
 
-namespace jabber
-{
-namespace config
+namespace jabber_app
 {
 
 void ConfigInput::PrintBaseFlowParams(std::ostream &out) const
@@ -232,5 +230,5 @@ TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
       *out << std::endl;
    }
 }
-} // namespace config
+
 } // namespace jabber

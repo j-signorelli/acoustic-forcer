@@ -6,15 +6,29 @@ project(jabber LANGUAGES CXX VERSION 1.0.0)
 add_library(compiler_flag_requirements INTERFACE)
 target_compile_features(compiler_flag_requirements INTERFACE cxx_std_20)
 
-# Find preCICE
-find_package(PRECICE 3.1.2 REQUIRED CONFIG NAMES precice)
-message(STATUS "Found preCICE config: TRUE")
+# Property of all targets to install
+set_property(GLOBAL PROPERTY JABBER_TARGETS_PROPERTY)
 
-# Add provided external dependencies
-add_subdirectory(externals/cxxopts)
-add_subdirectory(externals/toml11)
+# Build Jabber library
 add_subdirectory(src)
 
+# Build Jabber app, if ON
+option(JABBER_BUILD_APP "Build Jabber executable." ON)
+if (JABBER_BUILD_APP)
+
+    # Find preCICE
+    find_package(PRECICE 3.1.2 REQUIRED CONFIG NAMES precice)
+    message(STATUS "Found preCICE config: TRUE")
+
+    # Add external dependencies - required for app
+    add_subdirectory(externals/cxxopts)
+    add_subdirectory(externals/toml11)
+    
+    # Add app subdirectory
+    add_subdirectory(app)
+endif()
+
+# Build Jabber documentation, if ON
 option(JABBER_BUILD_DOCS "Build Jabber documentation w/ Doxygen." OFF)
 if (JABBER_BUILD_DOCS)
     add_subdirectory(docs)
@@ -23,16 +37,13 @@ endif()
 
 message(STATUS "Install directory: ${CMAKE_INSTALL_PREFIX}")
 
-add_executable(jabber run.cpp)
-target_link_libraries(jabber 
-   PRIVATE libjabber cxxopts::cxxopts precice::precice)
+get_property(JABBER_TARGETS GLOBAL PROPERTY JABBER_TARGETS_PROPERTY)
 
 # Install
 # From: https://stackoverflow.com/questions/17511496/how-to-create-a-shared-library-with-cmake
 include(GNUInstallDirs)
-install(TARGETS libjabber jabber
+install(TARGETS ${JABBER_TARGETS}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jabber)
-#install(TARGETS jabber DESTINATION bin)

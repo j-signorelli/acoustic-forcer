@@ -1,12 +1,14 @@
+#include "config_input.hpp"
+
+#include <jabber.hpp>
 #include <precice/precice.hpp>
 #include <cxxopts.hpp>
-#include <jabber.hpp>
 
 #include <iostream>
 #include <cmath>
 
 using namespace jabber;
-using namespace jabber::config;
+using namespace jabber_app;
 
 // Helper type for the std::visit
 // (https://en.cppreference.com/w/cpp/utility/variant/visit)
@@ -69,6 +71,8 @@ int main(int argc, char *argv[])
    AcousticField field(dim, coords);
 
    std::visit(
+   overloads
+   {
    [&](const SourceParams<SourceOption::SingleWave> &w)
    {
       Wave wave{w.amp, w.freq, w.phase};
@@ -79,7 +83,7 @@ int main(int argc, char *argv[])
       double sin_theta = std::sin(w.angle*M_PI/180.0);
       double c = std::sqrt(base_conf.gamma*base_conf.p/base_conf.rho);
 
-      double denom = base_conf.U*cos_theta + (w.slow ? -c : c);
+      double denom;//= base_conf.U*cos_theta + (w.slow ? -c : c);
 
       wave.k[0] = w.freq*2*M_PI*cos_theta/denom;
       if (dim > 1)
@@ -89,6 +93,10 @@ int main(int argc, char *argv[])
       
       field.AddWave(wave);
       
+   },
+   [&](const SourceParams<SourceOption::WaveSpectrum> &waves)
+   {
+   }
    }, source_conf);
 
    // Finalize field initialization
@@ -97,10 +105,25 @@ int main(int argc, char *argv[])
    std::cout << "Done!" << std::endl;
    
    // Initialize data vectors
-
    // p' must always be computed
    std::vector<double> p_prime(vertex_size);
    std::vector<double> rho, rhoV, rhoE;
+
+   for (const DataOption &data : comp_conf.data)
+   {
+      switch (data)
+      {
+         case DataOption::Density:
+            rho.resize(vertex_size);
+            break;
+         case DataOption::Momentum:
+            rhoV.resize(vertex_size*dim);
+            break;
+         case DataOption::Energy:
+            rhoE.resize(vertex_size);
+            break;
+      }
+   }
 
    double time = comp_conf.t0;
    double dt;
@@ -109,11 +132,22 @@ int main(int argc, char *argv[])
    while (participant.isCouplingOngoing())
    {
       dt = participant.getMaxTimeStepSize();
+
+      // Compute acoustic forcing
       field.Compute(time, p_prime);
 
-
-      participant.writeData(precice_conf.fluid_mesh_name, "p'", vertex_ids,
-                                 p_prime);
+      // Compute + send data fields
+      for (const DataOption &data : comp_conf.data)
+      {
+         switch (data)
+         {
+            case DataOption::PressurePerturbation:
+               participant.writeData(precice_conf.fluid_mesh_name, "p'",
+                                       vertex_ids, p_prime);
+               break;
+         }
+        
+      }
       participant.advance(dt);
       time += dt;
    }
