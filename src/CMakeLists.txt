@@ -5,11 +5,13 @@ target_sources(libjabber
     PRIVATE 
         config.cpp
         acoustic_field.cpp
+        transfer_functions.cpp
     PUBLIC
         FILE_SET HEADERS
         FILES
             config.hpp
             acoustic_field.hpp
+            transfer_functions.hpp
             jabber.hpp)
 
 # CMake automatically preprends "lib", so ensure that it is just "libjabber"
