@@ -9,6 +9,8 @@ target_compile_features(compiler_flag_requirements INTERFACE cxx_std_20)
 # Property of all targets to install
 set_property(GLOBAL PROPERTY JABBER_TARGETS_PROPERTY)
 
+set(DOC_PATHS ${CMAKE_SOURCE_DIR}/src)
+
 # Build Jabber library
 add_subdirectory(src)
 
@@ -26,6 +28,8 @@ if (JABBER_BUILD_APP)
     
     # Add app subdirectory
     add_subdirectory(app)
+
+    list(APPEND DOC_PATHS ${CMAKE_SOURCE_DIR}/app)
 endif()
 
 # Build Jabber documentation, if ON
