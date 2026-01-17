@@ -7,6 +7,8 @@
 #include <iostream>
 #include <cstdint>
 #include <array>
+#include <format>
+
 namespace jabber
 {
 
@@ -31,6 +33,34 @@ struct BaseFlowParams
 };
 
 // ----------------------------------------------------------------------------
+
+/// Acoustic wave speed options.
+enum class SpeedOption : std::uint8_t
+{
+   /**
+    * @brief "Slow" acoustic wave. Wavenumber vector should be computed
+    *  assuming wave travels *against* freestream (wave speed < freestream).
+    */
+   Slow,
+
+   /**
+    * @brief "Fast" acoustic wave. Wavenumber vector should be computed
+    *  assuming wave travels *with* freestream (wave speed > freestream).
+    */
+   Fast,
+
+   /// Number of speed options. **This should always be exactly 2.**
+   Size
+};
+
+/// Strings associated with SpeedOption enumerators.
+static constexpr std::array<std::string_view, 
+                           static_cast<std::size_t>(SpeedOption::Size)>
+SpeedNames = 
+{
+   "Slow",      // SpeedOption::Slow
+   "Fast",      // SpeedOption::Fast
+};
 
 /// Acoustic source options.
 enum class SourceOption : std::uint8_t
@@ -73,13 +103,34 @@ struct SourceParams<SourceOption::SingleWave>
    /// Planar wave angle, w.r.t. x-axis in xy-plane.
    double angle;
 
-   /// True if wave is "slow", false if "fast".
-   bool slow;
+   /// Wave speed.
+   SpeedOption speed;
+};
+
+/// Struct for source parameters of spectrum of acoustic waves.
+template<>
+struct SourceParams<SourceOption::WaveSpectrum>
+{
+   /// Wave amplitudes.
+   std::vector<double> amps;
+
+   /// Wave frequencies (not angular).
+   std::vector<double> freqs;
+
+   /// Phases, in deg.
+   std::vector<double> phases;
+
+   /// Planar wave angles w.r.t. x-axis in xy-plane.
+   std::vector<double> angles;
+
+   /// Wave speeds.
+   std::vector<SpeedOption> speeds;
 };
 
 /// All souce parameter options.
 using SourceParamsVariant 
-   = std::variant<SourceParams<SourceOption::SingleWave>>;
+   = std::variant<SourceParams<SourceOption::SingleWave>,
+                  SourceParams<SourceOption::WaveSpectrum>>;
 
 // ----------------------------------------------------------------------------
 
@@ -179,6 +230,16 @@ struct PreciceParams
 /// Parsed config file input
 class ConfigInput
 {
+private:
+   /// Precision used when printing double/float data in \ref OutReal().
+   static constexpr int kPrecision = 12;
+
+   /// Get string of double \p f with precision \ref kPrecision.
+   static std::string OutReal(double f)
+   {
+      return std::format("{:.{}f}", f, kPrecision);
+   }
+
 protected:
 
    /// Input base flow parameters.

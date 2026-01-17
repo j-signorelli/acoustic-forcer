@@ -3,6 +3,7 @@
 #include <toml.hpp>
 
 #include <iomanip>
+#include <format>
 
 // Helper type for the std::visit
 // (https://en.cppreference.com/w/cpp/utility/variant/visit)
@@ -14,38 +15,74 @@ namespace jabber
 namespace config
 {
 
-static constexpr std::string_view TRUE = "true";
-static constexpr std::string_view FALSE = "false";
-
 void ConfigInput::PrintBaseFlowParams(std::ostream &out) const
 {
    out << "Base Flow" << std::endl;
-   out << "\trho:   " << std::setprecision(14) << base_flow_.rho << std::endl;
-   out << "\tp:     " << std::setprecision(14) << base_flow_.p << std::endl;
-   out << "\tU:     " << std::setprecision(14) << base_flow_.U << std::endl;
-   out << "\tgamma: " << std::setprecision(14) << base_flow_.gamma
-                                                               << std::endl;
+   out << "\trho:   " << OutReal(base_flow_.rho) << std::endl;
+   out << "\tp:     " << OutReal(base_flow_.p) << std::endl;
+   out << "\tU:     " << OutReal(base_flow_.U) << std::endl;
+   out << "\tgamma: " << OutReal(base_flow_.gamma) << std::endl;
 }
 
 void ConfigInput::PrintSourceParams(std::ostream &out) const
 {
+
    out << "Source" << std::endl;
+
    std::visit(
+   overloads
+   {
    [&out](const SourceParams<SourceOption::SingleWave> &wave)
    {
-      out << "\tType:      SingleWave" << std::endl;
-      out << "\tAmplitude: " << wave.amp << std::endl;
-      out << "\tFrequency: " << wave.freq << std::endl;
-      out << "\tAngle:     " << wave.angle << std::endl;
-      out << "\tPhase:     " << wave.phase << std::endl;
-      out << "\tSlow:      " << (wave.slow ? TRUE : FALSE) << std::endl;
+      std::size_t name_i = static_cast<std::size_t>(SourceOption::SingleWave);
+      std::size_t speed_i = static_cast<std::size_t>(wave.speed);
+
+      out << "\tType:      " << SourceNames[name_i] << std::endl;
+      out << "\tAmplitude: " << OutReal(wave.amp) << std::endl;
+      out << "\tFrequency: " << OutReal(wave.freq) << std::endl;
+      out << "\tAngle:     " << OutReal(wave.angle) << std::endl;
+      out << "\tPhase:     " << OutReal(wave.phase) << std::endl;
+      out << "\tSpeed:     " << SpeedNames[speed_i] << std::endl;
+   },
+   [&out](const SourceParams<SourceOption::WaveSpectrum> &waves)
+   {
+      std::size_t name_i = static_cast<std::size_t>(SourceOption::WaveSpectrum);
+
+      // Quick helper fxn for writing vector of reals to string
+      auto write_real_vec =
+      [&](const std::vector<double> &vec) -> std::string
+      {
+         std::stringstream ss;
+         ss << "[";
+         for (int i = 0; i < vec.size(); i++)
+         {
+            ss << OutReal(vec[i]) 
+                  << ((i+1 == vec.size()) ? "]" : ", ");
+         }
+         return ss.str();
+      };
+
+      out << "\tType:        " << SourceNames[name_i] << std::endl;
+      out << "\tAmplitudes:  " << write_real_vec(waves.amps) << std::endl;
+      out << "\tFrequencies: " << write_real_vec(waves.freqs) << std::endl;
+      out << "\tAngles:      " << write_real_vec(waves.angles) << std::endl;
+      out << "\tPhases:      " << write_real_vec(waves.phases) << std::endl;
+      out << "\tSpeeds:      [";
+      for (int i = 0; i < waves.speeds.size(); i++)
+      {
+         std::size_t speed_i = static_cast<std::size_t>(waves.speeds[i]);
+         out << SpeedNames[speed_i] 
+               << ((i+1 == waves.speeds.size()) ? "]" : ", ");
+      }
+      out << std::endl;
+   }
    }, source_);
 }
 
 void ConfigInput::PrintCompParams(std::ostream &out) const
 {
    out << "Computation" << std::endl;
-   out << "\tt0:   " << std::setprecision(14) << comp_.t0 << std::endl;
+   out << "\tt0:   " << OutReal(comp_.t0) << std::endl;
    out << "\tData: [";
    for (int i = 0; i < comp_.data.size(); i++)
    {  
@@ -104,8 +141,39 @@ TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
          meta.freq = in_source.at("Frequency").as_floating();
          meta.angle = in_source.at("Angle").as_floating();
          meta.phase = in_source.at("Phase").as_floating();
-         meta.slow = in_source.at("Slow").as_boolean();
+         std::string speed_type =  in_source.at("Speed").as_string();
 
+         const std::string_view *speed_it = std::find(SpeedNames.begin(), 
+                                                      SpeedNames.end(), 
+                                                      speed_type);
+         SpeedOption speed_op = static_cast<SpeedOption>(speed_it-
+                                                         SpeedNames.begin());                  
+         meta.speed = speed_op;
+
+         source_ = meta;
+      }
+      else if (source_op == SourceOption::WaveSpectrum)
+      {
+         SourceParams<SourceOption::WaveSpectrum> meta;
+         
+         meta.amps = toml::get<std::vector<double>>(
+                                                in_source.at("Amplitudes"));
+         meta.freqs = toml::get<std::vector<double>>(
+                                                in_source.at("Frequencies"));
+         meta.angles = toml::get<std::vector<double>>(in_source.at("Angles"));
+         meta.phases = toml::get<std::vector<double>>(in_source.at("Phases"));
+         std::vector<std::string> speed_string_vec =
+                  toml::get<std::vector<std::string>>(in_source.at("Speeds"));
+         for (const std::string &speed_string : speed_string_vec)
+         {
+            const std::string_view *speed_it = std::find(SpeedNames.begin(), 
+                                                         SpeedNames.end(), 
+                                                         speed_string);
+            SpeedOption speed_op = static_cast<SpeedOption>(speed_it-
+                                                         SpeedNames.begin());
+            meta.speeds.push_back(speed_op);
+         }
+         
          source_ = meta;
       }
       else
