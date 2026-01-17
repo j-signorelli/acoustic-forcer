@@ -10,7 +10,10 @@ Amplitude=10.0
 Frequency=800.0
 Angle=30.0
 Phase=0.0
-Slow=true
+Speed="Slow"
+
+[TransferFunction]
+Type="None"
 
 [Computation]
 t0=0.0
@@ -22,4 +25,3 @@ ParticipantName="Jabber"
 ConfigFile="../precice-config.xml"
 MeshAccessRegion=[-0.01,1.01, -0.01,1.01]
 FluidMeshName="Square"
-

@@ -7,3 +7,4 @@ target_link_libraries(jabber PRIVATE libjabber
                                     cxxopts::cxxopts
                                     precice::precice
                                     toml11::toml11)
+                                    
