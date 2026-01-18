@@ -9,6 +9,7 @@ AcousticField::AcousticField(int dim, const std::vector<double> coords)
 : dim_(dim),
   num_pts_(coords.size()/dim_),
   coords_(dim_),
+  num_waves_(0),
   k_(dim)
 {
    // Store the coordinates in an SoA-style
@@ -85,7 +86,7 @@ void AcousticField::Finalize()
       {
          for (std::size_t i = 0; i < NumPoints(); i++)
          {
-            k_dot_x_p_phi_[w_offset + i] += k_[d][w]*coords_[d][i];
+            k_dot_x_p_phi_[w_offset + i] += k_[d][w]*coords_[d][i] + phase_[w];
          }
       }
    }

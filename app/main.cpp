@@ -19,8 +19,8 @@ struct overloads : Ts... { using Ts::operator()...; };
 void PrintBanner(std::ostream &out);
 
 /**
- * @brief Compute  bool slow,wavenumber vector \p k for an angled disturbance
- * in the xy-plane in freestream \f$U_\infty\f$ in the x-direction.
+ * @brief Compute wavenumber vector \p k for an angled disturbance in the
+ * xy-plane in freestream \f$U_\infty\f$ in the x-direction.
  * 
  * @details Specifically, evaluate
  * \f[
@@ -91,14 +91,14 @@ int main(int argc, char *argv[])
    participant.getMeshVertexIDsAndCoordinates(precice_conf.fluid_mesh_name,
                                               vertex_ids, coords);
 
-   // Assemble AcousticField object based on config mode
+   // Assemble AcousticField object
    std::cout << "Assembling acoustic field data... ";
    AcousticField field(dim, coords);
-
-   std::vector<Wave> all_waves;
    
    double c_infty = std::sqrt(base_conf.gamma*base_conf.p/base_conf.rho);
 
+   // Assemble vector of wave structs based on input source
+   std::vector<Wave> all_waves;
    std::visit(
    overloads
    {
@@ -112,11 +112,32 @@ int main(int argc, char *argv[])
 
       all_waves.emplace_back(wave);
    },
-   [&](const SourceParams<SourceOption::WaveSpectrum> &waves)
+   [&](const SourceParams<SourceOption::WaveSpectrum> &params_waves)
    {
-      
+      std::vector<double> k(dim);
+      for (int i = 0; i < params_waves.amps.size(); i++)
+      {
+         std::cout << "Adding wave " << i << std::endl;
+         bool slow = (params_waves.speeds[i] == SpeedOption::Slow ? 
+                        true : false);
+         ComputeWavenumber(dim, params_waves.angles[i], base_conf.U, c_infty, 
+                        params_waves.freqs[i], slow, k);
+         
+         all_waves.emplace_back(params_waves.amps[i], params_waves.freqs[i],
+                                 params_waves.phases[i], k);
+      }
    }
    }, source_conf);
+
+   // Apply transfer function
+
+
+
+   // Add all waves to AcousticField
+   for (const Wave &wave : all_waves)
+   {
+      field.AddWave(wave);
+   }
 
    // Finalize field initialization
    field.Finalize();
