@@ -1,3 +1,4 @@
+.vscode/
 build/
 tests/*/precice-run
 tests/*/jabber/precice*
