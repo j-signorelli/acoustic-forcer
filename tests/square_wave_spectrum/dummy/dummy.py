@@ -8,7 +8,7 @@ import numpy as np
 def main():
     
     parser=OptionParser()
-    parser.add_option("-N", "--n-points", dest="N", default=10,
+    parser.add_option("-N", "--n-points", dest="N", default=50,
                         help="N_x and N_y of square [0,1]x[0,1] grid.", )
     parser.add_option("-p", "--precice-config", dest="precice_config",
                         default="../precice-config.xml", 
