@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+
+<precice-configuration>
+    <log>
+        <sink
+        filter="%Severity% > debug and %Rank% = 0"
+        format="---[precice:%Participant%] %ColorizedSeverity% %Message%"
+        enabled="true" />
+    </log>
+    <data:scalar name="p'"/>
+
+    <mesh name="Square" dimensions="2">
+      <use-data name="p'" />
+    </mesh>
+
+    <participant name="Jabber">
+      <receive-mesh name="Square" from="Dummy" api-access="true"/>
+      <write-data name="p'" mesh="Square" />
+      <export:vtu directory="precice-exports"/>
+    </participant>
+
+    <participant name="Dummy">
+      <provide-mesh name="Square"/>
+      <read-data name="p'" mesh="Square" />
+    </participant>
+
+    <m2n:sockets acceptor="Dummy" connector="Jabber" exchange-directory=".."/>
+  
+    <coupling-scheme:serial-explicit>
+      <participants first="Jabber" second="Dummy" />
+      <time-window-size value="0.0001" method="fixed"/>
+      <max-time value="0.1" />
+      <exchange data="p'" mesh="Square" from="Jabber" to="Dummy"/>
+    </coupling-scheme:serial-explicit>
+</precice-configuration>

@@ -1,0 +1,27 @@
+[BaseFlow]
+rho=0.110790417259
+p=1991.193014318490
+U=958.090507772702
+gamma=1.4
+
+[Source]
+Type="WaveSpectrum"
+Amplitudes= [  10.0,   10.0] #  6.0,      4.0]
+Frequencies=[2000.0, 2000.0] #  450.0,  700.0]
+Angles=     [  30.0,  -30.0] #  45.0,    60.0]
+Phases=     [   0.0,   56.0] #  45.0,    65.0]
+Speeds=     ["Slow", "Slow"]# "Slow", "Slow"]
+
+[TransferFunction]
+Type="None"
+
+[Computation]
+t0=0.0
+Data=["p'"]
+Nondimensionalization="None"
+
+[preCICE]
+ParticipantName="Jabber"
+ConfigFile="../precice-config.xml"
+MeshAccessRegion=[-0.01,1.01, -0.01,1.01]
+FluidMeshName="Square"
