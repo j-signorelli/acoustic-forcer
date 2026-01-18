@@ -158,31 +158,6 @@ DataNames =
    "rhoV",  // Data::Momentum
    "rhoE"   // Data::Energy
 };
-
-// ----------------------------------------------------------------------------
-
-/// Nondimensionalization options to apply before sending to preCICE.
-enum class NondimensionalOption : std::uint8_t
-{
-   /// No nondimensionalization.
-   None,
-
-   /// Nondimensionalize using same method as in PlasCom2.
-   PlasCom2,
-
-   /// Number of NondimensionalOptions.
-   Size
-};
-
-/// Strings associated with Nondimensionalization enumerators.
-static constexpr std::array<std::string_view, 
-                        static_cast<std::size_t>(NondimensionalOption::Size)>
-NondimensionalNames = 
-{
-   "None",      // NondimensionalOption::None
-   "PlasCom2"   // NondimensionalOption::PlasCom2
-};
-
 // ----------------------------------------------------------------------------
 
 /// Struct for computation parameters.
@@ -194,10 +169,8 @@ struct CompParams
 
    /// Data to compute + write.
    std::vector<DataOption> data;
-
-   /// Data nondimensionalization.
-   NondimensionalOption non_dim;
 };
+
 // ----------------------------------------------------------------------------
 
 /// Struct for preCICE parameters.
