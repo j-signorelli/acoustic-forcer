@@ -148,7 +148,14 @@ public:
    void Finalize();
 
    /**
-    * @brief Compute the acoustic field at time \p t.
+    * @brief Compute the pressure perturbation field at time \p t.
+    * 
+    * @details Specifically, this evaluates:
+    * 
+    * \f[
+    * p'(\vec{x}_i,t)=\sum_{j=1}^Np'_j\cos(\vec{k}_j\cdot\vec{x}_i+\phi_j
+    *                                        -\omega_jt)
+    * \f]
     * 
     * @param t          Time.
     * @param p_prime    Output perturbation pressures, at coordinates specified
