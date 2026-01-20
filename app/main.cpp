@@ -104,7 +104,8 @@ int main(int argc, char *argv[])
    {
    [&](const SourceParams<SourceOption::SingleWave> &params_wave)
    {
-      Wave wave{params_wave.amp, params_wave.freq, params_wave.phase};
+      Wave wave{params_wave.amp, params_wave.freq, 
+                     params_wave.phase*M_PI/180.0};
       
       bool slow = (params_wave.speed == SpeedOption::Slow ? true : false);
       ComputeWavenumber(dim, params_wave.angle, base_conf.U, c_infty, 
@@ -117,14 +118,13 @@ int main(int argc, char *argv[])
       std::vector<double> k(dim);
       for (int i = 0; i < params_waves.amps.size(); i++)
       {
-         std::cout << "Adding wave " << i << std::endl;
          bool slow = (params_waves.speeds[i] == SpeedOption::Slow ? 
                         true : false);
-         ComputeWavenumber(dim, params_waves.angles[i], base_conf.U, c_infty, 
+         ComputeWavenumber(dim, params_waves.angles[i], base_conf.U, c_infty,
                         params_waves.freqs[i], slow, k);
          
          all_waves.emplace_back(params_waves.amps[i], params_waves.freqs[i],
-                                 params_waves.phases[i], k);
+                                 params_waves.phases[i]*M_PI/180.0, k);
       }
    }
    }, source_conf);
