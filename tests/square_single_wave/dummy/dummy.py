@@ -28,13 +28,19 @@ def main():
 
     participant = precice.Participant("Dummy", options.precice_config, 0, 1)
     vertex_ids = participant.set_mesh_vertices("Square", coords)
-    p_prime = np.zeros(vertex_size)
+    rho = np.zeros(vertex_size)
+    rhoV1 = np.zeros(vertex_size)
+    rhoV2 = np.zeros(vertex_size)
+    rhoE = np.zeros(vertex_size)
 
     participant.initialize()
 
     while participant.is_coupling_ongoing():
         precice_dt = participant.get_max_time_step_size()
-        p_prime = participant.read_data("Square", "p'", vertex_ids, precice_dt)
+        rho = participant.read_data("Square", "rho", vertex_ids, precice_dt)
+        rhoV1 = participant.read_data("Square", "rhoV1", vertex_ids, precice_dt)
+        rhoV2 = participant.read_data("Square", "rhoV2", vertex_ids, precice_dt)
+        rhoE = participant.read_data("Square", "rhoE", vertex_ids, precice_dt)
         participant.advance(precice_dt)
 
     participant.finalize()

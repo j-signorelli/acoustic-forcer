@@ -7,21 +7,33 @@
         format="---[precice:%Participant%] %ColorizedSeverity% %Message%"
         enabled="true" />
     </log>
-    <data:scalar name="p'"/>
+    <data:scalar name="rho"/>
+    <data:scalar name="rhoV1"/>
+    <data:scalar name="rhoV2"/>
+    <data:scalar name="rhoE"/>
 
     <mesh name="Square" dimensions="2">
-      <use-data name="p'" />
+      <use-data name="rho" />
+      <use-data name="rhoV1" />
+      <use-data name="rhoV2" />
+      <use-data name="rhoE" />
     </mesh>
 
     <participant name="Jabber">
       <receive-mesh name="Square" from="Dummy" api-access="true"/>
-      <write-data name="p'" mesh="Square" />
+      <write-data name="rho" mesh="Square" />
+      <write-data name="rhoV1" mesh="Square" />
+      <write-data name="rhoV2" mesh="Square" />
+      <write-data name="rhoE" mesh="Square" />
       <export:vtu directory="precice-exports"/>
     </participant>
 
     <participant name="Dummy">
       <provide-mesh name="Square"/>
-      <read-data name="p'" mesh="Square" />
+      <read-data name="rho" mesh="Square" />
+      <read-data name="rhoV1" mesh="Square" />
+      <read-data name="rhoV2" mesh="Square" />
+      <read-data name="rhoE" mesh="Square" />
     </participant>
 
     <m2n:sockets acceptor="Dummy" connector="Jabber" exchange-directory=".."/>
@@ -30,6 +42,9 @@
       <participants first="Jabber" second="Dummy" />
       <time-window-size value="0.0001" method="fixed"/>
       <max-time value="0.1" />
-      <exchange data="p'" mesh="Square" from="Jabber" to="Dummy"/>
+      <exchange data="rho" mesh="Square" from="Jabber" to="Dummy"/>
+      <exchange data="rhoV1" mesh="Square" from="Jabber" to="Dummy"/>
+      <exchange data="rhoV2" mesh="Square" from="Jabber" to="Dummy"/>
+      <exchange data="rhoE" mesh="Square" from="Jabber" to="Dummy"/>
     </coupling-scheme:serial-explicit>
 </precice-configuration>
