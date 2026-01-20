@@ -91,7 +91,6 @@ int main(int argc, char *argv[])
    },
    [&](const SourceParams<SourceOption::WaveSpectrum> &params_waves)
    {
-      std::vector<double> k(dim);
       for (int i = 0; i < params_waves.amps.size(); i++)
       {
          bool slow = (params_waves.speeds[i] == SpeedOption::Slow ? true : false);
@@ -102,7 +101,7 @@ int main(int argc, char *argv[])
             k_hat[1] = std::sin(params_waves.angles[i]);
          }
          all_waves.emplace_back(params_waves.amps[i], params_waves.freqs[i],
-                                 params_waves.phases[i]*M_PI/180.0, k);
+                              params_waves.phases[i]*M_PI/180.0, slow, k_hat);
       }
    }
    }, source_conf);
@@ -135,8 +134,16 @@ int main(int argc, char *argv[])
       field.Compute(time);
 
       // Send data
-      //participant.writeData(precice_conf.fluid_mesh_name, "rho",
-      //                        vertex_ids, field.Density());
+      participant.writeData(precice_conf.fluid_mesh_name, "rho",
+                             vertex_ids, field.Density());
+      for (int d = 0; d < dim; d++)
+      {
+         participant.writeData(precice_conf.fluid_mesh_name, 
+                              "rhoV" + std::to_string(d+1),
+                             vertex_ids, field.Momentum(d));
+      }
+      participant.writeData(precice_conf.fluid_mesh_name, "rhoE",
+                             vertex_ids, field.Energy());       
       participant.advance(dt);
       time += dt;
    }

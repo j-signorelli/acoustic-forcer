@@ -2,6 +2,7 @@
 #define JABBER_ACOUSTIC_FIELD
 
 #include <vector>
+#include <span>
 
 namespace jabber
 {
@@ -18,11 +19,11 @@ struct Wave
    /// Wave phase, φ.
    double phase;
 
-   /// **Normalized** wave directional vector.
-   std::vector<double> k_hat;
-
    /// Wave speed flag. "true" if slow, "false" if fast.
    bool speed_flag;
+
+   /// **Normalized** wave directional vector.
+   std::vector<double> k_hat;
 };
 
 /**
@@ -174,7 +175,7 @@ public:
    void ReserveNumWaves(int res_waves) { waves_.reserve(res_waves); }
 
    /// Add a Wave to the acoustic field.
-   void AddWave(const Wave &w);
+   void AddWave(const Wave &w) { waves_.push_back(w); }
    
    /// Get reference to Wave \p i from acoustic field.
    Wave& GetWave(int i) { return waves_[i]; }
@@ -202,7 +203,54 @@ public:
 
    /// Compute the perturbed flowfield at time \p t.
    void Compute(double t);
+   
+   /**
+    * @brief Get span of computed flow densities.
+    * 
+    * @warning This should only be called after \ref Compute().
+    */
+   std::span<double> Density() { return rho_; }
+   
+   /**
+    * @brief Get const span of computed flow densities.
+    * 
+    * @warning This should only be called after \ref Compute().
+    */
+   const std::span<const double> Density() const { return rho_; }
 
+   /**
+    * @brief Get span of computed flow momentum for component \p comp.
+    * 
+    * @warning This should only be called after \ref Compute().
+    */
+   std::span<double> Momentum(int comp)
+   { 
+      return std::span<double>(rhoV_).subspan(num_pts_*comp, num_pts_);
+   }
+   
+   /**
+    * @brief Get const span of computed flow momentum for component \p comp.
+    * 
+    * @warning This should only be called after \ref Compute().
+    */
+   const std::span<const double> Momentum(int comp) const
+   { 
+      return std::span<const double>(rhoV_).subspan(num_pts_*comp, num_pts_);
+   }
+
+   /**
+    * @brief Get span of computed flow energy.
+    * 
+    * @warning This should only be called after \ref Compute().
+    */
+   std::span<double> Energy() { return rhoE_; }
+   
+   /**
+    * @brief Get const span of computed flow energy.
+    * 
+    * @warning This should only be called after \ref Compute().
+    */
+   const std::span<const double> Energy() const { return rhoE_; }
 
 
 };
