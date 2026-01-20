@@ -35,6 +35,7 @@ void AcousticField::Finalize()
 {
    // Allocate non-time-varying constants
    amplitude_.resize(NumWaves());
+   k_hat_.resize(Dim()*NumWaves());
    k_dot_x_p_phi_.resize(NumWaves()*NumPoints(), 0.0);
    omega_.resize(NumWaves());
 
@@ -49,11 +50,12 @@ void AcousticField::Finalize()
       // Compute + set ω=2πf
       omega_[w] = 2*M_PI*wave.frequency;
 
-      // Compute U·k_hat±c
+      // Compute U·k_hat±c and set k_hat_
       double denom = wave.speed_flag ? -c_infty_ : c_infty_;
       for (int d = 0; d < Dim(); d++)
       {
          denom += U_bar_[d]*wave.k_hat[d];
+         k_hat_[d*NumWaves() + w] = wave.k_hat[d];
       }
 
       // Compute magnitude of wavelength vector k
@@ -80,27 +82,27 @@ void AcousticField::Finalize()
 void AcousticField::Compute(double t)
 {
    // Dispatch to appropriate kernel
-   // if (Dim() == 1)
-   // {
-   //    ComputeKernel<1>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
-   //                      NumWaves(), amplitude_.data(), omega_.data(), 
-   //                      k_dot_x_p_phi_.data(), t, rho_.data(), rhoV_.data(), 
-   //                      rhoE_.data());
-   // }
-   // else if (Dim() == 2)
-   // {
-   //    ComputeKernel<2>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
-   //                      NumWaves(), amplitude_.data(), omega_.data(), 
-   //                      k_dot_x_p_phi_.data(), t, rho_.data(), rhoV_.data(), 
-   //                      rhoE_.data());
-   // }
-   // else
-   // {
-   //    ComputeKernel<3>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
-   //                      NumWaves(), amplitude_.data(), omega_.data(), 
-   //                      k_dot_x_p_phi_.data(), t, rho_.data(), rhoV_.data(), 
-   //                      rhoE_.data());
-   // }
+   if (Dim() == 1)
+   {
+      ComputeKernel<1>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
+                        NumWaves(), amplitude_.data(), k_hat_.data(),
+                        omega_.data(), k_dot_x_p_phi_.data(), t, rho_.data(),
+                        rhoV_.data(), rhoE_.data());
+   }
+   else if (Dim() == 2)
+   {
+      ComputeKernel<2>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
+                        NumWaves(), amplitude_.data(), k_hat_.data(),
+                        omega_.data(), k_dot_x_p_phi_.data(), t, rho_.data(),
+                        rhoV_.data(), rhoE_.data());
+   }
+   else
+   {
+      ComputeKernel<3>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
+                        NumWaves(), amplitude_.data(), k_hat_.data(),
+                        omega_.data(), k_dot_x_p_phi_.data(), t, rho_.data(),
+                        rhoV_.data(), rhoE_.data());
+   }
 }
 
 
