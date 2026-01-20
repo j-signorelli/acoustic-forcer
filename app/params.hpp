@@ -20,8 +20,8 @@ struct BaseFlowParams
    /// Pressure.
    double p;
 
-   /// Velocity (in x-direction).
-   double U;
+   /// Velocity vector.
+   std::vector<double> U;
 
    /// Specific heat ratio.
    double gamma;
@@ -127,48 +127,14 @@ using SourceParamsVariant
    = std::variant<SourceParams<SourceOption::SingleWave>,
                   SourceParams<SourceOption::WaveSpectrum>>;
 
-// ----------------------------------------------------------------------------
 
-/// Data options to compute *and* write to preCICE.
-enum class DataOption : std::uint8_t
-{
-   /// Pressure perturbation, p'. 
-   PressurePerturbation,
-
-   /// Density, ρ.
-   Density,
-
-   /// Momentum, ρu.
-   Momentum,
-
-   /// Energy, ρE.
-   Energy,
-
-   /// Number of DataOptions.
-   Size
-};
-
-/// Strings associated with Data enumerators.
-static constexpr std::array<std::string_view, 
-                              static_cast<std::size_t>(DataOption::Size)>
-DataNames = 
-{
-   "p'",    // Data::PressurePerturbation
-   "rho",   // Data::Density
-   "rhoV",  // Data::Momentum
-   "rhoE"   // Data::Energy
-};
 // ----------------------------------------------------------------------------
 
 /// Struct for computation parameters.
 struct CompParams
 {  
-
    /// Initial time.
    double t0;
-
-   /// Data to compute + write.
-   std::vector<DataOption> data;
 };
 
 // ----------------------------------------------------------------------------

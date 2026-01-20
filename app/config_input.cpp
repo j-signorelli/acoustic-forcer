@@ -18,7 +18,7 @@ void ConfigInput::PrintBaseFlowParams(std::ostream &out) const
    out << "Base Flow" << std::endl;
    out << "\trho:   " << OutReal(base_flow_.rho) << std::endl;
    out << "\tp:     " << OutReal(base_flow_.p) << std::endl;
-   out << "\tU:     " << OutReal(base_flow_.U) << std::endl;
+   out << "\tU:     " << OutRealVec(base_flow_.U) << std::endl;
    out << "\tgamma: " << OutReal(base_flow_.gamma) << std::endl;
 }
 
@@ -46,25 +46,11 @@ void ConfigInput::PrintSourceParams(std::ostream &out) const
    {
       std::size_t name_i = static_cast<std::size_t>(SourceOption::WaveSpectrum);
 
-      // Quick helper fxn for writing vector of reals to string
-      auto write_real_vec =
-      [&](const std::vector<double> &vec) -> std::string
-      {
-         std::stringstream ss;
-         ss << "[";
-         for (int i = 0; i < vec.size(); i++)
-         {
-            ss << OutReal(vec[i]) 
-                  << ((i+1 == vec.size()) ? "]" : ", ");
-         }
-         return ss.str();
-      };
-
       out << "\tType:        " << SourceNames[name_i] << std::endl;
-      out << "\tAmplitudes:  " << write_real_vec(waves.amps) << std::endl;
-      out << "\tFrequencies: " << write_real_vec(waves.freqs) << std::endl;
-      out << "\tAngles:      " << write_real_vec(waves.angles) << std::endl;
-      out << "\tPhases:      " << write_real_vec(waves.phases) << std::endl;
+      out << "\tAmplitudes:  " << OutRealVec(waves.amps) << std::endl;
+      out << "\tFrequencies: " << OutRealVec(waves.freqs) << std::endl;
+      out << "\tAngles:      " << OutRealVec(waves.angles) << std::endl;
+      out << "\tPhases:      " << OutRealVec(waves.phases) << std::endl;
       out << "\tSpeeds:      [";
       for (int i = 0; i < waves.speeds.size(); i++)
       {
@@ -81,13 +67,6 @@ void ConfigInput::PrintCompParams(std::ostream &out) const
 {
    out << "Computation" << std::endl;
    out << "\tt0:   " << OutReal(comp_.t0) << std::endl;
-   out << "\tData: [";
-   for (int i = 0; i < comp_.data.size(); i++)
-   {  
-      const DataOption &dat = comp_.data[i];
-      out << DataNames[static_cast<std::size_t>(dat)]
-          << (i+1 == comp_.data.size() ? "]" : ",");
-   }
    out << std::endl;
 }
 
@@ -115,7 +94,7 @@ TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
    toml::value in_base_flow = file.at("BaseFlow");
    base_flow_.rho = in_base_flow.at("rho").as_floating();
    base_flow_.p = in_base_flow.at("p").as_floating();
-   base_flow_.U = in_base_flow.at("U").as_floating();
+   base_flow_.U = toml::get<std::vector<double>>(in_base_flow.at("U"));
    base_flow_.gamma = in_base_flow.at("gamma").as_floating();
    if (out)
    {
@@ -129,7 +108,8 @@ TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
                                           SourceNames.end(), mode_type);
    if (it != SourceNames.end())
    {
-      SourceOption source_op = static_cast<SourceOption>(it-SourceNames.begin());
+      SourceOption source_op = static_cast<SourceOption>(
+                                             it-SourceNames.begin());
 
       if (source_op == SourceOption::SingleWave)
       {
@@ -191,23 +171,6 @@ TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
    // Parse compute fields of run
    toml::value in_comp = file.at("Computation");
    comp_.t0 = in_comp.at("t0").as_floating();
-   std::vector<std::string> data_string_vec = 
-                     toml::get<std::vector<std::string>>(in_comp.at("Data"));
-   for (const std::string &data_string : data_string_vec)
-   {
-      const std::string_view *it = std::find(DataNames.begin(),
-                                             DataNames.end(),
-                                             data_string);
-      if (it != DataNames.end())
-      {
-         DataOption data = static_cast<DataOption>(it - DataNames.begin());
-         comp_.data.push_back(data);
-      }
-      else
-      {
-         throw std::invalid_argument("Invalid Computation.Type(s)");
-      }
-   }
    if (out)
    {
       PrintCompParams(*out);

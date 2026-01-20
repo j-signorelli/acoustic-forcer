@@ -14,8 +14,6 @@ Speed="Slow"
 
 [Computation]
 t0=0.0
-Data=["rho", "rhoV", "rhoE"]
-Nondimensionalization="PlasCom2"
 
 [preCICE]
 ParticipantName="Jabber"

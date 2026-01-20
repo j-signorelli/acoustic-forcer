@@ -22,6 +22,19 @@ private:
       return std::format("{:.{}f}", f, kPrecision);
    }
 
+   /// Get string of double vector \p vec with precision \ref kPrecision.
+   static std::string OutRealVec(const std::vector<double> &vec)
+   {
+      std::stringstream ss;
+      ss << "[";
+      for (int i = 0; i < vec.size(); i++)
+      {
+         ss << OutReal(vec[i]) 
+               << ((i+1 == vec.size()) ? "]" : ", ");
+      }
+      return ss.str();
+   }
+
 protected:
 
    /// Input base flow parameters.

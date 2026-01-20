@@ -18,31 +18,6 @@ struct overloads : Ts... { using Ts::operator()...; };
 /// Print Jabber banner
 void PrintBanner(std::ostream &out);
 
-/**
- * @brief Compute wavenumber vector \p k for an angled disturbance in the
- * xy-plane in freestream \f$U_\infty\f$ in the x-direction.
- * 
- * @details Specifically, evaluate
- * \f[
- * \alpha=\frac{2\pi f\cos(\theta)}{U_\infty\cos(\theta)\pm c_\infty},
- * \f]
- * and
- * \f[
- * \beta=\frac{2\pi f\sin(\theta)}{U_\infty\cos(\theta)\pm c_\infty}
- * \f]
- * for \f$\vec{k}=\left[\alpha,\beta,0\right]\f$.
- * 
- * @param dim           Spatial dimension.
- * @param theta         Wave angle in degrees w.r.t x-axis. CCW positive.
- * @param u_infty       Freestream velocity.
- * @param c_infty       Freestream speed of sound.
- * @param freq          Frequency (not angular).
- * @param slow          true if slow, false if fast.        
- * @returns k           Wavenumber vector.
- */
-void ComputeWavenumber(int dim, double theta, double u_infty, double c_infty,
-                        double freq, bool slow, std::vector<double> &k);
-
 int main(int argc, char *argv[])
 {
    PrintBanner(std::cout);
@@ -93,36 +68,39 @@ int main(int argc, char *argv[])
 
    // Assemble AcousticField object
    std::cout << "Assembling acoustic field data... ";
-   AcousticField field(dim, coords);
-   
-   double c_infty = std::sqrt(base_conf.gamma*base_conf.p/base_conf.rho);
+   AcousticField field(dim, coords, base_conf.p, base_conf.rho,
+                        base_conf.U, base_conf.gamma);
 
    // Assemble vector of wave structs based on input source
    std::vector<Wave> all_waves;
+
    std::visit(
    overloads
    {
    [&](const SourceParams<SourceOption::SingleWave> &params_wave)
    {
-      Wave wave{params_wave.amp, params_wave.freq, 
-                     params_wave.phase*M_PI/180.0};
-      
       bool slow = (params_wave.speed == SpeedOption::Slow ? true : false);
-      ComputeWavenumber(dim, params_wave.angle, base_conf.U, c_infty, 
-                        params_wave.freq, slow, wave.k);
-
-      all_waves.emplace_back(wave);
+      std::vector<double> k_hat(dim, 0.0);
+      k_hat[0] = std::cos(params_wave.angle);
+      if (dim > 1)
+      {
+         k_hat[1] = std::sin(params_wave.angle);
+      }
+      all_waves.emplace_back(params_wave.amp, params_wave.freq, 
+                            params_wave.phase*M_PI/180.0, slow, k_hat);
    },
    [&](const SourceParams<SourceOption::WaveSpectrum> &params_waves)
    {
       std::vector<double> k(dim);
       for (int i = 0; i < params_waves.amps.size(); i++)
       {
-         bool slow = (params_waves.speeds[i] == SpeedOption::Slow ? 
-                        true : false);
-         ComputeWavenumber(dim, params_waves.angles[i], base_conf.U, c_infty,
-                        params_waves.freqs[i], slow, k);
-         
+         bool slow = (params_waves.speeds[i] == SpeedOption::Slow ? true : false);
+         std::vector<double> k_hat(dim, 0.0);
+         k_hat[0] = std::cos(params_waves.angles[i]);
+         if (dim > 1)
+         {
+            k_hat[1] = std::sin(params_waves.angles[i]);
+         }
          all_waves.emplace_back(params_waves.amps[i], params_waves.freqs[i],
                                  params_waves.phases[i]*M_PI/180.0, k);
       }
@@ -130,12 +108,13 @@ int main(int argc, char *argv[])
    }, source_conf);
 
    // Apply transfer function
+   // TODO
 
 
-
-   // Add all waves to AcousticField
+   
    for (const Wave &wave : all_waves)
-   {
+   {  
+      // Add wave to acoustic field
       field.AddWave(wave);
    }
 
@@ -143,27 +122,6 @@ int main(int argc, char *argv[])
    field.Finalize();
 
    std::cout << "Done!" << std::endl;
-   
-   // Initialize data vectors
-   // p' must always be computed
-   std::vector<double> p_prime(vertex_size);
-   std::vector<double> rho, rhoV, rhoE;
-
-   for (const DataOption &data : comp_conf.data)
-   {
-      switch (data)
-      {
-         case DataOption::Density:
-            rho.resize(vertex_size);
-            break;
-         case DataOption::Momentum:
-            rhoV.resize(vertex_size*dim);
-            break;
-         case DataOption::Energy:
-            rhoE.resize(vertex_size);
-            break;
-      }
-   }
 
    double time = comp_conf.t0;
    double dt;
@@ -174,20 +132,11 @@ int main(int argc, char *argv[])
       dt = participant.getMaxTimeStepSize();
 
       // Compute acoustic forcing
-      field.Compute(time, p_prime);
+      field.Compute(time);
 
-      // Compute + send data fields
-      for (const DataOption &data : comp_conf.data)
-      {
-         switch (data)
-         {
-            case DataOption::PressurePerturbation:
-               participant.writeData(precice_conf.fluid_mesh_name, "p'",
-                                       vertex_ids, p_prime);
-               break;
-         }
-        
-      }
+      // Send data
+      //participant.writeData(precice_conf.fluid_mesh_name, "rho",
+      //                        vertex_ids, field.Density());
       participant.advance(dt);
       time += dt;
    }
@@ -213,21 +162,4 @@ void PrintBanner(std::ostream &out)
       \-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/)";
 
    out << banner << std::endl << std::endl;
-}
-
-void ComputeWavenumber(int dim, double theta, double u_infty, double c_infty,
-                        double freq, bool slow, std::vector<double> &k)
-{
-   k.resize(dim, 0.0);
-
-   double cos_theta = std::cos(theta*M_PI/180.0);
-   double sin_theta = std::sin(theta*M_PI/180.0);
-
-   double denom = u_infty*cos_theta + (slow ? -c_infty : c_infty);
-
-   k[0] = freq*2*M_PI*cos_theta/denom;
-   if (dim > 1)
-   {
-      k[1] = freq*2*M_PI*sin_theta/denom;
-   }
 }
