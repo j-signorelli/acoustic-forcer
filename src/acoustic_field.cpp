@@ -1,17 +1,94 @@
 #include "acoustic_field.hpp"
 
 #include <math.h>
+#include <numeric>
 
 namespace jabber
 {
 
-AcousticField::AcousticField(int dim, const std::vector<double> coords)
+template<int TDim>
+void AcousticField::ComputeKernel(const std::size_t num_pts, const double rho_bar,
+                             const double p_bar, const double *U_bar, 
+                             const double gamma, const int num_waves, 
+                             const double *wave_amps, const double *wave_omegas,
+                             const double *wave_dirs,
+                             const double *__restrict__ k_dot_x_p_phi,
+                             const double t,
+                             double *__restrict__ rho,
+                             double *__restrict__ rhoV,
+                             double *__restrict__ rhoE)
+{
+   // Initialize all output fields
+   // THIS SHOULD BE VECTORIZED:
+   for (std::size_t i = 0; i < num_pts; i++)
+   {
+      // Set \rho=\bar{\rho}
+      rho[i] = rho_bar;
+
+      // Unroll to ensure that loop over points (inner-most) is
+      // vectorized, NOT over these dims.
+      #pragma unroll
+      for (std::size_t d = 0; d < TDim; d++)
+      {
+         // Set \rho\vec{u} = \vec{\bar{u}}
+         rhoV[d*num_pts + i] = U_bar[d];
+      }
+      // Set \rho E = \bar{p}/(\gamma-1)
+      rhoE[i] = p_bar/(gamma-1.0);
+   }
+
+   const double c_infty = std::sqrt(gamma*p_bar/rho_bar);
+
+   // Add contribution of each wave
+   for (int w = 0; w < NumWaves(); w++)
+   {
+      const double rho_fac = wave_amps[w]/(c_infty*c_infty);
+      const double rhoV_fac = wave_amps[w]/(rho_bar*c_infty);
+      const double rhoE_fac = wave_amps[w]/(gamma-1.0);
+
+      const double omt = wave_omegas[w]*t;
+      const std::size_t w_offset = w*num_pts;
+
+      // THIS SHOULD BE VECTORIZED:
+      for (std::size_t i = 0; i < num_pts(); i++)
+      {
+         double cos_w = std::cos(k_dot_x_p_phi[w_offset + i] - omt);
+
+         // Add: \rho += (1/c_\infty^2)p'_w*cos(...)
+         rho_[i] += rho_fac*cos_w;
+
+         // Unroll to ensure that loop over points (inner-most) is
+         // vectorized, NOT over these dims.
+         #pragma unroll
+         for (std::size_t d = 0; d < TDim; d++)
+         {
+            // Add: \rhoV += (1/(\bar{\rho}))
+            rhoV_[d*num_pts + i] += rhoV_fac*cos_w*k_hat[d*num_waves + w];
+         }
+
+         rhoE_[i] += rhoE_fac*cos_w;
+
+      }
+   }
+
+   // TODO: One more loop to postprocess (multiply rhoV by rho, do energy shit, etc.)
+
+}
+
+
+AcousticField::AcousticField(int dim, const std::vector<double> coords,
+                  double p_bar, double rho_bar,
+                  const std::vector<double> U_bar, double gamma)
 : dim_(dim),
   num_pts_(coords.size()/dim_),
-  coords_(dim_),
-  num_waves_(0),
-  k_(dim)
+  p_bar_(p_bar),
+  rho_bar_(rho_bar),
+  U_bar_(U_bar),
+  gamma_(gamma),
+  c_infty_(std::sqrt(gamma_*p_bar_/rho_bar_)),
+  coords_(dim_)
 {
+   
    // Store the coordinates in an SoA-style
    for (int d = 0; d < Dim(); d++)
    {
@@ -23,96 +100,78 @@ AcousticField::AcousticField(int dim, const std::vector<double> coords)
    }
 }
 
-void AcousticField::SetNumWaves(int num_waves)
-{
-   amplitude_.resize(num_waves);
-   frequency_.resize(num_waves);
-   phase_.resize(num_waves);
-
-   for (std::vector<double> &k_d : k_)
-   {
-      k_d.resize(num_waves);
-   }
-   num_waves_ = num_waves;
-}
-
-void AcousticField::ReserveNumWaves(int num_waves)
-{
-   amplitude_.reserve(num_waves);
-   frequency_.reserve(num_waves);
-   phase_.reserve(num_waves);
-
-   for (std::vector<double> &k_d : k_)
-   {
-      k_d.reserve(num_waves);
-   }
-}
-
-void AcousticField::AddWave(const Wave &w)
-{
-   amplitude_.push_back(w.amplitude);
-   frequency_.push_back(w.frequency);
-   phase_.push_back(w.phase);
-
-   for (int d = 0; d < Dim(); d++)
-   {
-      k_[d].push_back(w.k[d]);
-   }
-   num_waves_++;
-}
-
-void AcousticField::GetWave(int i, Wave &w) const
-{
-   w.amplitude = Amplitude(i);
-   w.frequency = Frequency(i);
-   w.phase = Phase(i);
-   w.k.resize(Dim());
-   for (int d = 0; d < Dim(); d++)
-   {
-      w.k[d] = WaveNumber(d, i);
-   }
-}
-
 void AcousticField::Finalize()
 {
+   // Allocate non-time-varying constants
+   amplitude_.resize(NumWaves());
    k_dot_x_p_phi_.resize(NumWaves()*NumPoints(), 0.0);
    omega_.resize(NumWaves());
 
-   // Compute k·x+φ
+   // Note that performance of below was not carefully considered
    for (int w = 0; w < NumWaves(); w++)
    {
-      std::size_t w_offset = w*NumPoints();
+      const Wave &wave = GetWave(w);
+
+      // Set amplitude
+      amplitude_[w] = wave.amplitude;
+
+      // Compute + set ω=2πf
+      omega_[w] = 2*M_PI*wave.frequency;
+
+      // Compute U·k_hat±c
+      double denom = wave.speed_flag ? -c_infty_ : c_infty_;
       for (int d = 0; d < Dim(); d++)
       {
-         for (std::size_t i = 0; i < NumPoints(); i++)
+         denom += U_bar_[d]*wave.k_hat[d];
+      }
+
+      // Compute magnitude of wavelength vector k
+      double k = omega_[w]/denom;
+
+      // Compute + set k·x+φ
+      std::size_t w_offset = w*NumPoints();
+      for (std::size_t i = 0; i < NumPoints(); i++)
+      {  
+         k_dot_x_p_phi_[w_offset + i] = wave.phase;
+         for (int d = 0; d < Dim(); d++)
          {
-            k_dot_x_p_phi_[w_offset + i] += k_[d][w]*coords_[d][i] + phase_[w];
+            k_dot_x_p_phi_[w_offset + i] += wave.k_hat[d]*k*coords_[d][i];
          }
       }
    }
 
-   // Compute ω=2πf
-   for (int w = 0; w < NumWaves(); w++)
-   {
-      omega_[w] = 2*M_PI*frequency_[w];
-   }
+   // Allocate flow solution memory
+   rho_.resize(NumPoints());
+   rhoV_.resize(NumPoints()*Dim());
+   rhoE_.resize(NumPoints());
 }
 
-void AcousticField::Compute(double t, std::vector<double> &p_prime) const
+void AcousticField::Compute(double t)
 {
-   p_prime.assign(NumPoints(), 0.0);
-
-   // Compute p'=cos(k·x+φ-ωt)
-   for (int w = 0; w < NumWaves(); w++)
+   // Dispatch to appropriate kernel
+   if (Dim() == 1)
    {
-      double amp = amplitude_[w];
-      double omt = omega_[w]*t;
-      std::size_t w_offset = w*NumPoints();
-      for (std::size_t i = 0; i < NumPoints(); i++)
-      {
-         p_prime[i] += amp*std::cos(k_dot_x_p_phi_[w_offset + i] - omt);
-      }
+      ComputeKernel<1>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
+                        NumWaves(), amplitude_.data(), omega_.data(), 
+                        k_dot_x_p_phi_.data(), t, rho_.data(), rhoV_.data(), 
+                        rhoE_.data());
+   }
+   else if (Dim() == 2)
+   {
+      ComputeKernel<2>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
+                        NumWaves(), amplitude_.data(), omega_.data(), 
+                        k_dot_x_p_phi_.data(), t, rho_.data(), rhoV_.data(), 
+                        rhoE_.data());
+   }
+   else
+   {
+      ComputeKernel<3>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
+                        NumWaves(), amplitude_.data(), omega_.data(), 
+                        k_dot_x_p_phi_.data(), t, rho_.data(), rhoV_.data(), 
+                        rhoE_.data());
    }
 }
+
+
 
 } // namespace jabber
