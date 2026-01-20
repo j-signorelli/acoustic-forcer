@@ -7,15 +7,28 @@ namespace jabber
 {
 
 /**
-   * @brief Generalized kernel function for evaluating perturbed base flow
-   * using CPU vectorization.
+   * @brief Generalized kernel function for evaluating perturbed base flow.
    * 
    * 
    * @details This function was designed following Intel guidelines for 
-   * vectorizing code - including that the innermost loop is the vectorized
-   * one. As such, this function is templated with \p TDim for loop unrolling
-   * on the momentum terms. Data is stored in a SoA-format for contiguous 
-   * memory accesses across hardware threads.
+   * vectorizing code - notably that the innermost loop is the vectorized
+   * one. As such, this function is templated with \p TDim for "loop unrolling"
+   * on the momentum terms. Vectorization is across \p num_pts as that is
+   * expected to be the largest value, so data dimensioned by it must be
+   * stored in an SoA-format for contiguous memory accesses across hardware
+   * threads.
+   * 
+   * All inner loops have been verified to be vectorized by Intel `icpx` 
+   * 2025.3.1 using the flags `-O3 -xhost`. Proper vectorization by Intel
+   * compilers can be checked via:
+   * 
+   * ```
+   * icpx -O3 -qopt-report=3 \
+   *          -qopt-report-file="report.yaml" \
+   *          -xhost \
+   *          -c kernels.cpp
+   * ```
+   * 
    * 
    * @tparam TDim            Physical dimension.
    * 
@@ -29,7 +42,7 @@ namespace jabber
    * @param wave_omegas      Acoustic wave angular frequencies, sized 
    *                         \p num_waves.
    * @param wave_dirs        Acoustic wave normalized direction vectors
-   *                         (k_hat), dimensioned as \p num_waves x \p TDim.
+   *                         (k_hat), dimensioned as \p TDim x \p num_waves.
    * @param k_dot_x_p_phi    k·x+φ term computed for all waves at all points,
    *                         dimensioned as \p num_waves x \p num_pts but
    *                         flattened.
@@ -39,7 +52,7 @@ namespace jabber
    *                         dimensioned as \p TDim x \p num_pts but flattened.
    * @param rhoE             Output flow energy to compute, sized \p num_pts.
 */
-template<int TDim>
+template<std::size_t TDim>
 void ComputeKernel(const std::size_t num_pts, const double rho_bar,
                         const double p_bar, const double *U_bar, 
                         const double gamma, const int num_waves, 
