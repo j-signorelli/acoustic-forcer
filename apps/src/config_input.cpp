@@ -72,18 +72,23 @@ void ConfigInput::PrintCompParams(std::ostream &out) const
 
 void ConfigInput::PrintPreciceParams(std::ostream &out) const
 {
-   out << "preCICE" << std::endl;
-   out << "\tParticipant Name:   " << precice_.participant_name << std::endl;
-   out << "\tConfiguration File: " << precice_.config_file << std::endl;
-   out << "\tFluid Mesh Name:    " << precice_.fluid_mesh_name << std::endl;
-   out << "\tMesh Access Region: {";
-   for (int i = 0; i < precice_.mesh_access_region.size(); i+=2)
+   if (precice_.has_value())
    {
-      out << "[" << precice_.mesh_access_region[i] << ","
-                 << precice_.mesh_access_region[i+1] << "]";
-      out << ((i+2 < precice_.mesh_access_region.size()) ? "," : "}");
+      out << "preCICE" << std::endl;
+      out << "\tParticipant Name:   " << precice_->participant_name 
+                                             << std::endl;
+      out << "\tConfiguration File: " << precice_->config_file << std::endl;
+      out << "\tFluid Mesh Name:    " << precice_->fluid_mesh_name 
+                                             << std::endl;
+      out << "\tMesh Access Region: {";
+      for (int i = 0; i < precice_->mesh_access_region.size(); i+=2)
+      {
+         out << "[" << precice_->mesh_access_region[i] << ","
+                  << precice_->mesh_access_region[i+1] << "]";
+         out << ((i+2 < precice_->mesh_access_region.size()) ? "," : "}");
+      }
+      out << std::endl;
    }
-   out << std::endl;
 }
 
 TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
@@ -176,18 +181,21 @@ TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
       PrintCompParams(*out);
    }
 
-   // Parse preCICE related fields
-   toml::value in_precice = file.at("preCICE");
-   precice_.participant_name = in_precice.at("ParticipantName").as_string();
-   precice_.config_file = in_precice.at("ConfigFile").as_string();
-   precice_.fluid_mesh_name = in_precice.at("FluidMeshName").as_string();
-   precice_.mesh_access_region = toml::get<std::vector<double>>(
-                                          in_precice.at("MeshAccessRegion"));
-   if (out)
+   // Parse preCICE related fields - if exists
+   if (file.contains("preCICE"))
    {
-      PrintPreciceParams(*out);
+      precice_ = PreciceParams();
+      toml::value in_precice = file.at("preCICE");
+      precice_->participant_name = in_precice.at("ParticipantName").as_string();
+      precice_->config_file = in_precice.at("ConfigFile").as_string();
+      precice_->fluid_mesh_name = in_precice.at("FluidMeshName").as_string();
+      precice_->mesh_access_region = toml::get<std::vector<double>>(
+                                             in_precice.at("MeshAccessRegion"));
+      if (out)
+      {
+         PrintPreciceParams(*out);
+      }
    }
-
    if (out)
    {
       *out << std::endl;

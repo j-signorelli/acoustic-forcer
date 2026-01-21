@@ -48,7 +48,7 @@ protected:
    CompParams comp_;
 
    /// Input preCICE parameters.
-   PreciceParams precice_;
+   std::optional<PreciceParams> precice_;
 
 public:
 
@@ -71,10 +71,10 @@ public:
    const CompParams& Comp() const { return comp_; }
 
    /// Get reference to preCICE parameters.
-   PreciceParams& Precice() { return precice_; }
+   std::optional<PreciceParams>& Precice() { return precice_; }
 
    /// Get const reference to preCICE parameters.
-   const PreciceParams& Precice() const { return precice_; }
+   const std::optional<PreciceParams>& Precice() const { return precice_; }
 
    /// Print the configured base flow parameters.
    void PrintBaseFlowParams(std::ostream &out) const;
