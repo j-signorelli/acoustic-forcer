@@ -12,12 +12,13 @@ using namespace jabber_app;
 int main(int argc, char *argv[])
 {
    PrintBanner(std::cout);
-   std::cout << "Jabber preCICE Participant" << std::endl << std::endl;
+   std::cout << "Jabber preCICE Participant" << std::endl << std::endl
+               << LINE << std::endl;
 
    // Option parser:
    cxxopts::Options options("jabber_participant", 
-      "preCICE participant for coupling acoustic forcing with flow \
-                                                         simulations.");
+      "preCICE participant for coupling acoustic forcing with flow "
+      "simulations.");
    options.add_options()
       ("c,config", "Config file.", cxxopts::value<std::string>())
       ("h,help", "Print usage information.");
@@ -25,8 +26,9 @@ int main(int argc, char *argv[])
 
    std::string args_str = result.arguments_string();
    args_str = std::regex_replace(args_str, std::regex("\n"), "\n\t");
-   std::cout << "Command Line Arguments\n\t" << args_str << std::endl;
-   
+   std::cout << "Command Line Arguments\n\t" << args_str << std::endl
+               << LINE << std::endl;
+               
    if (result.count("help"))
    {
       std::cout << options.help() << std::endl;
@@ -41,6 +43,7 @@ int main(int argc, char *argv[])
    // Parse config file
    std::string config_file = result["config"].as<std::string>();
    TOMLConfigInput conf(config_file, &std::cout);
+   std::cout << LINE << std::endl;
 
    // Get the preCICE input
    const PreciceParams &precice_conf = *(conf.Precice());

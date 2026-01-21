@@ -15,9 +15,10 @@ void CreateGrid(const int dim, const int num_pts_d, const double extent,
 int main(int argc, char *argv[])
 {
    PrintBanner(std::cout);
-   std::cout << "Jabber Profiler Tool" << std::endl << std::endl;
+   std::cout << "Jabber Profiler Tool" << std::endl
+               << LINE << std::endl;
 
-    // Option parser:
+   // Option parser:
    cxxopts::Options options("jabber_profile", 
       "Simple profiler tool to obtain execution times of a given config file \
         and grid.");
@@ -25,18 +26,23 @@ int main(int argc, char *argv[])
    options.add_options()
       ("c,config", "Config file.", cxxopts::value<std::string>())
       ("d,dim", "Grid dimension (1,2,3).", 
-                        cxxopts::value<int>()->default_value("3"))
+                        cxxopts::value<int>()->default_value("2"))
       ("n,num_points", "Number grid points in each dimension.",
-                        cxxopts::value<std::size_t>()->default_value("10"))
-      ("e,extent", "Grid extent in each direction (such that domain is \
-                     [0,extent]^dim)", cxxopts::value<double>()->default_value("1.0"))
+                        cxxopts::value<std::size_t>()->default_value("50"))
+      ("e,extent", "Grid extent in each direction (such that domain is "
+                     "[0,extent]^dim)",
+                        cxxopts::value<double>()->default_value("1.0"))
+      ("f,fields", "Fields to visualize with GLVis ('rho', 'rhoV', 'rhoE')",
+                        cxxopts::value<std::vector<std::string>>()
+                        ->default_value("rho,rhoV,rhoE"))
       ("h,help", "Print usage information.");
 
    cxxopts::ParseResult result = options.parse(argc, argv);
    
    std::string args_str = result.arguments_string();
    args_str = std::regex_replace(args_str, std::regex("\n"), "\n\t");
-   std::cout << "Command Line Arguments\n\t" << args_str << std::endl;
+   std::cout << "Command Line Arguments\n\t" << args_str << std::endl 
+               << LINE << std::endl;
 
    if (result.count("help"))
    {
@@ -53,25 +59,30 @@ int main(int argc, char *argv[])
    const std::size_t num_pts_d = result["num_points"].as<std::size_t>();
    const std::size_t num_pts_total = std::pow(num_pts_d,dim);
    const double extent = result["extent"].as<double>();
+   const std::vector<std::string> fields = result["fields"]
+                                             .as<std::vector<std::string>>();
+
+   // Parse config file
+   std::string config_file = result["config"].as<std::string>();
+   TOMLConfigInput conf(config_file, &std::cout);
+   std::cout << LINE << std::endl;
 
    // Output grid information to console
-   std::cout << "Grid Dimension: ";
+   std::cout << "Grid\n";
+   std::cout << "\tDimension: ";
    for (int d = 0; d < dim; d++)
    {
       std::cout << num_pts_d << (d+1==dim ? "" : "x");
    }
    std::cout << std::endl;
-   std::cout << "Grid Extents: ";
+   std::cout << "\tExtents: ";
    for (int d = 0; d < dim; d++)
    {
       std::cout << "[0," << extent << "]" << ((d + 1 == dim) ? "" : "x");
    }
    std::cout << std::endl;
-   std::cout << "Number of points: " << num_pts_total << std::endl;
-
-   // Parse config file
-   std::string config_file = result["config"].as<std::string>();
-   TOMLConfigInput conf(config_file, &std::cout);
+   std::cout << "\tNumber of points: " << num_pts_total << std::endl;
+   std::cout << "\tSpacing: " << (extent/(num_pts_d-1.0)) << std::endl;
 
    // Create a simple [0,1]^dim grid
    std::vector<double> coords(num_pts_total*dim);
