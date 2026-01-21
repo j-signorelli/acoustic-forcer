@@ -218,6 +218,26 @@ public:
    std::span<const double> Density() const { return rho_; }
 
    /**
+    * @brief Get span of flow momentum across all components.
+    * 
+    * @warning This should only be called after \ref Compute().
+    */
+   std::span<double> Momentum()
+   { 
+      return std::span<double>(rhoV_);
+   }
+   
+   /**
+    * @brief Get const span of flow momentum across all components.
+    * 
+    * @warning This should only be called after \ref Compute().
+    */
+   std::span<const double> Momentum() const
+   { 
+      return std::span<const double>(rhoV_);
+   }
+
+   /**
     * @brief Get span of computed flow momentum for component \p comp.
     * 
     * @warning This should only be called after \ref Compute().
