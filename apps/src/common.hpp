@@ -9,10 +9,11 @@
 namespace jabber_app
 {
 
+constexpr static std::string_view LINE = 
+"-----------------------------------------------------------------------";
+
 /// Print Jabber banner.
 void PrintBanner(std::ostream &out);
-
-
 
 /**
  * @brief Initialize a \ref jabber::AcousticField object from user input and 
