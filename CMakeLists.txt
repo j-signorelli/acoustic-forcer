@@ -6,6 +6,20 @@ project(jabber LANGUAGES CXX VERSION 1.0.0)
 add_library(compiler_flag_requirements INTERFACE)
 target_compile_features(compiler_flag_requirements INTERFACE cxx_std_20)
 
+# Main Jabber compiler options:
+option(JABBER_BUILD_PARTICIPANT "Build Jabber preCICE participant 
+                                                    (requires preCICE)." ON)
+option(JABBER_BUILD_VIZ "Build Jabber flowfield visualizer 
+                                                    (requires MFEM)." ON)
+option(JABBER_BUILD_PROFILER "Build Jabber compute profiler." ON)
+option(JABBER_BUILD_DOCS "Build Jabber documentation w/ Doxygen." OFF)
+
+# If building any apps
+set(JABBER_BUILD_APP OFF)
+if (JABBER_BUILD_PARTICIPANT OR JABBER_BUILD_VIZ OR JABBER_BUILD_PROFILER)
+    set(JABBER_BUILD_APP ON)
+endif()
+
 # Property of all targets to install
 set_property(GLOBAL PROPERTY JABBER_TARGETS_PROPERTY)
 
@@ -14,26 +28,21 @@ set(DOC_PATHS ${CMAKE_SOURCE_DIR}/src)
 # Build Jabber library
 add_subdirectory(src)
 
-# Build Jabber app, if ON
-option(JABBER_BUILD_APP "Build Jabber executable." ON)
+
 if (JABBER_BUILD_APP)
 
-    # Find preCICE
-    find_package(PRECICE 3.1.2 REQUIRED CONFIG NAMES precice)
-    message(STATUS "Found preCICE config: TRUE")
-
-    # Add external dependencies - required for app
+    # Add external dependencies - required for apps
     add_subdirectory(externals/cxxopts)
     add_subdirectory(externals/toml11)
     
     # Add app subdirectory
-    add_subdirectory(app)
+    add_subdirectory(apps)
 
-    list(APPEND DOC_PATHS ${CMAKE_SOURCE_DIR}/app)
+    # Add jabber_app library to doc paths
+    list(APPEND DOC_PATHS ${CMAKE_SOURCE_DIR}/app/src)
+    
 endif()
 
-# Build Jabber documentation, if ON
-option(JABBER_BUILD_DOCS "Build Jabber documentation w/ Doxygen." OFF)
 if (JABBER_BUILD_DOCS)
     add_subdirectory(docs)
 endif()

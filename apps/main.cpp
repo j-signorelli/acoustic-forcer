@@ -1,6 +1,5 @@
-#include "config_input.hpp"
-
 #include <jabber.hpp>
+#include <jabber_app.hpp>
 #include <precice/precice.hpp>
 #include <cxxopts.hpp>
 
