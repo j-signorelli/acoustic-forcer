@@ -131,8 +131,7 @@ public:
     * 
     * @param dim        Spatial dimension of mesh.
     * @param coords     Mesh coordinates to compute acoustic forcing on, in
-    *                   XYZ XYZ ordering (output from precice::Participant
-    *                   ::getMeshVertexIDsAndCoordinates).
+    *                   XYZ XYZ ordering.
     * @param p_bar      Base flow pressure.
     * @param rho_bar    Base flow density.
     * @param U_bar      Base flow velocity vector, of size \p dim.
@@ -216,7 +215,7 @@ public:
     * 
     * @warning This should only be called after \ref Compute().
     */
-   const std::span<const double> Density() const { return rho_; }
+   std::span<const double> Density() const { return rho_; }
 
    /**
     * @brief Get span of computed flow momentum for component \p comp.
@@ -233,7 +232,7 @@ public:
     * 
     * @warning This should only be called after \ref Compute().
     */
-   const std::span<const double> Momentum(int comp) const
+   std::span<const double> Momentum(int comp) const
    { 
       return std::span<const double>(rhoV_).subspan(num_pts_*comp, num_pts_);
    }
@@ -250,7 +249,7 @@ public:
     * 
     * @warning This should only be called after \ref Compute().
     */
-   const std::span<const double> Energy() const { return rhoE_; }
+   std::span<const double> Energy() const { return rhoE_; }
 
 
 };
