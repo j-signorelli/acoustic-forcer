@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
    cxxopts::Options options("jabber", 
       "Planar acoustic wave forcer for flow simulations using preCICE.");
    options.add_options()
-      ("c,config", "Config file.", cxxopts::value<std::string>()),
+      ("c,config", "Config file.", cxxopts::value<std::string>())
       ("h,help", "Print usage information.");
    cxxopts::ParseResult result = options.parse(argc, argv);
    if (result.count("help"))
