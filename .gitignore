@@ -1,5 +1,5 @@
 .vscode/
 build/
-tests/*/precice-run
-tests/*/jabber/precice*
-tests/*/dummy/precice*
+examples/*/precice-run
+examples/*/jabber/precice*
+examples/*/dummy/precice*
