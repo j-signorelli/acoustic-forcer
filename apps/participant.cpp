@@ -12,7 +12,7 @@ using namespace jabber_app;
 int main(int argc, char *argv[])
 {
    PrintBanner(std::cout);
-   std::cout << "Jabber preCICE Participant" << std::endl << std::endl
+   std::cout << "Jabber preCICE Participant" << std::endl
                << LINE << std::endl;
 
    // Option parser:
