@@ -14,9 +14,6 @@ using namespace jabber_app;
 template<class... Ts>
 struct overloads : Ts... { using Ts::operator()...; };
 
-/// Print Jabber banner
-void PrintBanner(std::ostream &out);
-
 int main(int argc, char *argv[])
 {
    PrintBanner(std::cout);
@@ -150,22 +147,4 @@ int main(int argc, char *argv[])
    participant.finalize();
 
    return 0;
-}
-
-void PrintBanner(std::ostream &out)
-{
-   constexpr std::string_view banner = R"(
-      /-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\
-      |   ________  ____    ______  ______    _____ ______      |
-      \  (___  ___)(    )  (_   _ \(_   _ \  / ___/(   __ \     /
-      -      ) )   / /\ \    ) (_) ) ) (_) )( (__   ) (__) )    -
-      /     ( (   ( (__) )   \   _/  \   _/  ) __) (    __/     \
-      |  __  ) )   )    (    /  _ \  /  _ \ ( (     ) \ \  _    |
-      \ ( (_/ /   /  /\  \  _) (_) )_) (_) ) \ \___( ( \ \_))   /
-      -  \___/   /__(  )__\(______/(______/   \____\)_) \__/    -
-      /                                                         \
-      |                                                         |
-      \-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/)";
-
-   out << banner << std::endl << std::endl;
 }

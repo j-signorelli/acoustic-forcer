@@ -6,11 +6,13 @@ set_target_properties(libjabber_app PROPERTIES OUTPUT_NAME "jabber_app")
 
 target_sources(libjabber_app
     PRIVATE 
+        common.cpp
         config_input.cpp
     PUBLIC
         FILE_SET HEADERS
         FILES
             params.hpp
+            common.hpp
             config_input.hpp
             jabber_app.hpp)
 
