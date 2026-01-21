@@ -13,10 +13,12 @@ option(JABBER_BUILD_VIZ "Build Jabber flowfield visualizer
                                                     (requires MFEM)." ON)
 option(JABBER_BUILD_PROFILER "Build Jabber compute profiler." ON)
 option(JABBER_BUILD_DOCS "Build Jabber documentation w/ Doxygen." OFF)
+option(JABBER_INSTALL_APP_LIB "Install the jabber_app library" OFF)
 
 # If building any apps
 set(JABBER_BUILD_APP OFF)
-if (JABBER_BUILD_PARTICIPANT OR JABBER_BUILD_VIZ OR JABBER_BUILD_PROFILER)
+if (JABBER_BUILD_PARTICIPANT OR JABBER_BUILD_VIZ OR JABBER_BUILD_PROFILER
+    OR JABBER_INSTALL_APP_LIB)
     set(JABBER_BUILD_APP ON)
 endif()
 
@@ -59,4 +61,5 @@ install(TARGETS ${JABBER_TARGETS}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jabber)
+    FILE_SET jabber_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jabber
+    FILE_SET jabber_app_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jabber_app)

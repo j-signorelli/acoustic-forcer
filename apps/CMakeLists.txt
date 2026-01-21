@@ -7,13 +7,14 @@ if (JABBER_BUILD_PARTICIPANT)
     find_package(PRECICE 3.1.2 REQUIRED CONFIG NAMES precice)
     message(STATUS "Found preCICE config: TRUE")
 
-    add_executable(jabber main.cpp)
-    set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY jabber)
-    
-    target_link_libraries(jabber PRIVATE compiler_flag_requirements
+    add_executable(jabber_participant participant.cpp)
+    set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY 
+                                                    jabber_participant)
+
+    target_link_libraries(jabber_participant PRIVATE 
+                                    compiler_flag_requirements
                                     libjabber
                                     libjabber_app
                                     cxxopts::cxxopts
                                     precice::precice)
 endif()
-                                    

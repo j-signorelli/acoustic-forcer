@@ -11,7 +11,7 @@ target_sources(libjabber
         transfer_functions.cpp
         kernels.cpp
     PUBLIC
-        FILE_SET HEADERS
+        FILE_SET jabber_headers TYPE HEADERS
         FILES
             acoustic_field.hpp
             transfer_functions.hpp
