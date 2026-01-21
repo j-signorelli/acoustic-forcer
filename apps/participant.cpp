@@ -4,23 +4,18 @@
 #include <cxxopts.hpp>
 
 #include <iostream>
-#include <cmath>
 
 using namespace jabber;
 using namespace jabber_app;
-
-// Helper type for the std::visit
-// (https://en.cppreference.com/w/cpp/utility/variant/visit)
-template<class... Ts>
-struct overloads : Ts... { using Ts::operator()...; };
 
 int main(int argc, char *argv[])
 {
    PrintBanner(std::cout);
 
    // Option parser:
-   cxxopts::Options options("jabber", 
-      "Planar acoustic wave forcer for flow simulations using preCICE.");
+   cxxopts::Options options("jabber_participant", 
+      "Planar acoustic wave forcing participant for flow simulations \
+                                                            using preCICE.");
    options.add_options()
       ("c,config", "Config file.", cxxopts::value<std::string>())
       ("h,help", "Print usage information.");
