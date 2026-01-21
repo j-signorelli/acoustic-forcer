@@ -67,7 +67,6 @@ void ConfigInput::PrintCompParams(std::ostream &out) const
 {
    out << "Computation" << std::endl;
    out << "\tt0:   " << OutReal(comp_.t0) << std::endl;
-   out << std::endl;
 }
 
 void ConfigInput::PrintPreciceParams(std::ostream &out) const

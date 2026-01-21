@@ -1,13 +1,13 @@
 [BaseFlow]
 rho=0.110790417259
 p=1991.193014318490
-U=958.090507772702
+U=[958.090507772702,0.0]
 gamma=1.4
 
 [Source]
 Type="SingleWave"
 Amplitude=1e-2
-Frequency=100.0
+Frequency=1200.0
 Angle=0.0
 Phase=0.0
 Speed="Slow"

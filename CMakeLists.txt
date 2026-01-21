@@ -7,10 +7,10 @@ add_library(compiler_flag_requirements INTERFACE)
 target_compile_features(compiler_flag_requirements INTERFACE cxx_std_20)
 
 # Main Jabber compiler options:
-option(JABBER_BUILD_PARTICIPANT "Build Jabber preCICE participant 
-                                                    (requires preCICE)." ON)
-option(JABBER_BUILD_VIZ "Build Jabber flowfield visualizer 
-                                                    (requires MFEM)." ON)
+option(JABBER_BUILD_PARTICIPANT 
+    "Build Jabber preCICE participant (requires preCICE)." ON)
+option(JABBER_BUILD_VIZ 
+    "Build Jabber flowfield visualizer (requires MFEM)." ON)
 option(JABBER_BUILD_PROFILER "Build Jabber compute profiler." ON)
 option(JABBER_BUILD_DOCS "Build Jabber documentation w/ Doxygen." OFF)
 option(JABBER_INSTALL_APP_LIB "Install the jabber_app library" OFF)
