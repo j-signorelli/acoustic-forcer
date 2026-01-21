@@ -12,6 +12,8 @@ namespace jabber_app
 /// Print Jabber banner.
 void PrintBanner(std::ostream &out);
 
+
+
 /**
  * @brief Initialize a \ref jabber::AcousticField object from user input and 
  * grid.
