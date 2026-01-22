@@ -8,18 +8,28 @@ target_compile_features(compiler_flag_requirements INTERFACE cxx_std_20)
 
 # Main Jabber compiler options:
 option(JABBER_BUILD_PARTICIPANT 
-    "Build Jabber preCICE participant (requires preCICE)." ON)
+   "Build Jabber preCICE participant (requires preCICE)." ON)
+
 option(JABBER_BUILD_VIZ 
-    "Build Jabber flowfield visualizer (requires MFEM)." ON)
-option(JABBER_BUILD_PROFILER "Build Jabber compute profiler." ON)
-option(JABBER_BUILD_DOCS "Build Jabber documentation w/ Doxygen." OFF)
-option(JABBER_INSTALL_APP_LIB "Install the jabber_app library" OFF)
+   "Build Jabber flowfield visualizer (requires MFEM)." ON)
+
+option(JABBER_BUILD_PROFILER 
+   "Build Jabber compute profiler." ON)
+
+option(JABBER_BUILD_DOCS 
+   "Build Jabber documentation w/ Doxygen." OFF)
+
+option(JABBER_INSTALL_APP_LIB 
+   "Install the jabber_app library" OFF)
+
+option(JABBER_BUILD_TESTS 
+   "Build unit tests" OFF)
 
 # If building any apps
 set(JABBER_BUILD_APP OFF)
 if (JABBER_BUILD_PARTICIPANT OR JABBER_BUILD_VIZ OR JABBER_BUILD_PROFILER
-    OR JABBER_INSTALL_APP_LIB)
-    set(JABBER_BUILD_APP ON)
+   OR JABBER_INSTALL_APP_LIB)
+   set(JABBER_BUILD_APP ON)
 endif()
 
 # Property of all targets to install
@@ -33,22 +43,26 @@ add_subdirectory(src)
 
 if (JABBER_BUILD_APP)
 
-    # Add external dependencies - required for apps
-    add_subdirectory(externals/cxxopts)
-    add_subdirectory(externals/toml11)
-    
-    # Add app subdirectory
-    add_subdirectory(apps)
+   # Add external dependencies - required for apps
+   add_subdirectory(externals/cxxopts)
+   add_subdirectory(externals/toml11)
+   
+   # Add app subdirectory
+   add_subdirectory(apps)
 
-    # Add jabber_app library to doc paths
-    list(APPEND DOC_PATHS ${CMAKE_SOURCE_DIR}/app/src)
-    
+   # Add jabber_app library to doc paths
+   list(APPEND DOC_PATHS ${CMAKE_SOURCE_DIR}/app/src)
+   
 endif()
 
 if (JABBER_BUILD_DOCS)
-    add_subdirectory(docs)
+   add_subdirectory(docs)
 endif()
 
+if (JABBER_BUILD_TESTS)
+   add_subdirectory(externals/Catch2)
+   add_subdirectory(tests)
+endif()
 
 message(STATUS "Install directory: ${CMAKE_INSTALL_PREFIX}")
 
@@ -58,8 +72,8 @@ get_property(JABBER_TARGETS GLOBAL PROPERTY JABBER_TARGETS_PROPERTY)
 # From: https://stackoverflow.com/questions/17511496/how-to-create-a-shared-library-with-cmake
 include(GNUInstallDirs)
 install(TARGETS ${JABBER_TARGETS}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    FILE_SET jabber_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jabber
-    FILE_SET jabber_app_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jabber_app)
+   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+   FILE_SET jabber_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jabber
+   FILE_SET jabber_app_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jabber_app)
