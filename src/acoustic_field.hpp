@@ -139,7 +139,7 @@ public:
     * @param U_bar      Base flow velocity vector, of size \p dim.
     * @param gamma      Base flow specific heat ratio, γ.
     */
-   AcousticField(int dim, const std::vector<double> coords,
+   AcousticField(int dim, std::span<const double> coords,
                   double p_bar, double rho_bar,
                   const std::vector<double> U_bar, double gamma);
 

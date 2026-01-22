@@ -7,7 +7,7 @@
 namespace jabber
 {
 
-AcousticField::AcousticField(int dim, const std::vector<double> coords,
+AcousticField::AcousticField(int dim, std::span<const double> coords,
                   double p_bar, double rho_bar,
                   const std::vector<double> U_bar, double gamma)
 : dim_(dim),
