@@ -1,4 +1,4 @@
-# Kernel Tests
+# Unit Tests
 ## Flowfield Equations:
 
 Density:
@@ -15,21 +15,34 @@ Energy:
 $$
 \rho E=\dfrac{\bar{p}}{\gamma-1} + \dfrac{1}{\gamma-1}\sum_{j=1}^Np'_je^{i(\vec{k}\cdot\vec{x}+ \phi_j - \omega_jt)} + \dfrac{1}{2}\rho||\vec{\bar{U}} + \dfrac{1}{\bar{\rho} \bar{c}}\sum_{j=1}^N(\pm1)\hat{k}_jp'_je^{i(\vec{k}_j\cdot\vec{x}+\phi_j-\omega_jt)}||^2
 $$
-## Single Wave
-### 1D
+## Single Wave, 1D
 Consider the following base flow:
 $$
-\bar{U}=1000,\\
-\bar{p}=2000,\\
-\bar{\rho}=0.1792,\\
+\bar{U}=1000,
+$$
+$$
+\bar{p}=2000,
+$$
+$$
+\bar{\rho}=0.1792,\text{and}
+$$
+$$
 \gamma=1.4,
 $$
-where it is then shown that $\bar{c}= \sqrt{\gamma\bar{p}/\bar{\rho}}=\sqrt{15625}=125$. Note that $\bar{M}=$ Consider a single wave:
+where it can be shown that $\bar{c}= \sqrt{\gamma\bar{p}/\bar{\rho}}=\sqrt{15625}=125$. Consider a single slow wave with the following properties:
 $$
-p'_1=10,\\
-f_1=1000,\ \omega_1=2000\pi,\\
-\hat{k}_1=1,\\
-k_1=\dfrac{\omega_1}{\bar{U}-\bar{c}}=\dfrac{2000\pi}{875}=\dfrac{16}{7}\pi,\\
+p'_1=10,
+$$
+$$
+f_1=1000,\ \omega_1=2000\pi,
+$$
+$$
+\hat{k}_1=1,
+$$
+$$
+k_1=\dfrac{\omega_1}{\bar{U}-\bar{c}}=\dfrac{2000\pi}{875}=\dfrac{16}{7}\pi, \text{and}
+$$
+$$
 \phi_1=\pi/3.
 $$
 The flow solution for this is exactly:
@@ -42,3 +55,8 @@ $$
 $$
 \rho E=\dfrac{2000}{1.4-1} + \dfrac{1}{1.4-1}10\cos\left(\frac{16\pi}{7} x + \frac{\pi}{3} - 2000\pi t\right) + \dfrac{1}{2}\rho u^2
 $$
+
+## Single Wave, 2D
+Consider now similar base flow
+
+## Single Wave, 3D
