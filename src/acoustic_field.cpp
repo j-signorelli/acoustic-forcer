@@ -35,9 +35,9 @@ void AcousticField::Finalize()
 {
    // Allocate non-time-varying constants
    amplitude_.resize(NumWaves());
-   mod_k_hat_.resize(Dim()*NumWaves());
-   k_dot_x_p_phi_.resize(NumWaves()*NumPoints(), 0.0);
    omega_.resize(NumWaves());
+   mod_k_hat_.resize(Dim()*NumWaves());
+   k_dot_x_p_phi_.resize(NumWaves()*NumPoints());
 
    // Note that performance of below was not carefully considered
    for (int w = 0; w < NumWaves(); w++)
@@ -86,22 +86,22 @@ void AcousticField::Compute(double t)
    if (Dim() == 1)
    {
       ComputeKernel<1>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
-                        NumWaves(), amplitude_.data(), mod_k_hat_.data(),
-                        omega_.data(), k_dot_x_p_phi_.data(), t, rho_.data(),
+                        NumWaves(), amplitude_.data(), omega_.data(),
+                        mod_k_hat_.data(), k_dot_x_p_phi_.data(), t, rho_.data(),
                         rhoV_.data(), rhoE_.data());
    }
    else if (Dim() == 2)
    {
       ComputeKernel<2>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
-                        NumWaves(), amplitude_.data(), mod_k_hat_.data(),
-                        omega_.data(), k_dot_x_p_phi_.data(), t, rho_.data(),
+                        NumWaves(), amplitude_.data(), omega_.data(),
+                        mod_k_hat_.data(), k_dot_x_p_phi_.data(), t, rho_.data(),
                         rhoV_.data(), rhoE_.data());
    }
    else
    {
       ComputeKernel<3>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
-                        NumWaves(), amplitude_.data(), mod_k_hat_.data(),
-                        omega_.data(), k_dot_x_p_phi_.data(), t, rho_.data(),
+                        NumWaves(), amplitude_.data(), omega_.data(),
+                        mod_k_hat_.data(), k_dot_x_p_phi_.data(), t, rho_.data(),
                         rhoV_.data(), rhoE_.data());
    }
 }

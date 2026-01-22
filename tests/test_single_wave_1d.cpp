@@ -21,10 +21,10 @@ namespace test
 static constexpr std::uint64_t ULP = 5;
 
 /// Number of points to initialize + test at
-static constexpr std::size_t NUM_PTS = 1;
+static constexpr std::size_t NUM_PTS = 10;
 
 /// Number of times to test at
-static constexpr std::size_t NUM_TIMES = 1;
+static constexpr std::size_t NUM_TIMES = 10;
 
 /// Seed for randomizer
 static constexpr int SEED = 0;
@@ -122,7 +122,7 @@ TEST_CASE("Single 1D wave computation via kernel", "[Kernels]")
 }
 
 TEST_CASE("Single 1D wave computation via AcousticField", 
-            "[AcousticField] [Wave]")
+            "[AcousticField]")
 {
    // Build AcousticField
    std::vector<double> U_bar_vec = {U_bar};

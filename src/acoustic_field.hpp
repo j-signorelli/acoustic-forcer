@@ -196,9 +196,7 @@ public:
     *       they are contiguous in memory.
     *    3. Allocates the flowfield solution memory \ref rho, \ref rhoV, 
     *       and \ref rhoE vectors.
-    * 
-    * It should be noted that the actual performance impact of these
-    * precautions has not been profiled.
+    *
     */
    void Finalize();
 

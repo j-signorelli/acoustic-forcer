@@ -32,7 +32,7 @@ TEST_CASE("AcousticField", "[AcousticField]")
 {
    SECTION("Initialization")
    {
-      AcousticField field(DIM, coords, 
+
    }
 }
 

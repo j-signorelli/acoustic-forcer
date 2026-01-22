@@ -24,18 +24,6 @@ std::array<double, Size> GenerateRandomArr(int seed, double s0, double s1)
    return dat;
 }
 
-constexpr double GenerateRandomNum(int seed, double s0=0.0, double s1=1.0)
-{
-   std::mt19937 gen(seed);
-
-   std::uniform_real_distribution<double> real_dist_x(s0, s1);
-   for (std::size_t i = 0; i < Size; i++)
-   {
-      dat[i] = real_dist_x(gen);
-   }
-   return dat;
-}
-
 } // namespace test
 
 #endif // JABBER_TEST_UTILS
