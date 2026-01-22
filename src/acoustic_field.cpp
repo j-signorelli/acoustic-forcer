@@ -86,7 +86,7 @@ void AcousticField::Compute(double t)
    if (Dim() == 1)
    {
       ComputeKernel<1>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
-                        NumWaves(), amplitude_.data(), k_hat_.data(),
+                        NumWaves(), amplitude_.data(), mod_k_hat_.data(),
                         omega_.data(), k_dot_x_p_phi_.data(), t, rho_.data(),
                         rhoV_.data(), rhoE_.data());
    }
