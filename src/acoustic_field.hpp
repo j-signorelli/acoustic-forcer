@@ -75,14 +75,16 @@ private:
    std::vector<double> amplitude_;
 
    /**
-    * @brief Array of all wave direction vectors assembled in \ref Finalize() 
-    * for contiguous memory storage.
+    * @brief Array of all **modified** (speed-encoded) wave direction vectors 
+    * assembled in \ref Finalize() for contiguous memory storage. For fast 
+    * acoustic waves, this holds just the wave direction vector. For slow
+    * acoustic waves, this holds the inverted/negated wave direction vector.
     * 
     * @details Pre-assembling this before calls to \ref Compute() is required.
     * Size is \ref Dim() * \ref NumWaves(). This is a flattened array ordered
     * as [dim][wave].
     */
-   std::vector<double> k_hat_;
+   std::vector<double> mod_k_hat_;
 
    /**
     * @brief k·x+φ term computed in \ref Finalize() once for each wave and
@@ -188,8 +190,8 @@ public:
     * 
     * @details This function:
     *    1. Evaluates factors that are constant in time to reduce inner-loop
-    *       FLOPS in \ref Compute() (In particular, \ref k_dot_x_p_phi_ 
-    *       and \ref omega_).
+    *       FLOPS in \ref Compute() (In particular, \ref k_dot_x_p_phi_, 
+    *       \ref omega_, and \ref mod_k_hat_).
     *    2. Assembles pressure wave amplitudes in \ref amplitude_ such that
     *       they are contiguous in memory.
     *    3. Allocates the flowfield solution memory \ref rho, \ref rhoV, 

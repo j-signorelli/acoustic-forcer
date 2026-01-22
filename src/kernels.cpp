@@ -10,7 +10,7 @@ void ComputeKernel(const std::size_t num_pts, const double rho_bar,
                      const double p_bar, const double *U_bar, 
                      const double gamma, const int num_waves, 
                      const double *wave_amps, const double *wave_omegas,
-                     const double *wave_dirs,
+                     const double *mod_wave_dirs,
                      const double *__restrict__ k_dot_x_p_phi,
                      const double t,
                      double *__restrict__ rho,
@@ -51,14 +51,14 @@ void ComputeKernel(const std::size_t num_pts, const double rho_bar,
 
          rho[i] += rho_fac*cos_w;
 
-         rhoV[i] += rhoV_fac*cos_w*wave_dirs[w];
+         rhoV[i] += rhoV_fac*cos_w*mod_wave_dirs[w];
          if constexpr(TDim > 1)
          {
-            rhoV[num_pts + i] += rhoV_fac*cos_w*wave_dirs[num_waves + w];
+            rhoV[num_pts + i] += rhoV_fac*cos_w*mod_wave_dirs[num_waves + w];
          }
          if constexpr(TDim > 2)
          {
-            rhoV[2*num_pts + i] += rhoV_fac*cos_w*wave_dirs[2*num_waves + w];
+            rhoV[2*num_pts + i] += rhoV_fac*cos_w*mod_wave_dirs[2*num_waves + w];
          }
          rhoE[i] += rhoE_fac*cos_w;
 

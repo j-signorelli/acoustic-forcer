@@ -11,8 +11,8 @@ namespace jabber
    * 
    * 
    * @details This function was designed following Intel guidelines for 
-   * vectorizing code - notably that the innermost loop is the vectorized
-   * one. As such, this function is templated with \p TDim for "loop unrolling"
+   * autovectorizable code.  Because only inner-most loops are candidates for
+   * vectorization, this function is templated with \p TDim for "loop unrolling"
    * on the momentum terms. Vectorization is across \p num_pts as that is
    * expected to be the largest value, so data dimensioned by it must be
    * stored in an SoA-format for contiguous memory accesses across hardware
@@ -41,11 +41,16 @@ namespace jabber
    * @param wave_amps        Acoustic wave amplitudes, sized \p num_waves.
    * @param wave_omegas      Acoustic wave angular frequencies, sized 
    *                         \p num_waves.
-   * @param wave_dirs        Acoustic wave normalized direction vectors
-   *                         (k_hat), dimensioned as \p TDim x \p num_waves.
-   * @param k_dot_x_p_phi    k·x+φ term computed for all waves at all points,
-   *                         dimensioned as \p num_waves x \p num_pts but
-   *                         flattened.
+   * @param mod_wave_dirs    **Modified** acoustic wave normalized direction
+   *                         vectors -- For fast acoustic waves, this is simply
+   *                         just the normalized wave direction vector, 
+   *                         $\hat{k}$. For slow acoustic waves, this is the
+   *                         **inverted** normalized wave direction vector,
+   *                         $-\hat{k}$. This is dimensioned as \p TDim x 
+   *                         \p num_waves but flattened.
+   * @param k_dot_x_p_phi    $\vec{k}\cdot x+\phi$ term computed for all waves
+   *                         at all points, dimensioned as \p num_waves x 
+   *                          \p num_pts but flattened.
    * @param t                Time.
    * @param rho              Output flow density to compute, sized \p num_pts.
    * @param rhoV             Output flow momentum vector to compute,
@@ -58,7 +63,7 @@ void ComputeKernel(const std::size_t num_pts, const double rho_bar,
                         const double gamma, const int num_waves, 
                         const double *wave_amps, 
                         const double *wave_omegas,
-                        const double *wave_dirs,
+                        const double *mod_wave_dirs,
                         const double *__restrict__ k_dot_x_p_phi,
                         const double t,
                         double *__restrict__ rho,
