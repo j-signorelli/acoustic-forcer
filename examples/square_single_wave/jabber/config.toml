@@ -7,7 +7,7 @@ gamma=1.4
 [Source]
 Type="SingleWave"
 Amplitude=10.0
-Frequency=800.0
+Frequency=1200.0
 Angle=30.0
 Phase=0.0
 Speed="Slow"
