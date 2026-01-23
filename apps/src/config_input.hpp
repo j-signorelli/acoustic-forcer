@@ -42,7 +42,7 @@ protected:
    BaseFlowParams base_flow_;
 
    /// Input source parameters.
-   SourceParamsVariant source_;
+   std::vector<SourceParamsVariant> sources_;
 
    /// Input computation parameters.
    CompParams comp_;
@@ -59,10 +59,10 @@ public:
    const BaseFlowParams& BaseFlow() const { return base_flow_; }
 
    /// Get reference to source parameters.
-   SourceParamsVariant& Source() { return source_; }
+   std::vector<SourceParamsVariant>& Sources() { return sources_; }
 
    /// Get const reference to source parameters.
-   const SourceParamsVariant& Source() const { return source_; }
+   const std::vector<SourceParamsVariant>& Sources() const { return sources_; }
 
    /// Get reference to computation parameters.
    CompParams& Comp() { return comp_; }

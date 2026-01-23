@@ -35,7 +35,7 @@ AcousticField InitializeAcousticField(const ConfigInput &conf,
 {
    // Get relevant input metadata
    const BaseFlowParams &base_conf = conf.BaseFlow();
-   const SourceParamsVariant &source_conf = conf.Source();
+   const std::vector<SourceParamsVariant> &sources_conf = conf.Sources();
 
    // Initialize acoustic field
    AcousticField field(dim, coords, base_conf.p, base_conf.rho,
@@ -44,37 +44,42 @@ AcousticField InitializeAcousticField(const ConfigInput &conf,
       // Assemble vector of wave structs based on input source
    std::vector<Wave> all_waves;
 
-   std::visit(
-   overloads
+   for (const SourceParamsVariant &source : sources_conf)
    {
-   [&](const SourceParams<SourceOption::SingleWave> &params_wave)
-   {
-      bool slow = (params_wave.speed == SpeedOption::Slow ? true : false);
-      std::vector<double> k_hat(dim, 0.0);
-      k_hat[0] = std::cos(params_wave.angle);
-      if (dim > 1)
+      std::visit(
+      overloads
       {
-         k_hat[1] = std::sin(params_wave.angle);
-      }
-      all_waves.emplace_back(params_wave.amp, params_wave.freq, 
-                            params_wave.phase*M_PI/180.0, slow, k_hat);
-   },
-   [&](const SourceParams<SourceOption::WaveSpectrum> &params_waves)
-   {
-      for (int i = 0; i < params_waves.amps.size(); i++)
+      [&](const SourceParams<SourceOption::SingleWave> &params_wave)
       {
-         bool slow = (params_waves.speeds[i] == SpeedOption::Slow ? true : false);
+         bool slow = (params_wave.speed == SpeedOption::Slow ? true : false);
          std::vector<double> k_hat(dim, 0.0);
-         k_hat[0] = std::cos(params_waves.angles[i]);
+         k_hat[0] = std::cos(params_wave.angle);
          if (dim > 1)
          {
-            k_hat[1] = std::sin(params_waves.angles[i]);
+            k_hat[1] = std::sin(params_wave.angle);
          }
-         all_waves.emplace_back(params_waves.amps[i], params_waves.freqs[i],
-                              params_waves.phases[i]*M_PI/180.0, slow, k_hat);
+         all_waves.emplace_back(params_wave.amp, params_wave.freq, 
+                              params_wave.phase*M_PI/180.0, slow, k_hat);
+      },
+      [&](const SourceParams<SourceOption::WaveSpectrum> &params_waves)
+      {
+         for (int i = 0; i < params_waves.amps.size(); i++)
+         {
+            bool slow = (params_waves.speeds[i] == 
+                                          SpeedOption::Slow ? true : false);
+            std::vector<double> k_hat(dim, 0.0);
+            k_hat[0] = std::cos(params_waves.angles[i]);
+            if (dim > 1)
+            {
+               k_hat[1] = std::sin(params_waves.angles[i]);
+            }
+            all_waves.emplace_back(params_waves.amps[i], params_waves.freqs[i],
+                                    params_waves.phases[i]*M_PI/180.0, 
+                                    slow, k_hat);
+         }
       }
+      }, source);
    }
-   }, source_conf);
 
    // Apply transfer function
    // TODO
