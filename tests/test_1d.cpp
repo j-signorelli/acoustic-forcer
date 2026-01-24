@@ -2,12 +2,19 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
+
 #include <jabber.hpp>
+#ifdef JABBER_WITH_APP
+#include <jabber_app.hpp>
+#endif // JABBER_WITH_APP
 
 #include <cmath>
 
 using namespace jabber;
 using namespace Catch::Matchers;
+#ifdef JABBER_WITH_APP
+using namespace jabber_app;
+#endif // JABBER_WITH_APP
 
 namespace test
 {
@@ -150,5 +157,46 @@ TEST_CASE("Single 1D wave computation via AcousticField",
    }
 
 }
+
+#ifdef JABBER_WITH_APP
+
+TEST_CASE("Single 1D wave computation via app library", "[Config] [App]")
+{
+   ConfigInput config;
+
+   // Set base flow in config
+   BaseFlowParams &base_flow = config.BaseFlow();
+   base_flow.rho = rho_bar;
+   base_flow.p = p_bar;
+   base_flow.U = std::vector<double>(1, U_bar);
+   base_flow.gamma = gamma;
+
+   // Set source in config
+   SourceParams<SourceOption::SingleWave> wave;
+   wave.amp = p_amp;
+   wave.angle = 0.0;
+   wave.freq = freq;
+   wave.phase = phase;
+   wave.speed = SpeedOption::Slow;
+
+   // Add wave to Config sources
+   config.Sources().push_back(wave);
+
+   // Initialize AcousticField
+   AcousticField field = InitializeAcousticField(config, coords, 1);
+
+   // Evaluate field
+   for (const double &time : times)
+   {
+      // Compute
+      field.Compute(time);
+
+      // Check solutions
+      CheckSolution(coords, field.Density(), field.Momentum(),
+                     field.Energy(), time);
+   }
+}
+
+#endif // JABBER_WITH_APP
 
 } // test
