@@ -76,6 +76,22 @@ public:
    }
 };
 
+static void CheckSolution(std::span<const double> x, 
+                              std::span<const double> rho,
+                              std::span<const double> rhoU, 
+                              std::span<const double> rhoE,
+                              double t)
+{
+   // Check solutions
+   for (std::size_t i = 0; i < x.size(); i++)
+   {
+      CAPTURE(x[i], t);
+      CHECK_THAT(rho[i], WithinULP(SingleWave1DSolution::Rho(x[i], t), ULP));
+      CHECK_THAT(rhoU[i], WithinULP(SingleWave1DSolution::RhoU(x[i], t), ULP));
+      CHECK_THAT(rhoE[i], WithinULP(SingleWave1DSolution::RhoE(x[i],t), ULP));
+   }
+}
+
 TEST_CASE("Single 1D wave computation via kernel", "[Kernels]")
 {
    // Initialize kernel variables
@@ -91,7 +107,7 @@ TEST_CASE("Single 1D wave computation via kernel", "[Kernels]")
    }
 
    std::array<double, NUM_PTS> rho;
-   std::array<double, NUM_PTS> rhoV;
+   std::array<double, NUM_PTS> rhoU;
    std::array<double, NUM_PTS> rhoE;
 
 
@@ -102,22 +118,10 @@ TEST_CASE("Single 1D wave computation via kernel", "[Kernels]")
       ComputeKernel<1>(NUM_PTS, rho_bar, p_bar, &U_bar, gamma, 1,
                         &p_amp, &omega, &mod_wave_dir, 
                         k_dot_phi_p_phi.data(), time, rho.data(), 
-                        rhoV.data(), rhoE.data());
+                        rhoU.data(), rhoE.data());
 
       // Check solutions
-      for (std::size_t i = 0; i < NUM_PTS; i++)
-      {
-         CAPTURE(coords[i], time);
-         CHECK_THAT(rho[i], 
-                  WithinULP(SingleWave1DSolution::Rho(coords[i],
-                              time), ULP));
-         CHECK_THAT(rhoV[i], 
-                  WithinULP(SingleWave1DSolution::RhoU(coords[i], 
-                              time), ULP));
-         CHECK_THAT(rhoE[i], 
-                  WithinULP(SingleWave1DSolution::RhoE(coords[i],
-                              time), ULP));
-      }
+      CheckSolution(coords, rho, rhoU, rhoE, time);
    }
 }
 
@@ -141,19 +145,8 @@ TEST_CASE("Single 1D wave computation via AcousticField",
       field.Compute(time);
 
       // Check solutions
-      for (std::size_t i = 0; i < NUM_PTS; i++)
-      {
-         CAPTURE(coords[i], time);
-         CHECK_THAT(field.Density()[i], 
-                  WithinULP(SingleWave1DSolution::Rho(coords[i],
-                              time), ULP));
-         CHECK_THAT(field.Momentum()[i], 
-                  WithinULP(SingleWave1DSolution::RhoU(coords[i], 
-                              time), ULP));
-         CHECK_THAT(field.Energy()[i], 
-                  WithinULP(SingleWave1DSolution::RhoE(coords[i],
-                              time), ULP));
-      }
+      CheckSolution(coords, field.Density(), field.Momentum(),
+                     field.Energy(), time);
    }
 
 }
