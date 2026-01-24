@@ -95,8 +95,8 @@ struct SourceParams<SourceOption::SingleWave>
    /// Phase, in deg.
    double phase;
 
-   /// Planar wave angle, w.r.t. x-axis in xy-plane.
-   double angle;
+   /// Planar wave directional vector, can be non-normalized.
+   std::vector<double> direction;
 
    /// Wave speed.
    SpeedOption speed;
@@ -115,8 +115,8 @@ struct SourceParams<SourceOption::WaveSpectrum>
    /// Phases, in deg.
    std::vector<double> phases;
 
-   /// Planar wave angles w.r.t. x-axis in xy-plane.
-   std::vector<double> angles;
+   /// Planar wave directional vector, can be non-normalized.
+   std::vector<std::vector<double>> directions;
 
    /// Wave speeds.
    std::vector<SpeedOption> speeds;

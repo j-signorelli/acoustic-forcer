@@ -16,10 +16,11 @@ namespace jabber_app
 void ConfigInput::PrintBaseFlowParams(std::ostream &out) const
 {
    out << "Base Flow" << std::endl;
-   out << "\trho:   " << OutReal(base_flow_.rho) << std::endl;
-   out << "\tp:     " << OutReal(base_flow_.p) << std::endl;
-   out << "\tU:     " << OutRealVec(base_flow_.U) << std::endl;
-   out << "\tgamma: " << OutReal(base_flow_.gamma) << std::endl;
+   constexpr int label_width = 7;
+   out << WriteParam("rho", OutReal(base_flow_.rho), label_width);
+   out << WriteParam("p", OutReal(base_flow_.p), label_width);
+   out << WriteParam("U", OutRealVec(base_flow_.U), label_width);
+   out << WriteParam("gamma", OutReal(base_flow_.gamma), label_width);
    out << std::endl;
 }
 
@@ -35,33 +36,66 @@ void ConfigInput::PrintSourceParams(std::ostream &out) const
       {
       [&out](const SourceParams<SourceOption::SingleWave> &wave)
       {
-         std::size_t name_i = static_cast<std::size_t>(SourceOption::SingleWave);
+         std::size_t name_i 
+                        = static_cast<std::size_t>(SourceOption::SingleWave);
          std::size_t speed_i = static_cast<std::size_t>(wave.speed);
 
-         out << "\tType:      " << SourceNames[name_i] << std::endl;
-         out << "\tAmplitude: " << OutReal(wave.amp) << std::endl;
-         out << "\tFrequency: " << OutReal(wave.freq) << std::endl;
-         out << "\tAngle:     " << OutReal(wave.angle) << std::endl;
-         out << "\tPhase:     " << OutReal(wave.phase) << std::endl;
-         out << "\tSpeed:     " << SpeedNames[speed_i] << std::endl;
+         constexpr int label_width = 11;
+
+         out << WriteParam("Type", SourceNames[name_i], label_width);
+         out << WriteParam("Amplitude", OutReal(wave.amp), label_width);
+         out << WriteParam("Frequency", OutReal(wave.freq), label_width);
+         out << WriteParam("Direction", OutRealVec(wave.direction), 
+                                                            label_width);
+         out << WriteParam("Phase", OutReal(wave.phase), label_width);
+         out << WriteParam("Speed", SpeedNames[speed_i], label_width);
          out << std::endl;
       },
       [&out](const SourceParams<SourceOption::WaveSpectrum> &waves)
       {
-         std::size_t name_i = static_cast<std::size_t>(SourceOption::WaveSpectrum);
+         std::size_t name_i = 
+                        static_cast<std::size_t>(SourceOption::WaveSpectrum);
+         
+         constexpr int label_width = 13;
 
-         out << "\tType:        " << SourceNames[name_i] << std::endl;
-         out << "\tAmplitudes:  " << OutRealVec(waves.amps) << std::endl;
-         out << "\tFrequencies: " << OutRealVec(waves.freqs) << std::endl;
-         out << "\tAngles:      " << OutRealVec(waves.angles) << std::endl;
-         out << "\tPhases:      " << OutRealVec(waves.phases) << std::endl;
-         out << "\tSpeeds:      [";
+         // Assemble data such that each wave is on newline
+         std::string amplitudes_str = OutRealVec(waves.amps, 
+                                             std::format(",\n\t{:<{}}", 
+                                                         "", 
+                                                         label_width+3));
+
+         std::string freqs_str = OutRealVec(waves.freqs, 
+                                             std::format(",\n\t{:<{}}", 
+                                                         "", 
+                                                         label_width+3));
+
+         std::string phases_str = OutRealVec(waves.phases, 
+                                             std::format(",\n\t{:<{}}", 
+                                                         "", 
+                                                         label_width+3));
+
+         std::string dirs_str = "[";
+         for (int i = 0; i < waves.directions.size(); i++)
+         {
+            dirs_str += OutRealVec(waves.directions[i]) + 
+                        (i+1 == waves.directions.size() ? "]" :
+                           std::format("\n\t{:<{}}", "", label_width+3));
+
+         }
+         std::string speeds_str = "[";
          for (int i = 0; i < waves.speeds.size(); i++)
          {
             std::size_t speed_i = static_cast<std::size_t>(waves.speeds[i]);
-            out << SpeedNames[speed_i] 
-                  << ((i+1 == waves.speeds.size()) ? "]\n" : ", ");
+            speeds_str += std::string(SpeedNames[speed_i]) + 
+                           ((i+1 == waves.speeds.size()) ? "]\n" :
+                              std::format(",\n\t{:<{}}", "", label_width+3));
          }
+         out << WriteParam("Type", SourceNames[name_i], label_width);
+         out << WriteParam("Amplitudes", amplitudes_str, label_width);
+         out << WriteParam("Frequencies", freqs_str, label_width);
+         out << WriteParam("Directions", dirs_str, label_width);
+         out << WriteParam("Phases", phases_str, label_width);
+         out << WriteParam("Speeds", speeds_str, label_width);
          out << std::endl;
       }
       }, source);
@@ -71,7 +105,7 @@ void ConfigInput::PrintSourceParams(std::ostream &out) const
 void ConfigInput::PrintCompParams(std::ostream &out) const
 {
    out << "Computation" << std::endl;
-   out << "\tt0:   " << OutReal(comp_.t0) << std::endl;
+   out << WriteParam("t0", OutReal(comp_.t0), 3);
    out << std::endl;
 }
 
@@ -79,19 +113,17 @@ void ConfigInput::PrintPreciceParams(std::ostream &out) const
 {
    if (precice_.has_value())
    {
+      constexpr int label_width = 20;
       out << "preCICE" << std::endl;
-      out << "\tParticipant Name:   " << precice_->participant_name 
-                                             << std::endl;
-      out << "\tConfiguration File: " << precice_->config_file << std::endl;
-      out << "\tFluid Mesh Name:    " << precice_->fluid_mesh_name 
-                                             << std::endl;
-      out << "\tMesh Access Region: {";
-      for (int i = 0; i < precice_->mesh_access_region.size(); i+=2)
-      {
-         out << "[" << precice_->mesh_access_region[i] << ","
-                  << precice_->mesh_access_region[i+1] << "]";
-         out << ((i+2 < precice_->mesh_access_region.size()) ? "," : "}\n");
-      }
+      out << WriteParam("Participant Name", precice_->participant_name, 
+                        label_width);
+      out << WriteParam("Configuration File", precice_->config_file,
+                        label_width);
+      out << WriteParam("Fluid Mesh Name", precice_->fluid_mesh_name, 
+                        label_width);
+      out << WriteParam("Mesh Access Region", 
+                        OutRealVec(precice_->mesh_access_region),
+                        label_width);
       out << std::endl;
    }
 }
@@ -129,7 +161,8 @@ TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
 
             meta.amp = in_source.at("Amplitude").as_floating();
             meta.freq = in_source.at("Frequency").as_floating();
-            meta.angle = in_source.at("Angle").as_floating();
+            meta.direction = toml::get<std::vector<double>>(
+                                             in_source.at("Direction"));
             meta.phase = in_source.at("Phase").as_floating();
             std::string speed_type =  in_source.at("Speed").as_string();
 
@@ -150,8 +183,8 @@ TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
                                                 in_source.at("Amplitudes"));
             meta.freqs = toml::get<std::vector<double>>(
                                                 in_source.at("Frequencies"));
-            meta.angles = toml::get<std::vector<double>>(
-                                                in_source.at("Angles"));
+            meta.directions = toml::get<std::vector<std::vector<double>>>(
+                                                in_source.at("Directions"));
             meta.phases = toml::get<std::vector<double>>(
                                                    in_source.at("Phases"));
             std::vector<std::string> speed_string_vec = 
@@ -196,11 +229,12 @@ TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
    {
       precice_ = PreciceParams();
       toml::value in_precice = file.at("preCICE");
-      precice_->participant_name = in_precice.at("ParticipantName").as_string();
+      precice_->participant_name = in_precice.at("ParticipantName")
+                                             .as_string();
       precice_->config_file = in_precice.at("ConfigFile").as_string();
       precice_->fluid_mesh_name = in_precice.at("FluidMeshName").as_string();
-      precice_->mesh_access_region = toml::get<std::vector<double>>(
-                                             in_precice.at("MeshAccessRegion"));
+      precice_->mesh_access_region = 
+            toml::get<std::vector<double>>(in_precice.at("MeshAccessRegion"));
       if (out)
       {
          PrintPreciceParams(*out);

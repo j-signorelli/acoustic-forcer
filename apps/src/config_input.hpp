@@ -24,16 +24,26 @@ private:
    }
 
    /// Get string of double vector \p vec with precision \ref kPrecision.
-   static std::string OutRealVec(const std::vector<double> &vec)
+   static std::string OutRealVec(const std::vector<double> &vec, 
+                                    const std::string_view delim=", ")
    {
       std::stringstream ss;
       ss << "[";
       for (int i = 0; i < vec.size(); i++)
       {
          ss << OutReal(vec[i]) 
-               << ((i+1 == vec.size()) ? "]" : ", ");
+               << ((i+1 == vec.size()) ? "]" : delim);
       }
       return ss.str();
+   }
+
+   /// Get a string for writing parameters.
+   static std::string WriteParam(const std::string_view param_name, 
+                                    const std::string_view value,
+                                    int param_width, int left_margin=8)
+   {
+      return std::format("{:<{}}{:<{}}= {}\n", "", left_margin, param_name,
+                                                   param_width, value);
    }
 
 protected:
