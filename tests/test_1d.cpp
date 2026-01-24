@@ -107,10 +107,10 @@ TEST_CASE("Single 1D wave computation via kernel", "[Kernels]")
    const double c_bar = std::sqrt(gamma*p_bar/rho_bar);
    const double k = omega/(U_bar - c_bar);
    
-   std::array<double, NUM_PTS> k_dot_phi_p_phi;
+   std::array<double, NUM_PTS> k_dot_x_p_phi;
    for (std::size_t i = 0; i < NUM_PTS; i++)
    {
-      k_dot_phi_p_phi[i] = k*coords[i] + phase;
+      k_dot_x_p_phi[i] = k*coords[i] + phase;
    }
 
    std::array<double, NUM_PTS> rho;
@@ -124,7 +124,7 @@ TEST_CASE("Single 1D wave computation via kernel", "[Kernels]")
       // Compute
       ComputeKernel<1>(NUM_PTS, rho_bar, p_bar, &U_bar, gamma, 1,
                         &p_amp, &omega, &mod_wave_dir, 
-                        k_dot_phi_p_phi.data(), time, rho.data(), 
+                        k_dot_x_p_phi.data(), time, rho.data(), 
                         rhoU.data(), rhoE.data());
 
       // Check solutions
@@ -174,9 +174,9 @@ TEST_CASE("Single 1D wave computation via app library", "[Config] [App]")
    // Set source in config
    SourceParams<SourceOption::SingleWave> wave;
    wave.amp = p_amp;
-   wave.angle = 0.0;
+   wave.direction.resize(1, 1.0);
    wave.freq = freq;
-   wave.phase = phase;
+   wave.phase = phase*180.0/M_PI; // in degrees!
    wave.speed = SpeedOption::Slow;
 
    // Add wave to Config sources
