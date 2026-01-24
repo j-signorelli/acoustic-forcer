@@ -16,7 +16,7 @@ struct Wave
    /// Wave frequency, f.
    double frequency;
 
-   /// Wave phase, φ.
+   /// Wave phase, φ, in radians.
    double phase;
 
    /// Wave speed flag. "true" if slow, "false" if fast.

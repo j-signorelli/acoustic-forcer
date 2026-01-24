@@ -37,7 +37,10 @@ private:
       return ss.str();
    }
 
-   /// Get a string for writing parameters.
+   /**
+    * @brief Convenient string generator for writing parameter information to 
+    * console.
+    */
    static std::string WriteParam(const std::string_view param_name, 
                                     const std::string_view value,
                                     int param_width, int left_margin=8)
