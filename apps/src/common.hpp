@@ -15,6 +15,9 @@ constexpr static std::string_view LINE =
 /// Print Jabber banner.
 void PrintBanner(std::ostream &out);
 
+/// Normalize the provided vector.
+void Normalize(const std::vector<double> &vec, std::vector<double> &norm_vec);
+
 /**
  * @brief Initialize a \ref jabber::AcousticField object from user input and 
  * grid.
@@ -25,7 +28,7 @@ void PrintBanner(std::ostream &out);
  * @return jabber::AcousticField    Finalized acoustic field.
  */
 jabber::AcousticField InitializeAcousticField(const ConfigInput &conf, 
-                                             const std::vector<double> &coords,
+                                             std::span<const double> coords,
                                              int dim);
 
 } // namespace jabber_app

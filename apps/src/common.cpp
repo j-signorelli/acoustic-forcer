@@ -29,8 +29,26 @@ void PrintBanner(std::ostream &out)
 
    out << banner << std::endl << std::endl;
 }
+
+void Normalize(const std::vector<double> &vec, std::vector<double> &norm_vec)
+{
+   double sum_sq = 0.0;
+   for (std::size_t i = 0; i < vec.size(); i++)
+   {
+      const double val = vec[i];
+      sum_sq += val*val;
+   }
+
+   const double mag = std::sqrt(sum_sq);
+   norm_vec.resize(vec.size());
+   for (std::size_t i = 0; i < vec.size(); i++)
+   {
+      norm_vec[i] = vec[i]/mag;
+   }
+}
+
 AcousticField InitializeAcousticField(const ConfigInput &conf, 
-                                       const std::vector<double> &coords,
+                                       std::span<const double> coords,
                                        int dim)
 {
    // Get relevant input metadata
@@ -53,11 +71,7 @@ AcousticField InitializeAcousticField(const ConfigInput &conf,
       {
          bool slow = (params_wave.speed == SpeedOption::Slow ? true : false);
          std::vector<double> k_hat(dim, 0.0);
-         k_hat[0] = std::cos(params_wave.angle);
-         if (dim > 1)
-         {
-            k_hat[1] = std::sin(params_wave.angle);
-         }
+         Normalize(params_wave.direction, k_hat);
          all_waves.emplace_back(params_wave.amp, params_wave.freq, 
                               params_wave.phase*M_PI/180.0, slow, k_hat);
       },
@@ -68,11 +82,7 @@ AcousticField InitializeAcousticField(const ConfigInput &conf,
             bool slow = (params_waves.speeds[i] == 
                                           SpeedOption::Slow ? true : false);
             std::vector<double> k_hat(dim, 0.0);
-            k_hat[0] = std::cos(params_waves.angles[i]);
-            if (dim > 1)
-            {
-               k_hat[1] = std::sin(params_waves.angles[i]);
-            }
+            Normalize(params_waves.directions[i], k_hat);
             all_waves.emplace_back(params_waves.amps[i], params_waves.freqs[i],
                                     params_waves.phases[i]*M_PI/180.0, 
                                     slow, k_hat);
