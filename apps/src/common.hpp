@@ -15,8 +15,8 @@ constexpr static std::string_view LINE =
 /// Print Jabber banner.
 void PrintBanner(std::ostream &out);
 
-/// Normalize the provided vector.
-void Normalize(const std::vector<double> &vec, std::vector<double> &norm_vec);
+/// Normalize the provided vector data
+void Normalize(std::span<const double> vec, std::span<double> norm_vec);
 
 /**
  * @brief Initialize a \ref jabber::AcousticField object from user input and 

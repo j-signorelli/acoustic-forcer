@@ -30,7 +30,7 @@ void PrintBanner(std::ostream &out)
    out << banner << std::endl << std::endl;
 }
 
-void Normalize(const std::vector<double> &vec, std::vector<double> &norm_vec)
+void Normalize(std::span<const double> vec, std::span<double> norm_vec)
 {
    double sum_sq = 0.0;
    for (std::size_t i = 0; i < vec.size(); i++)
@@ -40,7 +40,6 @@ void Normalize(const std::vector<double> &vec, std::vector<double> &norm_vec)
    }
 
    const double mag = std::sqrt(sum_sq);
-   norm_vec.resize(vec.size());
    for (std::size_t i = 0; i < vec.size(); i++)
    {
       norm_vec[i] = vec[i]/mag;
