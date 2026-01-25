@@ -1,0 +1,4 @@
+#ifdef JABBER_WITH_APP
+
+
+#endif // JABBER_WITH_APP

@@ -3,7 +3,7 @@
 
 #include <random>
 
-namespace test
+namespace jabber_test
 {
 
 /**
@@ -24,6 +24,6 @@ std::array<double, Size> GenerateRandomArr(int seed, double s0, double s1)
    return dat;
 }
 
-} // namespace test
+} // namespace jabber_test
 
 #endif // JABBER_TEST_UTILS

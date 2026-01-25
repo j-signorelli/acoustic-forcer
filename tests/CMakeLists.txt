@@ -1,5 +1,9 @@
 add_executable(unit-tests
-                        test_1d.cpp)
+                        test_1d.cpp
+                        test_2d.cpp
+                        test_3d.cpp
+                        test_app_common.cpp
+                        test_app_config_input.cpp)
 
 set(dependencies Catch2::Catch2WithMain libjabber)
 if(JABBER_BUILD_APP)

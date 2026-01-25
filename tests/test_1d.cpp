@@ -16,7 +16,7 @@ using namespace Catch::Matchers;
 using namespace jabber_app;
 #endif // JABBER_WITH_APP
 
-namespace test
+namespace jabber_test
 {
 /**
  * @details **Important:** tests values must fall within
@@ -160,7 +160,7 @@ TEST_CASE("Single 1D wave computation via AcousticField",
 
 #ifdef JABBER_WITH_APP
 
-TEST_CASE("Single 1D wave computation via app library", "[Config] [App]")
+TEST_CASE("Single 1D wave computation via app library", "[App]")
 {
    ConfigInput config;
 
@@ -199,4 +199,4 @@ TEST_CASE("Single 1D wave computation via app library", "[Config] [App]")
 
 #endif // JABBER_WITH_APP
 
-} // test
+} // jabber_test
