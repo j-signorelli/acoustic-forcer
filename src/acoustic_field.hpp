@@ -186,7 +186,7 @@ public:
 
    /**
     * @brief Finalize the acoustic field, to be called after specifying all
-    * waves before \ref Compute().
+    * waves, before \ref Compute().
     * 
     * @details This function:
     *    1. Evaluates factors that are constant in time to reduce inner-loop
@@ -200,7 +200,13 @@ public:
     */
    void Finalize();
 
-   /// Compute the perturbed flowfield at time \p t.
+   /**
+    * @brief Compute the perturbed flowfield at time \p t, **after** calling
+    * adding all wave data and calling \ref Finalize()
+    * 
+    * @warning \ref Finalize() must be called once prior to calls to this,
+    * after adding all wave data.
+    */
    void Compute(double t);
    
    /**
@@ -270,7 +276,6 @@ public:
     * @warning This should only be called after \ref Compute().
     */
    std::span<const double> Energy() const { return rhoE_; }
-
 
 };
 
