@@ -165,44 +165,45 @@ TEST_CASE("Flowfield computation via kernel", "[Compute] [Kernels]")
 {
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
-
-   const double c_bar = std::sqrt(gamma*p_bar/rho_bar);
-
-   std::vector<double> k_dot_x_p_phi(NUM_PTS*kNumWaves);
-   std::vector<double> omega(kNumWaves);
-   std::vector<double> mod_wave_dir(kNumWaves);
-
-   // Initialize kernel variables
-   for (int w = 0; w < kNumWaves; w++)
+   DYNAMIC_SECTION("Number of waves: " << kNumWaves)
    {
-      omega[w] = 2*M_PI*freqs[w];
-      mod_wave_dir[w] = (speeds[w] ? -1.0 : 1.0);
+      const double c_bar = std::sqrt(gamma*p_bar/rho_bar);
 
-      const double k = speeds[w] ? omega[w]/(U_bar - c_bar) 
-                                 : omega[w]/(U_bar + c_bar);
-      
-      for (std::size_t i = 0; i < NUM_PTS; i++)
+      std::vector<double> k_dot_x_p_phi(NUM_PTS*kNumWaves);
+      std::vector<double> omega(kNumWaves);
+      std::vector<double> mod_wave_dir(kNumWaves);
+
+      // Initialize kernel variables
+      for (int w = 0; w < kNumWaves; w++)
       {
-         k_dot_x_p_phi[w*NUM_PTS + i] = k*coords[i] + phases[w];
+         omega[w] = 2*M_PI*freqs[w];
+         mod_wave_dir[w] = (speeds[w] ? -1.0 : 1.0);
+
+         const double k = speeds[w] ? omega[w]/(U_bar - c_bar) 
+                                    : omega[w]/(U_bar + c_bar);
+         
+         for (std::size_t i = 0; i < NUM_PTS; i++)
+         {
+            k_dot_x_p_phi[w*NUM_PTS + i] = k*coords[i] + phases[w];
+         }
       }
-   }
 
-   std::array<double, NUM_PTS> rho;
-   std::array<double, NUM_PTS> rhoU;
-   std::array<double, NUM_PTS> rhoE;
+      std::array<double, NUM_PTS> rho;
+      std::array<double, NUM_PTS> rhoU;
+      std::array<double, NUM_PTS> rhoE;
 
+      // Evaluate kernel
+      for (const double &time : times)
+      {
+         // Compute
+         ComputeKernel<1>(NUM_PTS, rho_bar, p_bar, &U_bar, gamma, kNumWaves,
+                           p_amps.data(), omega.data(), mod_wave_dir.data(), 
+                           k_dot_x_p_phi.data(), time, rho.data(), 
+                           rhoU.data(), rhoE.data());
 
-   // Evaluate kernel
-   for (const double &time : times)
-   {
-      // Compute
-      ComputeKernel<1>(NUM_PTS, rho_bar, p_bar, &U_bar, gamma, kNumWaves,
-                        p_amps.data(), omega.data(), mod_wave_dir.data(), 
-                        k_dot_x_p_phi.data(), time, rho.data(), 
-                        rhoU.data(), rhoE.data());
-
-      // Check solutions
-      CheckSolution(coords, rho, rhoU, rhoE, time, kNumWaves);
+         // Check solutions
+         CheckSolution(coords, rho, rhoU, rhoE, time, kNumWaves);
+      }
    }
 }
 
@@ -211,29 +212,31 @@ TEST_CASE("Flowfield computation via AcousticField",
 {
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
-
-   // Build AcousticField
-   std::vector<double> U_bar_vec = {U_bar};
-   AcousticField field(1, coords, p_bar, rho_bar, U_bar_vec, gamma);
-
-   // Add wave(s) + finalize
-   std::vector<double> dir_vec = {1.0};
-   for (int w = 0; w < kNumWaves; w++)
+   DYNAMIC_SECTION("Number of waves: " << kNumWaves)
    {
-      Wave wave{p_amps[w], freqs[w], phases[w], speeds[w], dir_vec};
-      field.AddWave(wave);
-   }
-   field.Finalize();
+      // Build AcousticField
+      std::vector<double> U_bar_vec = {U_bar};
+      AcousticField field(1, coords, p_bar, rho_bar, U_bar_vec, gamma);
 
-   // Evaluate field
-   for (const double &time : times)
-   {
-      // Compute
-      field.Compute(time);
+      // Add wave(s) + finalize
+      std::vector<double> dir_vec = {1.0};
+      for (int w = 0; w < kNumWaves; w++)
+      {
+         Wave wave{p_amps[w], freqs[w], phases[w], speeds[w], dir_vec};
+         field.AddWave(wave);
+      }
+      field.Finalize();
 
-      // Check solutions
-      CheckSolution(coords, field.Density(), field.Momentum(),
-                     field.Energy(), time, kNumWaves);
+      // Evaluate field
+      for (const double &time : times)
+      {
+         // Compute
+         field.Compute(time);
+
+         // Check solutions
+         CheckSolution(coords, field.Density(), field.Momentum(),
+                        field.Energy(), time, kNumWaves);
+      }
    }
 }
 
@@ -243,42 +246,44 @@ TEST_CASE("Single 1D wave computation via app library", "[Compute] [App]")
 {
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
-
-   ConfigInput config;
-
-   // Set base flow in config
-   BaseFlowParams &base_flow = config.BaseFlow();
-   base_flow.rho = rho_bar;
-   base_flow.p = p_bar;
-   base_flow.U = std::vector<double>(1, U_bar);
-   base_flow.gamma = gamma;
-
-   // Set source in config
-   for (int w = 0; w < kNumWaves; w++)
+   DYNAMIC_SECTION("Number of waves: " << kNumWaves)
    {
-      SourceParams<SourceOption::SingleWave> wave;
-      wave.amp = p_amps[w];
-      wave.direction.resize(1, 1.0);
-      wave.freq = freqs[w];
-      wave.phase = phases[w]*180.0/M_PI; // in degrees!
-      wave.speed = speeds[w] ? SpeedOption::Slow : SpeedOption::Fast;
+      ConfigInput config;
 
-      // Add wave to Config sources
-      config.Sources().push_back(wave);
-   }
+      // Set base flow in config
+      BaseFlowParams &base_flow = config.BaseFlow();
+      base_flow.rho = rho_bar;
+      base_flow.p = p_bar;
+      base_flow.U = std::vector<double>(1, U_bar);
+      base_flow.gamma = gamma;
 
-   // Initialize AcousticField
-   AcousticField field = InitializeAcousticField(config, coords, 1);
+      // Set source in config
+      for (int w = 0; w < kNumWaves; w++)
+      {
+         SourceParams<SourceOption::SingleWave> wave;
+         wave.amp = p_amps[w];
+         wave.direction.resize(1, 1.0);
+         wave.freq = freqs[w];
+         wave.phase = phases[w]*180.0/M_PI; // in degrees!
+         wave.speed = speeds[w] ? SpeedOption::Slow : SpeedOption::Fast;
 
-   // Evaluate field
-   for (const double &time : times)
-   {
-      // Compute
-      field.Compute(time);
+         // Add wave to Config sources
+         config.Sources().push_back(wave);
+      }
 
-      // Check solutions
-      CheckSolution(coords, field.Density(), field.Momentum(),
-                     field.Energy(), time, kNumWaves);
+      // Initialize AcousticField
+      AcousticField field = InitializeAcousticField(config, coords, 1);
+
+      // Evaluate field
+      for (const double &time : times)
+      {
+         // Compute
+         field.Compute(time);
+
+         // Check solutions
+         CheckSolution(coords, field.Density(), field.Momentum(),
+                        field.Energy(), time, kNumWaves);
+      }
    }
 }
 
