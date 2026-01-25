@@ -99,101 +99,124 @@ static void CheckSolution(std::span<const double> x,
    }
 }
 
-TEST_CASE("Single 1D wave computation via kernel", "[Kernels]")
+TEST_CASE("Flowfield computation via kernel", "[Compute] [Kernels]")
 {
-   // Initialize kernel variables
-   constexpr double omega = 2*M_PI*freq;
-   constexpr double mod_wave_dir = -1.0;
-   const double c_bar = std::sqrt(gamma*p_bar/rho_bar);
-   const double k = omega/(U_bar - c_bar);
-   
-   std::array<double, NUM_PTS> k_dot_x_p_phi;
-   for (std::size_t i = 0; i < NUM_PTS; i++)
+   SECTION("Single wave")
    {
-      k_dot_x_p_phi[i] = k*coords[i] + phase;
-   }
+      // Initialize kernel variables
+      constexpr double omega = 2*M_PI*freq;
+      constexpr double mod_wave_dir = -1.0;
+      const double c_bar = std::sqrt(gamma*p_bar/rho_bar);
+      const double k = omega/(U_bar - c_bar);
+      
+      std::array<double, NUM_PTS> k_dot_x_p_phi;
+      for (std::size_t i = 0; i < NUM_PTS; i++)
+      {
+         k_dot_x_p_phi[i] = k*coords[i] + phase;
+      }
 
-   std::array<double, NUM_PTS> rho;
-   std::array<double, NUM_PTS> rhoU;
-   std::array<double, NUM_PTS> rhoE;
+      std::array<double, NUM_PTS> rho;
+      std::array<double, NUM_PTS> rhoU;
+      std::array<double, NUM_PTS> rhoE;
 
 
-   // Evaluate kernel
-   for (const double &time : times)
-   {
-      // Compute
-      ComputeKernel<1>(NUM_PTS, rho_bar, p_bar, &U_bar, gamma, 1,
-                        &p_amp, &omega, &mod_wave_dir, 
-                        k_dot_x_p_phi.data(), time, rho.data(), 
-                        rhoU.data(), rhoE.data());
+      // Evaluate kernel
+      for (const double &time : times)
+      {
+         // Compute
+         ComputeKernel<1>(NUM_PTS, rho_bar, p_bar, &U_bar, gamma, 1,
+                           &p_amp, &omega, &mod_wave_dir, 
+                           k_dot_x_p_phi.data(), time, rho.data(), 
+                           rhoU.data(), rhoE.data());
 
-      // Check solutions
-      CheckSolution(coords, rho, rhoU, rhoE, time);
+         // Check solutions
+         CheckSolution(coords, rho, rhoU, rhoE, time);
+      }
+      
+      SECTION("Multi-wave")
+      {
+         // TODO
+      }
    }
 }
 
-TEST_CASE("Single 1D wave computation via AcousticField", 
-            "[AcousticField]")
+TEST_CASE("Flowfield computation via AcousticField", 
+            "[Compute] [AcousticField]")
 {
-   // Build AcousticField
-   std::vector<double> U_bar_vec = {U_bar};
-   AcousticField field(1, coords, p_bar, rho_bar, U_bar_vec, gamma);
-
-   // Add wave + finalize
-   std::vector<double> dir_vec = {1.0};
-   Wave single_wave{p_amp, freq, phase, true, dir_vec};
-   field.AddWave(single_wave);
-   field.Finalize();
-
-   // Evaluate field
-   for (const double &time : times)
+   SECTION("Single wave")
    {
-      // Compute
-      field.Compute(time);
+      // Build AcousticField
+      std::vector<double> U_bar_vec = {U_bar};
+      AcousticField field(1, coords, p_bar, rho_bar, U_bar_vec, gamma);
 
-      // Check solutions
-      CheckSolution(coords, field.Density(), field.Momentum(),
-                     field.Energy(), time);
+      // Add wave + finalize
+      std::vector<double> dir_vec = {1.0};
+      Wave single_wave{p_amp, freq, phase, true, dir_vec};
+      field.AddWave(single_wave);
+      field.Finalize();
+
+      // Evaluate field
+      for (const double &time : times)
+      {
+         // Compute
+         field.Compute(time);
+
+         // Check solutions
+         CheckSolution(coords, field.Density(), field.Momentum(),
+                        field.Energy(), time);
+      }
+
+      SECTION("Multi-wave")
+      {
+         // TODO
+      }
    }
-
 }
 
 #ifdef JABBER_WITH_APP
 
-TEST_CASE("Single 1D wave computation via app library", "[App]")
+TEST_CASE("Single 1D wave computation via app library", "[Compute] [App]")
 {
-   ConfigInput config;
-
-   // Set base flow in config
-   BaseFlowParams &base_flow = config.BaseFlow();
-   base_flow.rho = rho_bar;
-   base_flow.p = p_bar;
-   base_flow.U = std::vector<double>(1, U_bar);
-   base_flow.gamma = gamma;
-
-   // Set source in config
-   SourceParams<SourceOption::SingleWave> wave;
-   wave.amp = p_amp;
-   wave.direction.resize(1, 1.0);
-   wave.freq = freq;
-   wave.phase = phase*180.0/M_PI; // in degrees!
-   wave.speed = SpeedOption::Slow;
-
-   // Add wave to Config sources
-   config.Sources().push_back(wave);
-
-   // Initialize AcousticField
-   AcousticField field = InitializeAcousticField(config, coords, 1);
-
-   // Evaluate field
-   for (const double &time : times)
+   SECTION("Single wave")
    {
-      // Compute
-      field.Compute(time);
+      ConfigInput config;
 
-      // Check solutions
-      CheckSolution(coords, field.Density(), field.Momentum(),
-                     field.Energy(), time);
+      // Set base flow in config
+      BaseFlowParams &base_flow = config.BaseFlow();
+      base_flow.rho = rho_bar;
+      base_flow.p = p_bar;
+      base_flow.U = std::vector<double>(1, U_bar);
+      base_flow.gamma = gamma;
+
+      // Set source in config
+      SourceParams<SourceOption::SingleWave> wave;
+      wave.amp = p_amp;
+      wave.direction.resize(1, 1.0);
+      wave.freq = freq;
+      wave.phase = phase*180.0/M_PI; // in degrees!
+      wave.speed = SpeedOption::Slow;
+
+      // Add wave to Config sources
+      config.Sources().push_back(wave);
+
+      // Initialize AcousticField
+      AcousticField field = InitializeAcousticField(config, coords, 1);
+
+      // Evaluate field
+      for (const double &time : times)
+      {
+         // Compute
+         field.Compute(time);
+
+         // Check solutions
+         CheckSolution(coords, field.Density(), field.Momentum(),
+                        field.Energy(), time);
+      }
+
+      SECTION("Multi-wave")
+      {
+         // TODO
+      }
    }
 }
 

@@ -1,4 +1,5 @@
 # Unit Tests
+The following is detailed documentation on all of the unit tests performed - particularly any analytical solutions compared against.
 ## Flowfield Equations:
 
 Density:
@@ -15,7 +16,8 @@ Energy:
 $$
 \rho E=\dfrac{\bar{p}}{\gamma-1} + \dfrac{1}{\gamma-1}\sum_{j=1}^Np'_je^{i(\vec{k}\cdot\vec{x}+ \phi_j - \omega_jt)} + \dfrac{1}{2}\rho||\vec{\bar{U}} + \dfrac{1}{\bar{\rho} \bar{c}}\sum_{j=1}^N(\pm1)\hat{k}_jp'_je^{i(\vec{k}_j\cdot\vec{x}+\phi_j-\omega_jt)}||^2
 $$
-## Single Wave, 1D
+## 1D Computation
+### Base Flow
 Consider the following base flow:
 $$
 \bar{U}=1000,
@@ -29,7 +31,10 @@ $$
 $$
 \gamma=1.4,
 $$
-where it can be shown that $\bar{c}= \sqrt{\gamma\bar{p}/\bar{\rho}}=\sqrt{15625}=125$. Consider a single slow wave with the following properties:
+where it can be shown that $\bar{c}= \sqrt{\gamma\bar{p}/\bar{\rho}}=\sqrt{15625}=125$.
+
+### Single Wave
+Consider a single slow wave with the following properties:
 $$
 p'_1=10,
 $$
@@ -55,8 +60,13 @@ $$
 $$
 \rho E=\dfrac{2000}{1.4-1} + \dfrac{1}{1.4-1}10\cos\left(\frac{16\pi}{7} x + \frac{\pi}{3} - 2000\pi t\right) + \dfrac{1}{2}\rho u^2
 $$
+### Multi-Wave
+Consider the above wave, along with an additional one with the following properties:
 
-## Single Wave, 2D
-Consider now similar base flow
+## 2D Computation
+### Single Wave
+### Multi-Wave
 
-## Single Wave, 3D
+## 3D Computation
+### Single Wave
+### Multi-Wave
