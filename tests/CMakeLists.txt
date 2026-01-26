@@ -12,3 +12,8 @@ if(JABBER_BUILD_APP)
 endif()
 
 target_link_libraries(unit-tests PRIVATE ${dependencies})
+
+
+include(CTest)
+include(Catch)
+catch_discover_tests(unit-tests)
