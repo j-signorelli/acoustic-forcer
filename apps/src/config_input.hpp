@@ -107,7 +107,7 @@ class TOMLConfigInput : public ConfigInput
 {
 public:
    /// Construct an uninitialized TOMLConfigInput object.
-   TOMLConfigInput();
+   TOMLConfigInput() {};
    /**
     * @brief Construct a new TOMLConfigInput object.
     * 
