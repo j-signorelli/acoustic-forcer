@@ -53,11 +53,8 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
         if (option == SourceOption::SingleWave)
         {
             int seed = 0;
-            SourceParams<SourceOption::SingleWave> wave;
-            wave.amp = GenerateRandomReal(seed++,0.1,10.0);
-            wave.freq = GenerateRandomReal(seed++, 500.0, 1500.0);
-            wave.direction = GenerateRandomVec<3>(seed++, 0.0, 1.0);
-            wave.phase = GenerateRandomReal(seed++, 10.0, 180.0);
+            SourceParams<SourceOption::SingleWave> wave; 
+            wave = GenerateRandomSource<SourceOption::SingleWave>(seed++);
             wave.speed = GENERATE(SpeedOption::Slow, SpeedOption::Fast);
 
             const std::string_view speed_str = 
@@ -87,24 +84,11 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
         }
         else if (option == SourceOption::WaveSpectrum)
         {
-            constexpr int kNumWaves = 5;
             int seed = 0;
             SourceParams<SourceOption::WaveSpectrum> waves;
-            waves.amps = GenerateRandomVec<kNumWaves>(seed++, 1.0, 10.0);
-            waves.freqs = GenerateRandomVec<kNumWaves>(seed++, 500.0, 
-                                                                1500.0);
-            waves.directions.resize(kNumWaves);
-            for (std::vector<double> &w_dir : waves.directions)
-            {
-                w_dir = GenerateRandomVec<3>(seed++, 0.0, 1.0);
-            }
-            waves.phases = GenerateRandomVec<kNumWaves>(seed++,0.0,180.0);
-            waves.speeds.resize(kNumWaves);
-            for (int w = 0; w < kNumWaves; w++)
-            {
-                waves.speeds[w] = (w%2==0 ? SpeedOption::Slow
-                                        : SpeedOption::Fast);
-            }
+            waves = GenerateRandomSource<SourceOption::WaveSpectrum>(seed++);
+
+            const int kNumWaves = waves.amps.size();
             std::vector<std::string> speed_strs(kNumWaves);
             std::ranges::transform(waves.speeds.begin(), 
                                     waves.speeds.end(),
