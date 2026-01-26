@@ -7,19 +7,10 @@ gamma=1.4
 [[Sources]]
 Type="SingleWave"
 Amplitude=1.0
-Frequency=800.0
-Angle=30.0
+Frequency=1000.0
+Direction=[-1.0,0.5]
 Phase=0.0
 Speed="Slow"
-
-[[Sources]]
-Type="SingleWave"
-Amplitude=1.0
-Frequency=800.0
-Angle=-30.0
-Phase=0.0
-Speed="Fast"
-
 
 [Computation]
 t0=0.0

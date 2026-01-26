@@ -4,11 +4,11 @@ p=1991.193014318490
 U=[958.090507772702, 0.0]
 gamma=1.4
 
-[Source]
+[[Sources]]
 Type="SingleWave"
 Amplitude=10.0
 Frequency=1200.0
-Angle=30.0
+Direction=[1.0,0.0]
 Phase=0.0
 Speed="Slow"
 
