@@ -31,10 +31,10 @@ namespace jabber_test
 static constexpr std::uint64_t kULP = 5;
 
 /// Number of points to initialize + test at
-static constexpr std::size_t kNumPts = 3;
+static constexpr std::size_t kNumPts = 5;
 
 /// Number of kTimes to test at
-static constexpr std::size_t kNumTimes = 3;
+static constexpr std::size_t kNumTimes = 5;
 
 /// Seed for randomizer
 static constexpr int kSeed = 0;
@@ -161,7 +161,7 @@ static void CheckSolution(std::span<const double> coords,
    }
 }
 
-TEST_CASE("1D flowfield computation via kernel", "[Compute] [Kernels]")
+TEST_CASE("1D flowfield computation via kernel", "[1D][Compute][Kernels]")
 {
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
@@ -208,7 +208,7 @@ TEST_CASE("1D flowfield computation via kernel", "[Compute] [Kernels]")
 }
 
 TEST_CASE("1D flowfield computation via AcousticField", 
-            "[Compute] [AcousticField]")
+            "[1D][Compute][AcousticField]")
 {
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
@@ -242,7 +242,7 @@ TEST_CASE("1D flowfield computation via AcousticField",
 
 #ifdef JABBER_WITH_APP
 
-TEST_CASE("1D flowfield computation via app library", "[Compute] [App]")
+TEST_CASE("1D flowfield computation via app library", "[1D][Compute][App]")
 {
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
