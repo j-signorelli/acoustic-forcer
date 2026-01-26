@@ -24,7 +24,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         build_type: [Release]
-        cpp_compiler: [gcc, clang]
+        cpp_compiler: [g++, clang++]
 
     steps:
     - name: Checkout w/ submodules
