@@ -106,14 +106,42 @@ public:
 class TOMLConfigInput : public ConfigInput
 {
 public:
+   /// Construct an uninitialized TOMLConfigInput object.
+   TOMLConfigInput();
    /**
     * @brief Construct a new TOMLConfigInput object.
     * 
-    * @param config_file      TOML config file to parse.
+    * @param config_file      TOML config file address to parse.
     * @param out              [Optional] ostream to write parsed config file
     *                         to (verbose processing).
     */
    TOMLConfigInput(std::string config_file, std::ostream *out=nullptr);
+
+
+   /**
+    * @brief Parse base flow parameters from a serialized TOML string of that
+    * section.
+    */
+   void ParseBaseFlow(std::string base_flow_serialized);
+
+   /**
+    * @brief Parse source parameters from a serialized TOML string of that
+    * section, and append it to \ref sources_.
+    */
+   void ParseSource(std::string source_serialized);
+
+   /**
+    * @brief Parse computation parameters from a serialized TOML string of that
+    * section.
+    */
+   void ParseComputation(std::string comp_serialized);
+
+   /**
+    * @brief Parse preCICE parameters from a serialized TOML string of that
+    * section. This initializes \ref precice_.
+    */
+   void ParsePrecice(std::string precice_serialized);
+
 };
 
 } // namespace jabber_app
