@@ -16,6 +16,7 @@ namespace jabber_test
 TEST_CASE("TOMLConfigInput::ParseBaseFlow", "[App][TOMLConfigInput]")
 {
     int seed = 0;
+
     const double kRho = GenerateRandomReal(seed++, 0.1, 1.0);
     const double kPBar = GenerateRandomReal(seed++, 0.1, 2000.0);
     const std::vector<double> kUBar = GenerateRandomVec<2>(seed++, 0.0, 600.0);
@@ -150,19 +151,46 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
         }
         CHECK_THAT(waves_parsed.phases, Equals(waves.phases));
         CHECK_THAT(waves_parsed.speeds, Equals(waves.speeds));
-
-
     }
 }
 
 TEST_CASE("TOMLConfigInput::ParseComputation", "[App][TOMLConfigInput]")
 {
+    int seed = 0;
+    const double kT0 = GenerateRandomReal(seed++,0.0,100.0);
+    const std::string comp_str = 
+        std::format(R"(
+                       t0={}
+                    )", kT0);
 
+    TOMLConfigInput config;
+    config.ParseComputation(comp_str);
+
+    CHECK(config.Comp().t0 == kT0);
 }
 
 TEST_CASE("TOMLConfigInput::ParsePrecice", "[App][TOMLConfigInput]")
 {
+    constexpr std::string_view kPartName = "TestParticipant";
+    constexpr std::string_view kConfigFile = "TestConfig.xml";
+    constexpr std::string_view kFluidMesh = "TestFluidMesh";
+    const std::vector<double> kMeshRegion = {-0.01, 1.01, -1.01, 1.01};
 
+    const std::string precice_str = 
+        std::format(R"(
+                       ParticipantName="{}"
+                       ConfigFile="{}"
+                       MeshAccessRegion=[{},{},{},{}]
+                       FluidMeshName="{}"
+                    )", kPartName, kConfigFile, kMeshRegion[0], kMeshRegion[1],
+                        kMeshRegion[2], kMeshRegion[3], kFluidMesh);
+    
+    TOMLConfigInput config;
+    config.ParsePrecice(precice_str);
+    CHECK(config.Precice()->participant_name == kPartName);
+    CHECK(config.Precice()->config_file == kConfigFile);
+    CHECK(config.Precice()->fluid_mesh_name == kFluidMesh);
+    CHECK_THAT(config.Precice()->mesh_access_region, Equals(kMeshRegion));
 }
 
 } // jabber_test
