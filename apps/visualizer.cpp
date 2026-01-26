@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
       ("d,dim", "Grid dimension (1,2,3).", 
                         cxxopts::value<int>()->default_value("2"))
       ("n,num_points", "Number grid points in each dimension.",
-                        cxxopts::value<std::size_t>()->default_value("50"))
+                        cxxopts::value<std::size_t>()->default_value("100"))
       ("e,extent", "Grid extent in each direction (such that domain is "
                      "[0,extent]^dim)",
                         cxxopts::value<double>()->default_value("1.0"))
@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
       }
       else if (field == "rhoE")
       {
-         VisualizeField(rhoE_sock, vishost.data(), visport, rho_gf, "Energy",
+         VisualizeField(rhoE_sock, vishost.data(), visport, rhoE_gf, "Energy",
                         offset, 0, Wx, Wy, keys.data());
          offset += Wx;
       }
