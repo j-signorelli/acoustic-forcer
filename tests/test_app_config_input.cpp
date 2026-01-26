@@ -5,11 +5,12 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_vector.hpp>
 #include <catch2/generators/catch_generators.hpp>
-
+#include <catch2/generators/catch_generators_range.hpp>
 #include <jabber_app.hpp>
 
 using namespace jabber_app;
 using namespace Catch::Matchers;
+using namespace Catch::Generators;
 
 namespace jabber_test
 {
@@ -41,128 +42,126 @@ TEST_CASE("TOMLConfigInput::ParseBaseFlow", "[App][TOMLConfigInput]")
 
 TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
 {
-    // Loop over all options
-    // (Test will fail if new option not accomodated!)
-    constexpr std::uint8_t kNumSourceOptions = 
-                            static_cast<std::uint8_t>(SourceOption::Size);
-    for (std::uint8_t s = 0; s < kNumSourceOptions; s++)
-    {
-        SourceOption option = static_cast<SourceOption>(s);
-        DYNAMIC_SECTION(SourceNames[s])
-        {   
-            if (option == SourceOption::SingleWave)
+
+    constexpr int kNumSourceOptions = static_cast<int>(SourceOption::Size);
+
+    // Use generator to ensure that all source types are checked!
+    const int s = GENERATE_COPY(range(0, kNumSourceOptions));
+    const SourceOption option = static_cast<SourceOption>(s);
+    DYNAMIC_SECTION(SourceNames[s])
+    {   
+        if (option == SourceOption::SingleWave)
+        {
+            int seed = 0;
+            SourceParams<SourceOption::SingleWave> wave;
+            wave.amp = GenerateRandomReal(seed++,0.1,10.0);
+            wave.freq = GenerateRandomReal(seed++, 500.0, 1500.0);
+            wave.direction = GenerateRandomVec<3>(seed++, 0.0, 1.0);
+            wave.phase = GenerateRandomReal(seed++, 10.0, 180.0);
+            wave.speed = GENERATE(SpeedOption::Slow, SpeedOption::Fast);
+
+            const std::string_view speed_str = 
+                        SpeedNames[static_cast<std::size_t>(wave.speed)];
+
+            const std::string source_str = 
+            std::format(R"(
+                            Type="{}"
+                            Amplitude={}
+                            Frequency={}
+                            Direction=[{},{},{}]
+                            Phase={}
+                            Speed="{}"
+                            )", SourceNames[s], wave.amp, wave.freq, 
+                                wave.direction[0], wave.direction[1], 
+                                wave.direction[2], wave.phase, speed_str);
+            TOMLConfigInput config;
+            config.ParseSource(source_str);
+            SourceParams<SourceOption::SingleWave> wave_parsed = 
+                std::get<SourceParams<SourceOption::SingleWave>>(
+                                                    config.Sources()[0]);
+            CHECK(wave_parsed.amp == wave.amp);
+            CHECK(wave_parsed.freq == wave.freq);
+            CHECK_THAT(wave_parsed.direction, Equals(wave.direction));
+            CHECK(wave_parsed.phase == wave.phase);
+            CHECK(wave_parsed.speed == wave.speed);
+        }
+        else if (option == SourceOption::WaveSpectrum)
+        {
+            constexpr int kNumWaves = 5;
+            int seed = 0;
+            SourceParams<SourceOption::WaveSpectrum> waves;
+            waves.amps = GenerateRandomVec<kNumWaves>(seed++, 1.0, 10.0);
+            waves.freqs = GenerateRandomVec<kNumWaves>(seed++, 500.0, 
+                                                                1500.0);
+            waves.directions.resize(kNumWaves);
+            for (std::vector<double> &w_dir : waves.directions)
             {
-                int seed = 0;
-                SourceParams<SourceOption::SingleWave> wave;
-                wave.amp = GenerateRandomReal(seed++,0.1,10.0);
-                wave.freq = GenerateRandomReal(seed++, 500.0, 1500.0);
-                wave.direction = GenerateRandomVec<3>(seed++, 0.0, 1.0);
-                wave.phase = GenerateRandomReal(seed++, 10.0, 180.0);
-                wave.speed = GENERATE(SpeedOption::Slow, SpeedOption::Fast);
-
-                const std::string_view speed_str = 
-                            SpeedNames[static_cast<std::size_t>(wave.speed)];
-
-                const std::string source_str = 
-                std::format(R"(
-                                Type="{}"
-                                Amplitude={}
-                                Frequency={}
-                                Direction=[{},{},{}]
-                                Phase={}
-                                Speed="{}"
-                                )", SourceNames[s], wave.amp, wave.freq, 
-                                    wave.direction[0], wave.direction[1], 
-                                    wave.direction[2], wave.phase, speed_str);
-                TOMLConfigInput config;
-                config.ParseSource(source_str);
-                SourceParams<SourceOption::SingleWave> wave_parsed = 
-                    std::get<SourceParams<SourceOption::SingleWave>>(
-                                                        config.Sources()[0]);
-                CHECK(wave_parsed.amp == wave.amp);
-                CHECK(wave_parsed.freq == wave.freq);
-                CHECK_THAT(wave_parsed.direction, Equals(wave.direction));
-                CHECK(wave_parsed.phase == wave.phase);
-                CHECK(wave_parsed.speed == wave.speed);
+                w_dir = GenerateRandomVec<3>(seed++, 0.0, 1.0);
             }
-            else if (option == SourceOption::WaveSpectrum)
+            waves.phases = GenerateRandomVec<kNumWaves>(seed++,0.0,180.0);
+            waves.speeds.resize(kNumWaves);
+            for (int w = 0; w < kNumWaves; w++)
             {
-                constexpr int kNumWaves = 5;
-                int seed = 0;
-                SourceParams<SourceOption::WaveSpectrum> waves;
-                waves.amps = GenerateRandomVec<kNumWaves>(seed++, 1.0, 10.0);
-                waves.freqs = GenerateRandomVec<kNumWaves>(seed++, 500.0, 
-                                                                    1500.0);
-                waves.directions.resize(kNumWaves);
-                for (std::vector<double> &w_dir : waves.directions)
-                {
-                    w_dir = GenerateRandomVec<3>(seed++, 0.0, 1.0);
-                }
-                waves.phases = GenerateRandomVec<kNumWaves>(seed++,0.0,180.0);
-                waves.speeds.resize(kNumWaves);
-                for (int w = 0; w < kNumWaves; w++)
-                {
-                    waves.speeds[w] = (w%2==0 ? SpeedOption::Slow
-                                            : SpeedOption::Fast);
-                }
-                std::vector<std::string> speed_strs(kNumWaves);
-                std::ranges::transform(waves.speeds.begin(), 
-                                        waves.speeds.end(),
-                                        speed_strs.begin(),
-                    [](const SpeedOption &op) -> std::string
-                    {
-                        int op_idx = static_cast<std::size_t>(op);
-                        return "\"" + std::string(SpeedNames[op_idx]) + "\"";
-                    });
-                
-                std::string source_str = std::format("Type=\"{}\"\n",
-                                                        SourceNames[s]);
-
-                auto write_vec = 
-                [&kNumWaves]<typename T>
-                (const std::vector<T> &vec) -> std::string
-                {
-                    std::string vec_str;
-                    vec_str += "[";
-                    for (int w = 0; w < vec.size(); w++)
-                    {
-                        vec_str += std::format("{}", vec[w]);
-                        vec_str += (w+1==vec.size() ? "]" : ",");
-                    }
-                    return vec_str;
-                };
-
-                source_str += "Amplitudes=" + write_vec(waves.amps) + "\n";
-                source_str += "Frequencies=" + write_vec(waves.freqs) + "\n";
-                source_str += "Directions=[";
-                for (int w = 0; w < kNumWaves; w++)
-                {
-                    source_str += write_vec(waves.directions[w]);
-                    source_str += (w+1==kNumWaves ? "]\n" : ",");
-                }
-                source_str += "Phases=" + write_vec(waves.phases) + "\n";
-                source_str += "Speeds=" + write_vec(speed_strs);
-
-                TOMLConfigInput config;
-                config.ParseSource(source_str);
-                SourceParams<SourceOption::WaveSpectrum> waves_parsed = 
-                    std::get<SourceParams<SourceOption::WaveSpectrum>>(
-                                                        config.Sources()[0]);
-
-                CHECK_THAT(waves_parsed.amps, Equals(waves.amps));
-                CHECK_THAT(waves_parsed.freqs, Equals(waves.freqs));
-                for (int w = 0; w < kNumWaves; w++)
-                {
-                    CHECK_THAT(waves_parsed.directions[w], 
-                                Equals(waves.directions[w]));
-                }
-                CHECK_THAT(waves_parsed.phases, Equals(waves.phases));
-                CHECK_THAT(waves_parsed.speeds, Equals(waves.speeds));
+                waves.speeds[w] = (w%2==0 ? SpeedOption::Slow
+                                        : SpeedOption::Fast);
             }
-            else
+            std::vector<std::string> speed_strs(kNumWaves);
+            std::ranges::transform(waves.speeds.begin(), 
+                                    waves.speeds.end(),
+                                    speed_strs.begin(),
+                [](const SpeedOption &op) -> std::string
+                {
+                    int op_idx = static_cast<std::size_t>(op);
+                    return "\"" + std::string(SpeedNames[op_idx]) + "\"";
+                });
+            
+            std::string source_str = std::format("Type=\"{}\"\n",
+                                                    SourceNames[s]);
+
+            auto write_vec = 
+            [&kNumWaves]<typename T>
+            (const std::vector<T> &vec) -> std::string
             {
-                FAIL("No unit test for source type " << SourceNames[s] << "!");
+                std::string vec_str;
+                vec_str += "[";
+                for (int w = 0; w < vec.size(); w++)
+                {
+                    vec_str += std::format("{}", vec[w]);
+                    vec_str += (w+1==vec.size() ? "]" : ",");
+                }
+                return vec_str;
+            };
+
+            source_str += "Amplitudes=" + write_vec(waves.amps) + "\n";
+            source_str += "Frequencies=" + write_vec(waves.freqs) + "\n";
+            source_str += "Directions=[";
+            for (int w = 0; w < kNumWaves; w++)
+            {
+                source_str += write_vec(waves.directions[w]);
+                source_str += (w+1==kNumWaves ? "]\n" : ",");
             }
+            source_str += "Phases=" + write_vec(waves.phases) + "\n";
+            source_str += "Speeds=" + write_vec(speed_strs);
+
+            TOMLConfigInput config;
+            config.ParseSource(source_str);
+            SourceParams<SourceOption::WaveSpectrum> waves_parsed = 
+                std::get<SourceParams<SourceOption::WaveSpectrum>>(
+                                                    config.Sources()[0]);
+
+            CHECK_THAT(waves_parsed.amps, Equals(waves.amps));
+            CHECK_THAT(waves_parsed.freqs, Equals(waves.freqs));
+            for (int w = 0; w < kNumWaves; w++)
+            {
+                CHECK_THAT(waves_parsed.directions[w], 
+                            Equals(waves.directions[w]));
+            }
+            CHECK_THAT(waves_parsed.phases, Equals(waves.phases));
+            CHECK_THAT(waves_parsed.speeds, Equals(waves.speeds));
+        }
+        else
+        {
+            FAIL("No unit test for source type " << SourceNames[s] << "!");
         }
     }
 }
