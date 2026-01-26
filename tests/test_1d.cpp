@@ -10,6 +10,7 @@
 #endif // JABBER_WITH_APP
 
 #include <cmath>
+#include <functional>
 
 using namespace jabber;
 using namespace Catch::Matchers;
@@ -19,6 +20,7 @@ using namespace jabber_app;
 
 namespace jabber_test
 {
+
 /**
  * @details **Important:** tests values must fall within
  * "this-many" floating-point numbers from the provided actual solution.
@@ -26,28 +28,29 @@ namespace jabber_test
  * try increasing this and checking if values being compared are still
  * "equal enough"!
  */
-static constexpr std::uint64_t ULP = 5;
+static constexpr std::uint64_t kULP = 5;
 
 /// Number of points to initialize + test at
-static constexpr std::size_t NUM_PTS = 10;
+static constexpr std::size_t kNumPts = 3;
 
-/// Number of times to test at
-static constexpr std::size_t NUM_TIMES = 10;
+/// Number of kTimes to test at
+static constexpr std::size_t kNumTimes = 3;
 
 /// Seed for randomizer
-static constexpr int SEED = 0;
+static constexpr int kSeed = 0;
 
 /// Base flow params:
-static constexpr double rho_bar = 0.1792;
-static constexpr double p_bar = 2000.0;
-static constexpr double U_bar = 1000.0;
-static constexpr double gamma = 1.4;
+static constexpr double kRhoBar = 0.1792;
+static constexpr double kPBar = 2000.0;
+static constexpr double kUBar = 1000.0;
+static constexpr double kGamma = 1.4;
 
 /// Wave params:
-static constexpr std::array<double, 2> p_amps = {10.0, 5.0};
-static constexpr std::array<double, 2> freqs = {1000.0, 1250.0};
-static constexpr std::array<double, 2> phases = {M_PI/3, M_PI};
-static constexpr std::array<bool, 2> speeds = {true, false};
+static constexpr std::array<double, 2> kPAmps = {10.0, 5.0};
+static constexpr std::array<double, 2> kFreqs = {1000.0, 1250.0};
+static constexpr std::array<double, 2> kPhases = {M_PI/3, M_PI};
+static constexpr std::array<bool, 2> kSpeeds = {true, false};
+
 /**
  * @brief Coordinates data.
  * 
@@ -56,8 +59,8 @@ static constexpr std::array<bool, 2> speeds = {true, false};
  * 
  * 
  */
-static const std::array<double, NUM_PTS> coords 
-                        = GenerateRandomArr<NUM_PTS>(SEED,0.0,2.0);
+static const std::array<double, kNumPts> kCoords 
+                        = GenerateRandomArr<kNumPts>(kSeed,0.0,2.0);
 
 /**
  * @brief Time data.
@@ -66,8 +69,8 @@ static const std::array<double, NUM_PTS> coords
  * period = 1/f_2=0.0008. Choose 0.002 to cover ~2 periods.
  * 
  */
-static const std::array<double, NUM_TIMES> times 
-                        = GenerateRandomArr<NUM_TIMES>(SEED,0.0,0.002);
+static const std::array<double, kNumTimes> kTimes 
+                        = GenerateRandomArr<kNumTimes>(kSeed,0.0,0.002);
 
 /// Hardcoded analytical solution. See README.md.
 template<int NumWaves>
@@ -122,92 +125,89 @@ public:
    }
 };
 
-static void CheckSolution(std::span<const double> x, 
+static void CheckSolution(std::span<const double> coords, 
                               std::span<const double> rho,
                               std::span<const double> rhoU, 
                               std::span<const double> rhoE,
                               double t, int num_waves)
 {
-   // Check solutions
+   using function_t = std::function<double(double,double)>;
+   function_t rho_exact, rhoU_exact, rhoE_exact;
+
    if (num_waves == 1)
    {
-      for (std::size_t i = 0; i < x.size(); i++)
-      {
-         CAPTURE(x[i], t);
-         CHECK_THAT(rho[i], 
-                     WithinULP(AnalyticalSolution1D<1>::Rho(x[i], t), ULP));
-         CHECK_THAT(rhoU[i], 
-                     WithinULP(AnalyticalSolution1D<1>::RhoU(x[i], t), ULP));
-         CHECK_THAT(rhoE[i], 
-                     WithinULP(AnalyticalSolution1D<1>::RhoE(x[i],t), ULP));
-      }
+      rho_exact = AnalyticalSolution1D<1>::Rho;
+      rhoU_exact = AnalyticalSolution1D<1>::RhoU;
+      rhoE_exact = AnalyticalSolution1D<1>::RhoE;
    }
    else if (num_waves == 2)
    {
-      for (std::size_t i = 0; i < x.size(); i++)
-      {
-         CAPTURE(x[i], t);
-         CHECK_THAT(rho[i], 
-                     WithinULP(AnalyticalSolution1D<2>::Rho(x[i], t), ULP));
-         CHECK_THAT(rhoU[i], 
-                     WithinULP(AnalyticalSolution1D<2>::RhoU(x[i], t), ULP));
-         CHECK_THAT(rhoE[i], 
-                     WithinULP(AnalyticalSolution1D<2>::RhoE(x[i],t), ULP));
-      }
+      rho_exact = AnalyticalSolution1D<2>::Rho;
+      rhoU_exact = AnalyticalSolution1D<2>::RhoU;
+      rhoE_exact = AnalyticalSolution1D<2>::RhoE;
    }
    else
    {
       FAIL("Test does not support number of waves = " << num_waves);
    }
+
+   for (std::size_t i = 0; i < kNumPts; i++)
+   {
+      const double x = coords[i];
+      CAPTURE(x, t);
+      CHECK_THAT(rho[i], WithinULP(rho_exact(x,t), kULP));
+      CHECK_THAT(rhoU[i], WithinULP(rhoU_exact(x,t), kULP));
+      CHECK_THAT(rhoE[i], WithinULP(rhoE_exact(x,t), kULP));
+   }
 }
 
-TEST_CASE("Flowfield computation via kernel", "[Compute] [Kernels]")
+TEST_CASE("1D flowfield computation via kernel", "[Compute] [Kernels]")
 {
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
    DYNAMIC_SECTION("Number of waves: " << kNumWaves)
    {
-      const double c_bar = std::sqrt(gamma*p_bar/rho_bar);
+      const double c_bar = std::sqrt(kGamma*kPBar/kRhoBar);
 
-      std::vector<double> k_dot_x_p_phi(NUM_PTS*kNumWaves);
+      std::vector<double> k_dot_x_p_phi(kNumPts*kNumWaves);
       std::vector<double> omega(kNumWaves);
       std::vector<double> mod_wave_dir(kNumWaves);
 
       // Initialize kernel variables
       for (int w = 0; w < kNumWaves; w++)
       {
-         omega[w] = 2*M_PI*freqs[w];
-         mod_wave_dir[w] = (speeds[w] ? -1.0 : 1.0);
+         omega[w] = 2*M_PI*kFreqs[w];
+         mod_wave_dir[w] = (kSpeeds[w] ? -1.0 : 1.0);
 
-         const double k = speeds[w] ? omega[w]/(U_bar - c_bar) 
-                                    : omega[w]/(U_bar + c_bar);
+         const double k = kSpeeds[w] ? omega[w]/(kUBar - c_bar) 
+                                    : omega[w]/(kUBar + c_bar);
          
-         for (std::size_t i = 0; i < NUM_PTS; i++)
+         for (std::size_t i = 0; i < kNumPts; i++)
          {
-            k_dot_x_p_phi[w*NUM_PTS + i] = k*coords[i] + phases[w];
+            k_dot_x_p_phi[w*kNumPts + i] = k*kCoords[i] + kPhases[w];
          }
       }
 
-      std::array<double, NUM_PTS> rho;
-      std::array<double, NUM_PTS> rhoU;
-      std::array<double, NUM_PTS> rhoE;
+      std::array<double, kNumPts> rho;
+      std::array<double, kNumPts> rhoU;
+      std::array<double, kNumPts> rhoE;
 
       // Evaluate kernel
-      for (const double &time : times)
+      for (const double &time : kTimes)
       {
          // Compute
-         ComputeKernel<1>(NUM_PTS, rho_bar, p_bar, &U_bar, gamma, kNumWaves,
-                           p_amps.data(), omega.data(), mod_wave_dir.data(), 
+         ComputeKernel<1>(kNumPts, kRhoBar, kPBar, &kUBar, kGamma, kNumWaves,
+                           kPAmps.data(), omega.data(), mod_wave_dir.data(), 
                            k_dot_x_p_phi.data(), time, rho.data(), 
                            rhoU.data(), rhoE.data());
 
          // Check solutions
-         CheckSolution(coords, rho, rhoU, rhoE, time, kNumWaves);
+         CheckSolution(kCoords, rho, rhoU, rhoE, time, kNumWaves);
       }
    }
 }
 
-TEST_CASE("Flowfield computation via AcousticField", 
+TEST_CASE("1D flowfield computation via AcousticField", 
             "[Compute] [AcousticField]")
 {
    const int kNumWaves = GENERATE(1,2);
@@ -215,26 +215,26 @@ TEST_CASE("Flowfield computation via AcousticField",
    DYNAMIC_SECTION("Number of waves: " << kNumWaves)
    {
       // Build AcousticField
-      std::vector<double> U_bar_vec = {U_bar};
-      AcousticField field(1, coords, p_bar, rho_bar, U_bar_vec, gamma);
+      std::vector<double> kUBar_vec = {kUBar};
+      AcousticField field(1, kCoords, kPBar, kRhoBar, kUBar_vec, kGamma);
 
       // Add wave(s) + finalize
       std::vector<double> dir_vec = {1.0};
       for (int w = 0; w < kNumWaves; w++)
       {
-         Wave wave{p_amps[w], freqs[w], phases[w], speeds[w], dir_vec};
+         Wave wave{kPAmps[w], kFreqs[w], kPhases[w], kSpeeds[w], dir_vec};
          field.AddWave(wave);
       }
       field.Finalize();
 
       // Evaluate field
-      for (const double &time : times)
+      for (const double &time : kTimes)
       {
          // Compute
          field.Compute(time);
 
          // Check solutions
-         CheckSolution(coords, field.Density(), field.Momentum(),
+         CheckSolution(kCoords, field.Density(), field.Momentum(),
                         field.Energy(), time, kNumWaves);
       }
    }
@@ -242,7 +242,7 @@ TEST_CASE("Flowfield computation via AcousticField",
 
 #ifdef JABBER_WITH_APP
 
-TEST_CASE("Single 1D wave computation via app library", "[Compute] [App]")
+TEST_CASE("1D flowfield computation via app library", "[Compute] [App]")
 {
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
@@ -252,36 +252,36 @@ TEST_CASE("Single 1D wave computation via app library", "[Compute] [App]")
 
       // Set base flow in config
       BaseFlowParams &base_flow = config.BaseFlow();
-      base_flow.rho = rho_bar;
-      base_flow.p = p_bar;
-      base_flow.U = std::vector<double>(1, U_bar);
-      base_flow.gamma = gamma;
+      base_flow.rho = kRhoBar;
+      base_flow.p = kPBar;
+      base_flow.U = std::vector<double>(1, kUBar);
+      base_flow.gamma = kGamma;
 
       // Set source in config
       for (int w = 0; w < kNumWaves; w++)
       {
          SourceParams<SourceOption::SingleWave> wave;
-         wave.amp = p_amps[w];
+         wave.amp = kPAmps[w];
          wave.direction.resize(1, 1.0);
-         wave.freq = freqs[w];
-         wave.phase = phases[w]*180.0/M_PI; // in degrees!
-         wave.speed = speeds[w] ? SpeedOption::Slow : SpeedOption::Fast;
+         wave.freq = kFreqs[w];
+         wave.phase = kPhases[w]*180.0/M_PI; // in degrees!
+         wave.speed = kSpeeds[w] ? SpeedOption::Slow : SpeedOption::Fast;
 
          // Add wave to Config sources
          config.Sources().push_back(wave);
       }
 
       // Initialize AcousticField
-      AcousticField field = InitializeAcousticField(config, coords, 1);
+      AcousticField field = InitializeAcousticField(config, kCoords, 1);
 
       // Evaluate field
-      for (const double &time : times)
+      for (const double &time : kTimes)
       {
          // Compute
          field.Compute(time);
 
          // Check solutions
-         CheckSolution(coords, field.Density(), field.Momentum(),
+         CheckSolution(kCoords, field.Density(), field.Momentum(),
                         field.Energy(), time, kNumWaves);
       }
    }
