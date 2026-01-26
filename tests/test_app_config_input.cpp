@@ -43,6 +43,7 @@ TEST_CASE("TOMLConfigInput::ParseBaseFlow", "[App][TOMLConfigInput]")
 TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
 {
 
+    constexpr int kSeed = 0;
     constexpr int kNumSourceOptions = static_cast<int>(SourceOption::Size);
 
     // Use generator to ensure that all source types are checked!
@@ -52,9 +53,8 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
     {   
         if (option == SourceOption::SingleWave)
         {
-            int seed = 0;
             SourceParams<SourceOption::SingleWave> wave; 
-            wave = GenerateRandomSource<SourceOption::SingleWave>(seed++);
+            wave = GenerateRandomSource<SourceOption::SingleWave>(kSeed);
             wave.speed = GENERATE(SpeedOption::Slow, SpeedOption::Fast);
 
             const std::string_view speed_str = 
@@ -84,9 +84,8 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
         }
         else if (option == SourceOption::WaveSpectrum)
         {
-            int seed = 0;
             SourceParams<SourceOption::WaveSpectrum> waves;
-            waves = GenerateRandomSource<SourceOption::WaveSpectrum>(seed++);
+            waves = GenerateRandomSource<SourceOption::WaveSpectrum>(kSeed);
 
             const int kNumWaves = waves.amps.size();
             std::vector<std::string> speed_strs(kNumWaves);

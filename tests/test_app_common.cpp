@@ -36,13 +36,6 @@ TEST_CASE("Normalize", "[App]")
     REQUIRE_THAT(dot_product, WithinULP(vec_mag, 0));
 }
 
-TEST_CASE("InitializeAcousticField", "[App]")
-{
-    // TODO.
-    // Main thing is to ensure base flow and all waves, from a given config, are sufficient.
-    // This test will become more important when we have transfer functions as well...
-}
-
 } // jabber_test
 
 #endif // JABBER_WITH_APP
