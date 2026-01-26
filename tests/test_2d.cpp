@@ -55,7 +55,7 @@ static const std::array<std::vector<double>,2>
 /**
  * @brief Coordinates data, in XY XY ordering.
  * 
- * @details Same extent as 1D, in both directions
+ * @details Same extent as 1D, in both directions.
  */
 static const std::array<double, kNumPts*2> kCoords
                         = GenerateRandomArr<kNumPts*2>(kSeed,0.0,2.0);
@@ -268,7 +268,7 @@ TEST_CASE("2D flowfield computation via AcousticField",
    }
 }
 
-// #ifdef JABBER_WITH_APP
+#ifdef JABBER_WITH_APP
 
 TEST_CASE("2D flowfield computation via app library", "[2D][Compute][App]")
 {
@@ -315,6 +315,6 @@ TEST_CASE("2D flowfield computation via app library", "[2D][Compute][App]")
    }
 }
 
-// #endif // JABBER_WITH_APP
+#endif // JABBER_WITH_APP
 
 } // jabber_test
