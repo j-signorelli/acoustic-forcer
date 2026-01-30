@@ -43,6 +43,10 @@ int main(int argc, char *argv[])
       ("f,fields", "Fields to visualize with GLVis ('rho', 'rhoV', 'rhoE').",
                         cxxopts::value<std::vector<std::string>>()
                         ->default_value("rho,rhoV,rhoE"))
+      ("s,dt,timestep", "Timestep to use.", 
+                        cxxopts::value<double>()->default_value("0.0"))
+      ("t,nt,num_timesteps", "Number of timesteps to run to.",
+                        cxxopts::value<int>()->default_value("500"))
       ("h,help", "Print usage information.");
 
    cxxopts::ParseResult result = options.parse(argc, argv);
@@ -69,6 +73,8 @@ int main(int argc, char *argv[])
    const double extent = result["extent"].as<double>();
    const std::vector<std::string> fields = result["fields"]
                                              .as<std::vector<std::string>>();
+   const double timestep = result["timestep"].as<double>();
+   const int num_timesteps = result["num_timesteps"].as<int>();
 
    // Parse config file
    std::string config_file = result["config"].as<std::string>();
@@ -128,18 +134,13 @@ int main(int argc, char *argv[])
    // Initialize AcousticField
    AcousticField field = InitializeAcousticField(conf, coords, dim);
 
-   // Compute at time in config
-   field.Compute(conf.Comp().t0);
-
    // Initialize solution FE spaces + grid functions
    FiniteElementSpace s_fespace(&mesh, &fec, 1);
    FiniteElementSpace v_fespace(&mesh, &fec, 1, Ordering::byNODES);
-   GridFunction rho_gf(&s_fespace), rhoV_gf(&v_fespace), rhoE_gf(&s_fespace);
-   rho_gf.NewDataAndSize(field.Density().data(), rho_gf.Size());
-   rhoV_gf.NewDataAndSize(field.Momentum().data(), rhoV_gf.Size());
-   rhoE_gf.NewDataAndSize(field.Energy().data(), rhoE_gf.Size());
+   GridFunction rho_gf(&s_fespace, field.Density().data()),
+               rhoV_gf(&v_fespace, field.Momentum().data()),
+               rhoE_gf(&s_fespace, field.Energy().data());
 
-   // Write to GLVis windows
    const int visport = 19916;
    constexpr std::string_view vishost = "localhost";
    std::string keys;
@@ -155,26 +156,35 @@ int main(int argc, char *argv[])
    socketstream rho_sock;
    socketstream rhoV_sock;
    socketstream rhoE_sock;
-   int offset = 0;
 
-   for (const std::string &field : fields)
+
+   double t = conf.Comp().t0;
+   for (int i = 0; i < num_timesteps; i++)
    {
-      if (field == "rho")
+
+      field.Compute(t);
+
+      t += timestep;
+
+      // Write to GLVis windows
+      int offset = 0;
+      for (const std::string &field : fields)
       {
-         VisualizeField(rho_sock, vishost.data(), visport, rho_gf, "Density",
-                        offset, 0, Wx, Wy, keys.data());
-         offset += Wx;
-      }
-      else if (field == "rhoV")
-      {
-         VisualizeField(rhoV_sock, vishost.data(), visport, rhoV_gf, "Momentum",
-                        offset, 0, Wx, Wy, keys.data(), true);
-         offset += Wx;
-      }
-      else if (field == "rhoE")
-      {
-         VisualizeField(rhoE_sock, vishost.data(), visport, rhoE_gf, "Energy",
-                        offset, 0, Wx, Wy, keys.data());
+         if (field == "rho")
+         {
+            VisualizeField(rho_sock, vishost.data(), visport, rho_gf, "Density",
+                           offset, 0, Wx, Wy, keys.data());
+         }
+         else if (field == "rhoV")
+         {
+            VisualizeField(rhoV_sock, vishost.data(), visport, rhoV_gf, "Momentum",
+                           offset, 0, Wx, Wy, keys.data(), true);
+         }
+         else if (field == "rhoE")
+         {
+            VisualizeField(rhoE_sock, vishost.data(), visport, rhoE_gf, "Energy",
+                           offset, 0, Wx, Wy, keys.data());
+         }
          offset += Wx;
       }
    }
