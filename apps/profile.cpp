@@ -61,12 +61,12 @@ int main(int argc, char *argv[])
       return 1;
    }
 
-   const int kDim = result["dim"].as<int>();
-   const std::size_t kNumPtsD = result["num_points"].as<std::size_t>();
-   const std::size_t kNumPtsTotal = std::pow(kNumPtsD,kDim);
-   const double kExtent = result["extent"].as<double>();
-   const int kPasses = result["passes"].as<int>();
-   const int kWarmupPasses = result["warmup"].as<int>();
+   const int dim = result["dim"].as<int>();
+   const std::size_t num_pts_d = result["num_points"].as<std::size_t>();
+   const std::size_t num_pts_total = std::pow(num_pts_d,dim);
+   const double extent = result["extent"].as<double>();
+   const int passes = result["passes"].as<int>();
+   const int warmup_passes = result["warmup"].as<int>();
 
    // Parse config file
    std::string config_file = result["config"].as<std::string>();
@@ -76,32 +76,32 @@ int main(int argc, char *argv[])
    // Output grid information to console
    std::cout << "Grid\n";
    std::cout << "\tDimension: ";
-   for (int d = 0; d < kDim; d++)
+   for (int d = 0; d < dim; d++)
    {
-      std::cout << kNumPtsD << (d+1==kDim ? "" : "x");
+      std::cout << num_pts_d << (d+1==dim ? "" : "x");
    }
    std::cout << std::endl;
    std::cout << "\tExtents: ";
-   for (int d = 0; d < kDim; d++)
+   for (int d = 0; d < dim; d++)
    {
-      std::cout << "[0," << kExtent << "]" << ((d + 1 == kDim) ? "" : "x");
+      std::cout << "[0," << extent << "]" << ((d + 1 == dim) ? "" : "x");
    }
    std::cout << std::endl;
-   std::cout << "\tNumber of points: " << kNumPtsTotal << std::endl;
-   std::cout << "\tSpacing: " << (kExtent/(kNumPtsD-1.0)) << std::endl;
+   std::cout << "\tNumber of points: " << num_pts_total << std::endl;
+   std::cout << "\tSpacing: " << (extent/(num_pts_d-1.0)) << std::endl;
 
-   // Create a simple [0,1]^kDim grid
-   std::vector<double> coords(kNumPtsTotal*kDim);
-   CreateGrid(kDim, kNumPtsD, kExtent, coords);
+   // Create a simple [0,1]^dim grid
+   std::vector<double> coords(num_pts_total*dim);
+   CreateGrid(dim, num_pts_d, extent, coords);
 
    // Initialize AcousticField
-   AcousticField field = InitializeAcousticField(conf, coords, kDim);
+   AcousticField field = InitializeAcousticField(conf, coords, dim);
 
 
    // Create an array of randomized times
    std::mt19937 gen(0);
    std::uniform_real_distribution<double> real_dist(0,1);
-   std::vector<double> time_rand(kPasses+kWarmupPasses);
+   std::vector<double> time_rand(passes+warmup_passes);
    for (int i = 0; i < time_rand.size(); i++)
    {
       time_rand[i] = real_dist(gen);
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
 
    // Run profiling loop
    std::vector<std::chrono::duration<double, std::micro>> 
-      compute_times(kPasses+kWarmupPasses);
+      compute_times(passes+warmup_passes);
    for (int i = 0; i < time_rand.size(); i++)
    {
       const std::chrono::time_point<std::chrono::steady_clock> start =
@@ -121,25 +121,25 @@ int main(int argc, char *argv[])
       compute_times[i] = 
             std::chrono::duration_cast<std::chrono::microseconds>(end - start);
       
-      if (i < kWarmupPasses)
+      if (i < warmup_passes)
       {
          std::cout << "Warmup Pass #" << (i+1) << ": " << compute_times[i]
                    << std::endl;
       }
       else
       {
-         std::cout << "Pass #" << (i+1-kWarmupPasses) << ": "
+         std::cout << "Pass #" << (i+1-warmup_passes) << ": "
                    << compute_times[i] << std::endl;
       }
    }
 
    // Compute the average compute time after warmups
    std::chrono::duration<double, std::micro> total_dur(0.0);
-   for (int i = 0; i < kPasses; i++)
+   for (int i = 0; i < passes; i++)
    {
-      total_dur += compute_times[i+kWarmupPasses];
+      total_dur += compute_times[i+warmup_passes];
    }
-   std::chrono::duration<double, std::micro> ave_dur = total_dur/kPasses;
+   std::chrono::duration<double, std::micro> ave_dur = total_dur/passes;
 
    std::cout << LINE << std::endl << "Average Compute() Time: " << ave_dur << std::endl;
    return 0;
