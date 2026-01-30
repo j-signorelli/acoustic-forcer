@@ -38,9 +38,9 @@ int main(int argc, char *argv[])
       ("n,num_points", "Number grid points in each dimension.",
                         cxxopts::value<std::size_t>()->default_value("100"))
       ("e,extent", "Grid extent in each direction (such that domain is "
-                     "[0,extent]^dim)",
+                     "[0,extent]^dim).",
                         cxxopts::value<double>()->default_value("1.0"))
-      ("f,fields", "Fields to visualize with GLVis ('rho', 'rhoV', 'rhoE')",
+      ("f,fields", "Fields to visualize with GLVis ('rho', 'rhoV', 'rhoE').",
                         cxxopts::value<std::vector<std::string>>()
                         ->default_value("rho,rhoV,rhoE"))
       ("h,help", "Print usage information.");
