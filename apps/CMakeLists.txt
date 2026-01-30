@@ -27,7 +27,7 @@ if (JABBER_BUILD_VIZ)
    find_package(MFEM 4.8 REQUIRED CONFIG)
    message(STATUS "Found MFEM config: TRUE")
 
-   add_executable(jabber_viz visualizer.cpp)
+   add_executable(jabber_viz viz.cpp)
    set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY 
                                                    jabber_viz)
 
@@ -44,7 +44,7 @@ endif()
 # Build Jabber profiler app
 if (JABBER_BUILD_PROFILER)
 
-   add_executable(jabber_profile profiler.cpp)
+   add_executable(jabber_profile profile.cpp)
    set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY 
                                                    jabber_profile)
 
