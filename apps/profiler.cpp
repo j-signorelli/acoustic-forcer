@@ -5,12 +5,16 @@
 #include <iostream>
 #include <cmath>
 #include <regex>
+#include <chrono>
+#include <random>
 
 using namespace jabber;
 using namespace jabber_app;
 
+/// Create a dummy grid.
 void CreateGrid(const int dim, const int num_pts_d, const double extent, 
                   std::vector<double> &coords);
+
 
 int main(int argc, char *argv[])
 {
@@ -26,15 +30,17 @@ int main(int argc, char *argv[])
    options.add_options()
       ("c,config", "Config file.", cxxopts::value<std::string>())
       ("d,dim", "Grid dimension (1,2,3).", 
-                        cxxopts::value<int>()->default_value("2"))
+                        cxxopts::value<int>()->default_value("3"))
       ("n,num_points", "Number grid points in each dimension.",
-                        cxxopts::value<std::size_t>()->default_value("50"))
+                        cxxopts::value<std::size_t>()->default_value("100"))
       ("e,extent", "Grid extent in each direction (such that domain is "
-                     "[0,extent]^dim)",
+                     "[0,extent]^dim).",
                         cxxopts::value<double>()->default_value("1.0"))
-      ("f,fields", "Fields to visualize with GLVis ('rho', 'rhoV', 'rhoE')",
-                        cxxopts::value<std::vector<std::string>>()
-                        ->default_value("rho,rhoV,rhoE"))
+      ("p,passes", "Number of passes to Compute() to profile, using "
+                   "randomized times.",
+                        cxxopts::value<int>()->default_value("100"))
+      ("w,warmup", "Number of warmup passes to Compute(), using randomized "
+                   "times.", cxxopts::value<int>()->default_value("10"))
       ("h,help", "Print usage information.");
 
    cxxopts::ParseResult result = options.parse(argc, argv);
@@ -55,12 +61,12 @@ int main(int argc, char *argv[])
       return 1;
    }
 
-   const int dim = result["dim"].as<int>();
-   const std::size_t num_pts_d = result["num_points"].as<std::size_t>();
-   const std::size_t num_pts_total = std::pow(num_pts_d,dim);
-   const double extent = result["extent"].as<double>();
-   const std::vector<std::string> fields = result["fields"]
-                                             .as<std::vector<std::string>>();
+   const int kDim = result["dim"].as<int>();
+   const std::size_t kNumPtsD = result["num_points"].as<std::size_t>();
+   const std::size_t kNumPtsTotal = std::pow(kNumPtsD,kDim);
+   const double kExtent = result["extent"].as<double>();
+   const int kPasses = result["passes"].as<int>();
+   const int kWarmupPasses = result["warmup"].as<int>();
 
    // Parse config file
    std::string config_file = result["config"].as<std::string>();
@@ -70,24 +76,72 @@ int main(int argc, char *argv[])
    // Output grid information to console
    std::cout << "Grid\n";
    std::cout << "\tDimension: ";
-   for (int d = 0; d < dim; d++)
+   for (int d = 0; d < kDim; d++)
    {
-      std::cout << num_pts_d << (d+1==dim ? "" : "x");
+      std::cout << kNumPtsD << (d+1==kDim ? "" : "x");
    }
    std::cout << std::endl;
    std::cout << "\tExtents: ";
-   for (int d = 0; d < dim; d++)
+   for (int d = 0; d < kDim; d++)
    {
-      std::cout << "[0," << extent << "]" << ((d + 1 == dim) ? "" : "x");
+      std::cout << "[0," << kExtent << "]" << ((d + 1 == kDim) ? "" : "x");
    }
    std::cout << std::endl;
-   std::cout << "\tNumber of points: " << num_pts_total << std::endl;
-   std::cout << "\tSpacing: " << (extent/(num_pts_d-1.0)) << std::endl;
+   std::cout << "\tNumber of points: " << kNumPtsTotal << std::endl;
+   std::cout << "\tSpacing: " << (kExtent/(kNumPtsD-1.0)) << std::endl;
 
-   // Create a simple [0,1]^dim grid
-   std::vector<double> coords(num_pts_total*dim);
-   CreateGrid(dim, num_pts_d, extent, coords);
+   // Create a simple [0,1]^kDim grid
+   std::vector<double> coords(kNumPtsTotal*kDim);
+   CreateGrid(kDim, kNumPtsD, kExtent, coords);
 
+   // Initialize AcousticField
+   AcousticField field = InitializeAcousticField(conf, coords, kDim);
+
+
+   // Create an array of randomized times
+   std::mt19937 gen(0);
+   std::uniform_real_distribution<double> real_dist(0,1);
+   std::vector<double> time_rand(kPasses+kWarmupPasses);
+   for (int i = 0; i < time_rand.size(); i++)
+   {
+      time_rand[i] = real_dist(gen);
+   }
+
+   // Run profiling loop
+   std::vector<std::chrono::duration<double, std::micro>> 
+      compute_times(kPasses+kWarmupPasses);
+   for (int i = 0; i < time_rand.size(); i++)
+   {
+      const std::chrono::time_point<std::chrono::steady_clock> start =
+        std::chrono::steady_clock::now();
+      field.Compute(time_rand[i]);
+      const std::chrono::time_point<std::chrono::steady_clock> end =
+        std::chrono::steady_clock::now();
+
+      compute_times[i] = 
+            std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+      
+      if (i < kWarmupPasses)
+      {
+         std::cout << "Warmup Pass #" << (i+1) << ": " << compute_times[i]
+                   << std::endl;
+      }
+      else
+      {
+         std::cout << "Pass #" << (i+1-kWarmupPasses) << ": "
+                   << compute_times[i] << std::endl;
+      }
+   }
+
+   // Compute the average compute time after warmups
+   std::chrono::duration<double, std::micro> total_dur(0.0);
+   for (int i = 0; i < kPasses; i++)
+   {
+      total_dur += compute_times[i+kWarmupPasses];
+   }
+   std::chrono::duration<double, std::micro> ave_dur = total_dur/kPasses;
+
+   std::cout << LINE << std::endl << "Average Compute() Time: " << ave_dur << std::endl;
    return 0;
 }
 
