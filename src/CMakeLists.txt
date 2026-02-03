@@ -10,12 +10,14 @@ target_sources(libjabber
         acoustic_field.cpp
         transfer_functions.cpp
         kernels.cpp
+        psd.cpp
     PUBLIC
         FILE_SET jabber_headers TYPE HEADERS
         FILES
             acoustic_field.hpp
             transfer_functions.hpp
             kernels.hpp
+            psd.hpp
             jabber.hpp)
 
 target_link_libraries(libjabber PUBLIC compiler_flag_requirements)
