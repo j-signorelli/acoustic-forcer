@@ -194,8 +194,8 @@ public:
     *       \ref omega_, and \ref mod_k_hat_).
     *    2. Assembles pressure wave amplitudes in \ref amplitude_ such that
     *       they are contiguous in memory.
-    *    3. Allocates the flowfield solution memory \ref rho, \ref rhoV, 
-    *       and \ref rhoE vectors.
+    *    3. Allocates the flowfield solution memory \ref rho_, \ref rhoV_, 
+    *       and \ref rhoE_ vectors.
     *
     */
    void Finalize();
