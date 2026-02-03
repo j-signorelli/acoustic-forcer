@@ -11,11 +11,11 @@ namespace jabber
    * 
    * 
    * @details This function was designed following Intel guidelines for 
-   * autovectorizable code.  Because only inner-most loops are candidates for
-   * vectorization, this function is templated with \p TDim for "loop unrolling"
-   * on the momentum terms. Vectorization is across \p num_pts as that is
-   * expected to be the largest value, so data dimensioned by it must be
-   * stored in an SoA-format for contiguous memory accesses across hardware
+   * auto-vectorizable code.  Because only inner-most loops are candidates for
+   * vectorization, this function is templated with \p TDim for "loop
+   * unrolling" on the momentum terms. Vectorization is across \p num_pts as
+   * that is expected to be the largest value, so data dimensioned by it must
+   * be stored in an SoA-format for contiguous memory accesses across hardware
    * threads.
    * 
    * All inner loops have been verified to be vectorized by Intel `icpx` 
@@ -44,13 +44,13 @@ namespace jabber
    * @param mod_wave_dirs    **Modified** acoustic wave normalized direction
    *                         vectors -- For fast acoustic waves, this is simply
    *                         just the normalized wave direction vector, 
-   *                         $\hat{k}$. For slow acoustic waves, this is the
-   *                         **inverted** normalized wave direction vector,
-   *                         $-\hat{k}$. This is dimensioned as \p TDim x 
+   *                         \f$\hat{k}\f$. For slow acoustic waves, this is
+   *                         the **inverted** normalized wave direction vector,
+   *                         \f$-\hat{k}\f$. This is dimensioned as \p TDim x 
    *                         \p num_waves but flattened.
-   * @param k_dot_x_p_phi    $\vec{k}\cdot x+\phi$ term computed for all waves
-   *                         at all points, dimensioned as \p num_waves x 
-   *                          \p num_pts but flattened.
+   * @param k_dot_x_p_phi    \f$\vec{k}\cdot x+\phi\f$ term computed for all
+   *                         waves at all points, dimensioned as \p num_waves 
+   *                         x \p num_pts but flattened.
    * @param t                Time.
    * @param rho              Output flow density to compute, sized \p num_pts.
    * @param rhoV             Output flow momentum vector to compute,
