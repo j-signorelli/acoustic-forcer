@@ -126,7 +126,9 @@ struct SourceParams<SourceOption::WaveSpectrum>
 using SourceParamsVariant 
    = std::variant<SourceParams<SourceOption::SingleWave>,
                   SourceParams<SourceOption::WaveSpectrum>>;
-
+static_assert(std::variant_size_v<SourceParamsVariant> == 
+                     static_cast<std::size_t>(SourceOption::Size),
+              "Missing SourceParams in SourceParamsVariant.");
 
 // ----------------------------------------------------------------------------
 
