@@ -2,8 +2,7 @@
 #define JABBER_PSD
 
 #include <span>
-#include <functional>
-
+#include <map>
 namespace jabber
 {
 
@@ -34,13 +33,13 @@ namespace jabber
  * V_k=\sqrt{2P_k}.
  * \f]
  * 
- * To allow for an arbitrary discretization of frequencies, the PSD must
+ * For an arbitrary discretization of frequencies in Jabber, the PSD must
  * be represented in a continuous form, in which case this integral may then be
  * exactly evaluated for frequency bins. To support this, lightweight
  * classes are provided in @ref psd_exact_group to formulate a
  * continuous representation of a digitized or discrete PSD and then compute
  * "exact" powers. For general use cases, discretizations using quadrature on a 
- * provided continuous PSD function are given in @ref psd_quad_group.
+ * provided discrete PSD are given in @ref psd_quad_group.
  * 
  * @{
  * 
@@ -51,8 +50,10 @@ namespace jabber
 
 
 /**
- * @brief Compute energy-conserved powers from a PSD using a midpoint Riemann
- * sum.
+ * @brief Compute energy-conserved powers from a discrete PSD using a midpoint
+ * Riemann sum.
+ * 
+ * @todo Cleanup / improve this description...
  * 
  * @details Specifically, this function evaluates
  * 
@@ -96,8 +97,8 @@ void DiscretizePSDRiemann(std::span<const double> freqs,
 class BasePSD
 {
 public:
-   /// Evaluate the PSD at \p x.
-   virtual double operator() (double x) const = 0;
+   /// Evaluate the PSD at \p f.
+   virtual double operator() (double f) const = 0;
    
    /**
     * @brief Compute energy-conserved powers using exact integration.
@@ -113,17 +114,17 @@ public:
 
 /**
  * @brief Piecewise log-log interpolation of discrete PSD data.
+ * 
+ * @details Piecewise linear fit but on log-log scaling.
  */
 class PWLogLogPSD : public BasePSD
 {
 private:
-   const std::vector<double> x_;
-   const std::vector<double> y_;
+   std::map<double, double> freq_psd_map_;
 public:
-   PWLogLogPSD(std::span<const double> x, std::span<const double> y)
-   : x_(x.begin(), x.end()), y_(y.begin(), y.end()) {}
+   PWLogLogPSD(std::span<const double> freq, std::span<const double> psd);
 
-   double operator() (double x) const override;
+   double operator() (double f) const override;
 
    void Discretize(std::span<const double> freqs, 
                               std::span<double> powers) const override;
