@@ -5,37 +5,41 @@
 namespace jabber
 {
 
-void DiscretizePSDRiemann(std::function<double(double)> psd,
-                           std::span<const double> freqs,
+void DiscretizePSDRiemann(std::span<const double> freqs,
+                           std::span<const double> psd,
                            std::span<double> powers,
                            bool log_scale)
 {
-   // Define lambda fxn for computing Δf
-   auto compute_df = 
-   [log_scale](const double fkm1, const double fkp1)
-   {
-      if (log_scale)
-      {
-         double log_fkm1 = std::log10(fkm1);
-         double log_fkp1 = std::log10(fkp1);
-         return std::pow(10, (log_fkp1-log_fkm1)/2);
-      }
-      else
-      {
-         return (fkp1-fkm1)/2;
-      }
-   };
-
-   // Compute all interior powers
    const std::size_t N = freqs.size()-1;
-   for (std::size_t i = 1; i < N; i++)
-   {  
-      powers[i] = psd(freqs[i])*compute_df(freqs[i-1], freqs[i+1]);
-   }
 
-   //  Handle boundaries
-   powers[0] = psd(freqs[0])*(2*compute_df(freqs[1], freqs[0]));
-   powers[N] = psd(freqs[N])*(2*compute_df(freqs[N-1], freqs[N]));
+   if (!log_scale)
+   {
+      // Compute all interior powers
+      for (std::size_t i = 1; i < N; i++)
+      {  
+         powers[i] = psd[i]*(freqs[i+1]-freqs[i-1])/2.0;
+      }
+
+      //  Handle boundaries
+      powers[0] = psd[0]*(freqs[1]-freqs[0])/2.0;
+      powers[N] = psd[N]*(freqs[N]-freqs[N-1])/2.0;
+   }
+   else
+   {
+      // Can be shown that log10 midpoint of f_1 and f_2 is sqrt(f_1*f_2)
+
+      // Compute all interior powers
+      for (std::size_t i = 1; i < N; i++)
+      {  
+         const double df = std::sqrt(freqs[i]*freqs[i+1]) 
+                           - std::sqrt(freqs[i]*freqs[i-1]);
+         powers[i] = psd[i]*df;
+      }
+      
+      //  Handle boundaries
+      powers[0] = psd[0]*(std::sqrt(freqs[0]*freqs[1]) - freqs[0]);
+      powers[N] = psd[N]*(freqs[N] - std::sqrt(freqs[N]*freqs[N-1]));
+   }
 }
 
 } // namespace jabber

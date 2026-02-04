@@ -44,7 +44,7 @@ namespace jabber
  * 
  * @{
  * 
- * @defgroup psd_quad_group Quadrature-based PSD Discretization.
+ * @defgroup psd_quad_group Quadrature-Based Discretization
  * @{
  *
  */
@@ -74,14 +74,14 @@ namespace jabber
  * if \p log_scale is false. If \p log_scale is true, then the midpoints are
  * computed on a log10 scale.
  * 
- * @param psd           Input continuous PSD function \f$S(f)\f$.
  * @param freqs         Input discrete center frequencies in ascending order.
+ * @param psd           Input PSD evaluated at \p freqs, \f$S(f_k)\f$.
  * @param powers        Output powers.
  * @param log_scale     True if midpoints taken on log10 scale, false
  *                      otherwise.
  */
-void DiscretizePSDRiemann(std::function<double(double)> psd,
-                           std::span<const double> freqs,
+void DiscretizePSDRiemann(std::span<const double> freqs,
+                           std::span<const double> psd,
                            std::span<double> powers,
                            bool log_scale=false);
 
@@ -114,16 +114,20 @@ public:
 /**
  * @brief Piecewise log-log interpolation of discrete PSD data.
  */
-class PiecewiseLogLog : public BasePSD
+class PWLogLogPSD : public BasePSD
 {
 private:
    const std::vector<double> x_;
    const std::vector<double> y_;
 public:
-   PiecewiseLogLog(std::span<const double> x, std::span<const double y>)
+   PWLogLogPSD(std::span<const double> x, std::span<const double> y)
    : x_(x.begin(), x.end()), y_(y.begin(), y.end()) {}
 
-   /// TODO
+   double operator() (double x) const override;
+
+   void Discretize(std::span<const double> freqs, 
+                              std::span<double> powers) const override;
+
 };
 
 /**
