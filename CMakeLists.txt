@@ -28,14 +28,13 @@ option(JABBER_BUILD_TESTS
 # If building any apps
 set(JABBER_BUILD_APP OFF)
 if (JABBER_BUILD_PARTICIPANT OR JABBER_BUILD_VIZ OR JABBER_BUILD_PROFILER
-   OR JABBER_INSTALL_APP_LIB)
+                                                   OR JABBER_INSTALL_APP_LIB)
    set(JABBER_BUILD_APP ON)
+   add_compile_definitions(JABBER_WITH_APP)
 endif()
 
 # Property of all targets to install
 set_property(GLOBAL PROPERTY JABBER_TARGETS_PROPERTY)
-
-set(DOC_PATHS ${CMAKE_SOURCE_DIR}/src)
 
 # Build Jabber library
 add_subdirectory(src)
@@ -49,9 +48,6 @@ if (JABBER_BUILD_APP)
    
    # Add app subdirectory
    add_subdirectory(apps)
-
-   # Add jabber_app library to doc paths
-   list(APPEND DOC_PATHS ${CMAKE_SOURCE_DIR}/app/src)
    
 endif()
 

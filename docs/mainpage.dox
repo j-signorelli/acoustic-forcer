@@ -1,7 +1,18 @@
 /** 
  * @mainpage Jabber
  * 
- * @details Jabber is a planar wave acoustic forcing library 
- * and app-suite to support the modeling of freestream disturbances
- * in high-speed wind tunnels for fluid dynamics simulations.
+ * @details Jabber is a library and app-suite to support the modeling of 
+ * freestream disturbances in high-speed wind tunnels for fluid dynamics 
+ * simulations. For more details, please refer to the following list of 
+ * features:
+ *
+ * # Core Library
+ * - @ref psd_group
+ * - Transfer functions
+ * - Initializing and evaluating flowfield with acoustic disturbances
+ * - Compute kernel(s)
+ * 
+ * # App Library
+ * 
+ * # App Suite
  */
