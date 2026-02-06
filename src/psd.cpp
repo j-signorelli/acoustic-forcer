@@ -6,82 +6,165 @@
 namespace jabber
 {
 
-void DiscretizePSDRiemann(std::span<const double> freqs,
-                           std::span<const double> psd,
-                           std::span<double> powers,
-                           bool log_scale)
+
+Interval Interval::ComputeInterval(std::span<const double> freqs,
+                                    std::size_t i,
+                                    Interval::Method method)
 {
    const std::size_t N = freqs.size()-1;
 
-   if (!log_scale)
+   if (method == Interval::Method::Midpoint)
    {
-      // Compute all interior powers
-      for (std::size_t i = 1; i < N; i++)
-      {  
-         powers[i] = psd[i]*(freqs[i+1]-freqs[i-1])/2.0;
+      // Left-boundary
+      if (i == 0)
+      {
+         return Interval{freqs[0],
+                         (freqs[0] + freqs[1])/2.0};
       }
-
-      //  Handle boundaries
-      powers[0] = psd[0]*(freqs[1]-freqs[0])/2.0;
-      powers[N] = psd[N]*(freqs[N]-freqs[N-1])/2.0;
+      // Right-boundary
+      else if (i == N)
+      {
+         return Interval{(freqs[N-1] + freqs[N])/2.0, 
+                         freqs[N]};
+      }
+      // Interior
+      else
+      {
+         return Interval{(freqs[i] + freqs[i-1])/2.0,
+                         (freqs[i] + freqs[i+1])/2.0};
+      }
+   }
+   else if (method == Interval::Method::MidpointLog10)
+   {
+      // Left-boundary
+      if (i == 0)
+      {
+         return Interval{freqs[0],
+                         std::sqrt(freqs[0]*freqs[1])};
+      }
+      // Right-boundary
+      else if (i == N)
+      {
+         return Interval{std::sqrt(freqs[N]*freqs[N-1]),
+                         freqs[N]};
+      }
+      // Interior
+      else
+      {
+         return Interval{std::sqrt(freqs[i]*freqs[i-1]), 
+                         std::sqrt(freqs[i]*freqs[i+1])};
+      }
    }
    else
    {
-      // Can be shown that log10 midpoint of f_1 and f_2 is sqrt(f_1*f_2)
+      throw std::logic_error("Invalid/Unimplemented Interval::Method");
+   }
+}
 
-      // Compute all interior powers
-      for (std::size_t i = 1; i < N; i++)
-      {  
-         const double df = std::sqrt(freqs[i]*freqs[i+1]) 
-                           - std::sqrt(freqs[i]*freqs[i-1]);
-         powers[i] = psd[i]*df;
+void DiscretizePSDRiemann(std::span<const double> freqs,
+                           std::span<const double> psd,
+                           std::span<double> powers,
+                           Interval::Method method)
+{
+   // TODO.
+}
+
+double PWLinearPSD::Integrate(double f1, double f2) const
+{
+   // Determine pieces where f1 and f2 fall within
+   auto it = Map().lower_bound(f1);
+   if (it == Map().end())
+   {
+      it = Map().begin();
+   }
+
+   auto it_last = Map().upper_bound(f2);
+   if (it_last == Map().end())
+   {
+      it_last = std::prev(Map().end());
+   }
+   auto it_stop = std::next(it_last);
+
+   double integral_val = 0.0;
+   double x0 = f1;
+   double y0, x1, y1, m;
+
+   // Integrate through
+   it++;
+   for(; it != it_stop; it++)
+   {
+      y0 = operator()(x0);
+      m = it->second.m;
+      if (it != it_last)
+      {
+         x1 = it->first;
+         y1 = it->second.y;
       }
-      
-      //  Handle boundaries
-      powers[0] = psd[0]*(std::sqrt(freqs[0]*freqs[1]) - freqs[0]);
-      powers[N] = psd[N]*(freqs[N] - std::sqrt(freqs[N]*freqs[N-1]));
+      else
+      {
+         x1 = f2;
+         y1 = operator()(x1);
+      }
+
+      integral_val += 0.5*m*(x1*x1-x0*x0)+(y1-x1*m)*(x1-x0);
+
+      x0 = x1;
    }
+
+   return integral_val;
 }
 
-PWLogLogPSD::PWLogLogPSD(std::span<const double> freq, 
-                           std::span<const double> psd)
+double PWLogLogPSD::Integrate(double f1, double f2) const
 {
-   for (std::size_t i = 0; i < freq.size(); i++)
+   // Determine pieces where f1 and f2 fall within
+   auto it = Map().lower_bound(f1);
+   if (it == Map().end())
    {
-      freq_psd_map_.insert({freq[i], psd[i]});
-   }
-}
-
-double PWLogLogPSD::operator() (double f) const
-{
-   auto it = freq_psd_map_.upper_bound(f);
-
-   // Extrapolate from first/last interior curve
-   //  if f falls below/above min/max frequency
-   if (it == freq_psd_map_.begin())
-   {
-      it++;
-   }
-   if (it == freq_psd_map_.end())
-   {
-      it--;
+      it = Map().begin();
    }
 
-   const double f_2 = it->first;
-   const double psd_2 = it->second;
-   it--;
-   const double f_1 = it->first;
-   const double psd_1 = it->second;
+   auto it_last = Map().upper_bound(f2);
+   if (it_last == Map().end())
+   {
+      it_last = std::prev(Map().end());
+   }
+   auto it_stop = std::next(it_last);
 
-   const double m = (std::log(psd_2/psd_1))/(std::log(f_2/f_1));
+   double integral_val = 0.0;
+   double x0 = f1;
+   double y0, x1, y1, m;
 
-   return psd_1*std::pow((f/f_1), m);
-}
+   // Integrate through
+   it++;
+   for(; it != it_stop; it++)
+   {
+      y0 = operator()(x0);
+      m = it->second.m;
+      if (it != it_last)
+      {
+         x1 = it->first;
+         y1 = it->second.y;
+      }
+      else
+      {
+         x1 = f2;
+         y1 = operator()(x1);
+      }
 
-void PWLogLogPSD::Discretize(std::span<const double> freqs, 
-                              std::span<double> powers) const
-{
-   
+      // If slope within [-1-1e-8,-1+1e-8], use m=-1 integral
+      if (std::abs(m+1) > 1e-8)
+      {
+         integral_val += y0/(m+1)*(x1*std::pow(x1/x0, m)-x0);
+      }
+      else
+      {
+         integral_val += y0*x0*std::log(x1/x0);
+      }
+      x0 = x1;
+   }
+
+   return integral_val;
+
 }
 
 } // namespace jabber
