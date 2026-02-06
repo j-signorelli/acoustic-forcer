@@ -6,18 +6,20 @@ set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY libjabber)
 set_target_properties(libjabber PROPERTIES OUTPUT_NAME "jabber")
 
 target_sources(libjabber
-    PRIVATE 
+    PRIVATE
+        interpolant.cpp
         acoustic_field.cpp
         transfer_functions.cpp
         kernels.cpp
-        psd.cpp
+        #psd.cpp
     PUBLIC
         FILE_SET jabber_headers TYPE HEADERS
         FILES
+            interpolant.hpp
             acoustic_field.hpp
             transfer_functions.hpp
             kernels.hpp
-            psd.hpp
+            #psd.hpp
             jabber.hpp)
 
 target_link_libraries(libjabber PUBLIC compiler_flag_requirements)
