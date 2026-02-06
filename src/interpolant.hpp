@@ -35,6 +35,11 @@ private:
    /// Map of Key = x, Value=Line (y-value for x, and slope).
    std::map<double, Line> func_map_;
 
+protected:
+
+   /// Get const reference to \ref func_map_.
+   const std::map<double, Line>& Map() const { return func_map_; }
+
 public:
    /// Construct piecewise linear interpolant through ( \p x_k , \p y_k ).
    PWLinear(std::span<const double> x_k, std::span<const double> y_k);
@@ -56,6 +61,11 @@ private:
 
    /// Map of Key = x, Value=Line (y-value for x, and log-space slope).
    std::map<double, Line> func_map_;
+
+protected:
+
+   /// Get const reference to \ref func_map_.
+   const std::map<double, Line>& Map() const { return func_map_; }
 
 public:
    /**
