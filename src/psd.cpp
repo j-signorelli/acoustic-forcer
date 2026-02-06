@@ -72,10 +72,11 @@ void DiscretizePSDRiemann(std::span<const double> freqs,
 double PWLinearPSD::Integrate(double f1, double f2) const
 {
    // Determine pieces where f1 and f2 fall within
-   auto it = Map().lower_bound(f1);
+   auto it = Map().upper_bound(f1);
    if (it == Map().end())
    {
       it = Map().begin();
+      it++;
    }
 
    auto it_last = Map().upper_bound(f2);
@@ -90,7 +91,6 @@ double PWLinearPSD::Integrate(double f1, double f2) const
    double y0, x1, y1, m;
 
    // Integrate through
-   it++;
    for(; it != it_stop; it++)
    {
       y0 = operator()(x0);
@@ -117,10 +117,11 @@ double PWLinearPSD::Integrate(double f1, double f2) const
 double PWLogLogPSD::Integrate(double f1, double f2) const
 {
    // Determine pieces where f1 and f2 fall within
-   auto it = Map().lower_bound(f1);
+   auto it = Map().upper_bound(f1);
    if (it == Map().end())
    {
       it = Map().begin();
+      it++;
    }
 
    auto it_last = Map().upper_bound(f2);
@@ -135,7 +136,6 @@ double PWLogLogPSD::Integrate(double f1, double f2) const
    double y0, x1, y1, m;
 
    // Integrate through
-   it++;
    for(; it != it_stop; it++)
    {
       y0 = operator()(x0);
