@@ -164,7 +164,6 @@ double PWLogLogPSD::Integrate(double f1, double f2) const
    }
 
    return integral_val;
-
 }
 
 } // namespace jabber
