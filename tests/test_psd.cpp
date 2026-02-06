@@ -24,6 +24,7 @@ static constexpr std::array<double, 4> kPsd={1e-8, 5e-8, 7e-9, 2e-9};
 static constexpr std::array<double, 5> kFreqSample={0.1e3, 0.7e3, 5e3, 10e3,
                                                       100e3};
 
+
 TEST_CASE("ComputeInterval", "[PSD]")
 {
 
@@ -35,41 +36,60 @@ TEST_CASE("ComputeInterval", "[PSD]")
    const Interval::Method method = static_cast<Interval::Method>(m);
    DYNAMIC_SECTION("Interval Method " << m)
    {
-      std::array<Interval, 5> exact_sample_intervals;
+      // Interior index to test:
+      constexpr std::size_t kIdx = 2;
+
+      constexpr std::size_t N = kFreqSample.size()-1;
+
+      Interval left_exact, interior_exact, right_exact;
+
       if (method == Interval::Method::Midpoint)
       {
-         exact_sample_intervals = std::array<Interval,5>{
-                        Interval{0.1e3, (0.1e3+0.7e3)/2.0},
-                        Interval{(0.1e3+0.7e3)/2.0, (0.7e3+5e3)/2.0},
-                        Interval{(0.7e3+5e3)/2.0, (5e3+10e3)/2.0},
-                        Interval{(5e3+10e3)/2.0, (10e3+100e3)/2.0},
-                        Interval{(10e3+100e3)/2.0, 100e3}};
+         left_exact = Interval{kFreqSample[0], 
+                               (kFreqSample[0]+kFreqSample[1])/2.0};
+         interior_exact = Interval{
+                              (kFreqSample[kIdx]+kFreqSample[kIdx-1])/2.0, 
+                              (kFreqSample[kIdx]+kFreqSample[kIdx+1])/2.0};
+         right_exact = Interval{(kFreqSample[N-1]+kFreqSample[N])/2.0, 
+                                 kFreqSample[N]};
       }
       else if (method == Interval::Method::MidpointLog10)
       {
-         exact_sample_intervals = std::array<Interval,5>{
-               Interval{0.1e3,std::sqrt(0.1e3*0.7e3)},
-               Interval{std::sqrt(0.1e3*0.7e3), std::sqrt(0.7e3*5e3)},
-               Interval{std::sqrt(0.7e3*5e3), std::sqrt(5e3*10e3)},
-               Interval{std::sqrt(5e3*10e3), std::sqrt(10e3*100e3)},
-               Interval{std::sqrt(10e3*100e3), 100e3}};
+         left_exact = Interval{kFreqSample[0], 
+                               std::sqrt(kFreqSample[0]*kFreqSample[1])};
+         interior_exact = Interval{
+                           std::sqrt(kFreqSample[kIdx-1]*kFreqSample[kIdx]),
+                           std::sqrt(kFreqSample[kIdx+1]*kFreqSample[kIdx])};
+         right_exact = Interval{std::sqrt(kFreqSample[N]*kFreqSample[N-1]), 
+                                kFreqSample[N]};                   
       }
       else
       {
          const int m = static_cast<int>(method);
          FAIL("No unit test for interval method enumerator" << m << "!");
       }
-
-      for (std::size_t i = 0; i < kFreqSample.size(); i++)
+      std::map<std::size_t, Interval*> exact_intervals{{0, &left_exact}, 
+                                                       {kIdx, &interior_exact},
+                                                       {N, &right_exact}};
+      for (auto kv : exact_intervals)
       {
          Interval test_interval = 
-                     Interval::ComputeInterval(kFreqSample, i, method);
-         CAPTURE(i);
-         CHECK(exact_sample_intervals[i].f_left == test_interval.f_left);
-         CHECK(exact_sample_intervals[i].f_right == test_interval.f_right);
+                     Interval::ComputeInterval(kFreqSample, kv.first, method);
+         INFO("Index: " << kv.first);
+         CHECK(kv.second->f_left == test_interval.f_left);
+         CHECK(kv.second->f_right == test_interval.f_right);
       }
    }
 
+}
+
+TEST_CASE("PWLinearPSD integration", "[PSD]")
+{
+   SECTION("Single segment")
+   {
+      //PWLinearPSD psd({kFreqs[0], kFreqs[1]}, {kPsd[0], kPsd[1]});
+   }
+   // Integrate from 
 }
 
 } // namespace jabber_test
