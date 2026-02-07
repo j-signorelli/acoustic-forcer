@@ -69,13 +69,7 @@ TEST_CASE("Integration function verification", "[PSD]")
 TEST_CASE("ComputeInterval", "[Interval]")
 {
 
-   constexpr std::array<double, 3> kFreqSample={0.1e3, 10e3, 100e3};
-   
-   // End index:
-   constexpr std::size_t kN = kFreqSample.size()-1;
-
-   // Interior index to test
-   constexpr std::size_t kIdx = 1;
+   constexpr std::array<double, 3> kFreqSample={0.1e3, 10e3, 40e3};
 
    constexpr int kNumIntervalMethods = 
                                  static_cast<int>(Interval::Method::Size);
@@ -88,22 +82,15 @@ TEST_CASE("ComputeInterval", "[Interval]")
       std::array<Interval, 3> exact;
       if (method == Interval::Method::Midpoint)
       {
-         exact[0] = Interval{kFreqSample[0], 
-                               (kFreqSample[0]+kFreqSample[1])/2.0};
-         exact[kIdx] = Interval{(kFreqSample[kIdx]+kFreqSample[kIdx-1])/2.0, 
-                              (kFreqSample[kIdx]+kFreqSample[kIdx+1])/2.0};
-         exact[kN] = Interval{(kFreqSample[kN-1]+kFreqSample[kN])/2.0, 
-                                 kFreqSample[kN]};
+         exact[0] = Interval{0.1e3, 5.05e3};
+         exact[1] = Interval{5.05e3, 25e3};
+         exact[2] = Interval{25e3, 40e3};
       }
       else if (method == Interval::Method::MidpointLog10)
       {
-         exact[0] = Interval{kFreqSample[0], 
-                              std::sqrt(kFreqSample[0]*kFreqSample[1])};
-         exact[kIdx] = Interval{
-                           std::sqrt(kFreqSample[kIdx-1]*kFreqSample[kIdx]),
-                           std::sqrt(kFreqSample[kIdx+1]*kFreqSample[kIdx])};
-         exact[kN] = Interval{std::sqrt(kFreqSample[kN]*kFreqSample[kN-1]), 
-                              kFreqSample[kN]};                   
+         exact[0] = Interval{0.1e3, 1e3};
+         exact[1] = Interval{1e3, 20e3};
+         exact[2] = Interval{20e3, 40e3};                   
       }
       else
       {
