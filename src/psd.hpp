@@ -117,7 +117,7 @@ public:
    double f_right;
 
    /// Δf
-   double df() const { return f_right - f_left; }
+   double DeltaF() const { return f_right - f_left; }
 };
 
 /** @{

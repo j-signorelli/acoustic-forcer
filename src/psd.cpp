@@ -71,7 +71,10 @@ void DiscretizePSDRiemann(std::span<const double> freqs,
                            std::span<double> powers,
                            Interval::Method method)
 {
-   // TODO.
+   for (std::size_t i = 0; i < freqs.size(); i++)
+   {
+      powers[i] = psd[i]*Interval::ComputeInterval(freqs, i, method).DeltaF();
+   }
 }
 
 void BasePSD::Discretize(std::span<const double> freqs,
