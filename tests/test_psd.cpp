@@ -12,6 +12,7 @@
 
 using namespace jabber;
 using namespace Catch::Matchers;
+using namespace Catch::Generators;
 
 namespace jabber_test
 {
@@ -118,11 +119,17 @@ TEST_CASE("PWLinearPSD integration", "[PSD]")
                                      kY{2.0, 4.0};
       constexpr double kM = (kY[1]-kY[0])/(kX[1]-kX[0]);
 
+      
       const double kA=GENERATE(0.5,1.0,1.5); 
       const double kB=GENERATE(3.5,4.0,4.5);
-      
+      if (kA > kB)
+      {
+         FAIL("Error in test configuration. kA cannot be > kB.");
+      }
+
       // Definite integral of m(x-x0)+y0 computed via Wolfram Alpha
-      const double kExact = 0.5*(kB-kA)*(kM*(kA+kB-2*kX[0])+2*kY[0]);
+      const double kExact = ExactLinearIntegral(kX[0], kY[0], kX[1], kY[1], 
+                                                   kA, kB);
 
       PWLinearPSD psd(kX,kY);
       CAPTURE(kA, kB);
@@ -133,80 +140,56 @@ TEST_CASE("PWLinearPSD integration", "[PSD]")
    {
       constexpr std::array<double,4> kX{1.0, 3.0,  5.0,  7.0}, 
                                      kY{2.0, 4.0, -6.0, -8.0};
-      constexpr std::size_t kNumIv = kX.size() -1;
-      constexpr std::array<double,kNumIv> kM = 
-      [&]()
-      {
-         std::array<double, kNumIv> slopes;
-         for (std::size_t i = 0; i < kNumIv; i++)
-         {
-            slopes[i] = (kY[i+1]-kY[i])/(kX[i+1]-kX[i]);
-         }
-         return slopes;
-      }();
 
-      // Define function pointers of integral for each interval
-      const std::array<std::function<double(double,double)>,kNumIv> kExact =
-      [&]()
-      {
-         std::array<std::function<double(double,double)>,kNumIv> exact_funcs;
-         for (std::size_t i = 0; i < kNumIv; i++)
-         {
-            exact_funcs[i] = 
-            [&,i](double a, double b) -> double
-            {
-               return 0.5*(b-a)*(kM[i]*(a+b-2*kX[i])+2*kY[i]);
-            };
-         }
-         return exact_funcs;
-      }();
+      // Generate table
+      // First value = a
+      // Second value = index of PW interval to compute with at a
+      const auto [kA, kAInterval]=GENERATE(table<double, std::size_t>(
+                                            {{0.5, 0},
+                                             {1.0, 0},
+                                             {1.5, 0},
+                                             {3.0, 1},
+                                             {3.3, 1}}));
 
-      const double kA=GENERATE(0.5, 1.0, 1.5, 3.0, 3.3); 
-      const double kB=GENERATE(3.5, 5.0, 5.5, 7.0, 8.0);
-
+      // First value = b
+      // Second value = index of PW interval to compute with at b                         
+      const auto [kB, kBInterval]=GENERATE(table<double, std::size_t>(
+                                            {{3.5, 1},
+                                             {5.0, 2},
+                                             {5.5, 2},
+                                             {7.0, 2},
+                                             {8.0, 2}}));
       if (kA > kB)
       {
          FAIL("Error in test configuration. kA cannot be > kB.");
       }
 
-      double exact = 0.0;
-      for (std::size_t i = 0; i < kNumIv; i++)
+      constexpr std::size_t kNumIntervals = kX.size() -1;
+
+      // Define function pointers of integral for each interval
+      const std::array<std::function<double(double,double)>,kNumIntervals>
+      kExact =
+      [&]()
       {
-         double left_bound = 0.0;
-         double right_bound = 0.0;
+         std::array<std::function<double(double,double)>,kNumIntervals> 
+            exact_funcs;
+         for (std::size_t i = 0; i < kNumIntervals; i++)
+         {
+            exact_funcs[i] = 
+            [&,i](double a, double b) -> double
+            {
+               return ExactLinearIntegral(kX[i], kY[i], kX[i+1], kY[i+1], 
+                                             a, b);
+            };
+         }
+         return exact_funcs;
+      }();
 
-         // End if we have finished integration.
-         if (kB < kX[i])
-         {
-            break;
-         }
-         // If a is before/at interval start AND not ahead of first interval
-         if (kA <= kX[i] && i != 0)
-         {
-            left_bound = kX[i];
-         }
-         // Else if a is within interval OR ahead of first interval
-         else if (kA < kX[i+1])
-         {
-            left_bound = kA;
-         }
-         // else not yet at interval of integration start
-         else
-         {
-            continue;
-         }
-
-         // If b is after/at interval end AND not behind final interval
-         if (kB >= kX[i+1] && i+1 != kNumIv)
-         {
-            right_bound = kX[i+1];
-         }
-         // Else must be within interval
-         else
-         {
-            right_bound = kB;
-         }
-         exact += kExact[i](left_bound, right_bound);
+      double exact = 0.0;
+      for (std::size_t i = kAInterval; i <= kBInterval; i++)
+      {
+         exact += kExact[i](i == kAInterval ? kA : kX[i], 
+                            i == kBInterval ? kB : kX[i+1]);
       }
       
       PWLinearPSD psd(kX,kY);
@@ -221,17 +204,21 @@ TEST_CASE("PWLogLogPSD integration", "[PSD]")
    {
       constexpr std::array<double,2> kX{5e3, 20e3}, 
                                      kY{1e-8, 1e-9};
-      const double kM = std::log10(kY[1]/kY[0])/std::log10(kX[1]/kX[0]);
 
-      // Ensure that kM != -1
+      // Ensure that m != -1
+      const double kM = std::log10(kY[1]/kY[0])/std::log10(kX[1]/kX[0]);
       REQUIRE(kM != -1);
 
       const double kA=GENERATE(2.5e3,5e3,10e3); 
       const double kB=GENERATE(15e3, 20e3, 25e3);
-      
+      if (kA > kB)
+      {
+         FAIL("Error in test configuration. kA cannot be > kB.");
+      }
+
       // Definite integral of y0*(x/x0)^m computed via Wolfram Alpha
-      const double kExact = (kY[0]/(kM+1))*(kB*std::pow(kB/kX[0], kM)
-                                             -kA*std::pow(kA/kX[0], kM));
+      const double kExact = ExactLogLogIntegral(kX[0], kY[0], kX[1], kY[1],
+                                                kA, kB);
 
       PWLogLogPSD psd(kX,kY);
       CAPTURE(kA, kB);
@@ -243,16 +230,22 @@ TEST_CASE("PWLogLogPSD integration", "[PSD]")
    {
       constexpr std::array<double,2> kX{1e3, 10e3}, 
                                      kY{1e-6, 1e-7};
-      const double kM = std::log10(kY[1]/kY[0])/std::log10(kX[1]/kX[0]);
-
+      
       // Ensure that m == -1
+      const double kM = std::log10(kY[1]/kY[0])/std::log10(kX[1]/kX[0]);
       REQUIRE(kM == -1);
 
       const double kA=GENERATE(0.5e3,1e3,2.5e3); 
       const double kB=GENERATE(7.5e3, 10e3, 15e3);
-      
+
+      if (kA > kB)
+      {
+         FAIL("Error in test configuration. kA cannot be > kB.");
+      }
+
       // Definite integral of y0*(x/x0)^(-1) computed via Wolfram Alpha
-      const double kExact = kX[0]*kY[0]*(std::log(kB)-std::log(kA));
+      const double kExact = ExactLogLogIntegral(kX[0], kY[0], kX[1], kY[1],
+                                                kA, kB);
 
       PWLogLogPSD psd(kX,kY);
       CAPTURE(kA, kB);
@@ -264,88 +257,57 @@ TEST_CASE("PWLogLogPSD integration", "[PSD]")
    {
       constexpr std::array<double,4> kX{1e3,  10e3, 50e3, 95e3}, 
                                      kY{1e-6, 1e-7, 5e-7, 5e-8};
-      constexpr std::size_t kNumIv = kX.size() - 1;
-      const std::array<double,kNumIv> kM = 
-      [&]()
-      {
-         std::array<double, kNumIv> slopes;
-         for (std::size_t i = 0; i < kNumIv; i++)
-         {
-            slopes[i] = std::log10(kY[i+1]/kY[i])/std::log10(kX[i+1]/kX[i]);
-         }
-         return slopes;
-      }();
 
-      // Define function pointers of integral for each interval
-      const std::array<std::function<double(double,double)>,kNumIv> kExact =
-      [&]()
-      {
-         std::array<std::function<double(double,double)>,kNumIv> exact_funcs;
-         for (std::size_t i = 0; i < kNumIv; i++)
-         {
-            exact_funcs[i] = 
-            [&,i](double a, double b) -> double
-            {
-               if (kM[i] == -1)
-               {
-                  return kX[i]*kY[i]*(std::log(b)-std::log(a));
-               }
-               else
-               {
-                  return (kY[i]/(kM[i]+1))*(b*std::pow(b/kX[i], kM[i])
-                                             -a*std::pow(a/kX[i], kM[i]));
-               }
-            };
-         }
-         return exact_funcs;
-      }();
+      // Generate table
+      // First value = a
+      // Second value = index of PW interval to compute with at a
+      const auto [kA, kAInterval]=GENERATE(table<double, std::size_t>(
+                                            {{0.5e3, 0},
+                                             {1e3, 0},
+                                             {5e3, 0},
+                                             {10e3, 1},
+                                             {15e3, 1}}));
 
-      const double kA=GENERATE(0.5e3, 1e3, 5e3, 10e3, 15e3); 
-      const double kB=GENERATE(30e3, 50e3, 75e3, 95e3, 150e3);
+      // First value = b
+      // Second value = index of PW interval to compute with at b                         
+      const auto [kB, kBInterval]=GENERATE(table<double, std::size_t>(
+                                            {{30e3, 1},
+                                             {50e3, 2},
+                                             {75e3, 2},
+                                             {95e3, 2},
+                                             {150e3, 2}}));
 
       if (kA > kB)
       {
          FAIL("Error in test configuration. kA cannot be > kB.");
       }
+      
+      constexpr std::size_t kNumIntervals = kX.size() -1;
+
+      // Define function pointers of integral for each interval
+      const std::array<std::function<double(double,double)>,kNumIntervals>
+      kExact =
+      [&]()
+      {
+         std::array<std::function<double(double,double)>,kNumIntervals> 
+            exact_funcs;
+         for (std::size_t i = 0; i < kNumIntervals; i++)
+         {
+            exact_funcs[i] = 
+            [&,i](double a, double b) -> double
+            {
+               return ExactLogLogIntegral(kX[i], kY[i], kX[i+1], kY[i+1], 
+                                             a, b);
+            };
+         }
+         return exact_funcs;
+      }();
 
       double exact = 0.0;
-      for (std::size_t i = 0; i < kNumIv; i++)
+      for (std::size_t i = kAInterval; i <= kBInterval; i++)
       {
-         double left_bound = 0.0;
-         double right_bound = 0.0;
-
-         // End if we have finished integration.
-         if (kB < kX[i])
-         {
-            break;
-         }
-         // If a is before/at interval start AND not ahead of first interval
-         if (kA <= kX[i] && i != 0)
-         {
-            left_bound = kX[i];
-         }
-         // Else if a is within interval OR ahead of first interval
-         else if (kA < kX[i+1])
-         {
-            left_bound = kA;
-         }
-         // else not yet at interval of integration start
-         else
-         {
-            continue;
-         }
-
-         // If b is after/at interval end AND not behind final interval
-         if (kB >= kX[i+1] && i+1 != kNumIv)
-         {
-            right_bound = kX[i+1];
-         }
-         // Else must be within interval
-         else
-         {
-            right_bound = kB;
-         }
-         exact += kExact[i](left_bound, right_bound);
+         exact += kExact[i](i == kAInterval ? kA : kX[i], 
+                            i == kBInterval ? kB : kX[i+1]);
       }
       
       PWLogLogPSD psd(kX,kY);
