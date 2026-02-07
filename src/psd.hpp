@@ -48,7 +48,7 @@ namespace jabber
  * provided discrete PSD are given in @ref psd_quad_group.
  * 
  * ## Interval Method
- * @todo here
+ * 
  */
 
 /**
@@ -80,6 +80,8 @@ public:
    /**
     * @brief Compute Interval Δf for given discrete frequency at index \p i
     * in \p freqs using \p method.
+    * 
+    * @todo Update this.
     * 
     * @details
     * For \ref Method::Midpoint :
@@ -132,9 +134,10 @@ public:
  * @brief Compute energy-conserved powers from a discrete PSD using a midpoint
  * Riemann sum.
  * 
- * @todo Not yet implemented!
+ * @todo Should I allow for an input min/max instead?
+ * @todo Add unit test?
  * 
- * @details Specifically, this function evaluates
+ * @details Specifically, this function very simply evaluates
  * 
  * \f[
  *    P_k=S(f_k)\Delta f_k,
@@ -151,9 +154,10 @@ void DiscretizePSDRiemann(std::span<const double> freqs,
                            std::span<double> powers,
                            Interval::Method method);
 
+/// @}
+// end of psd_quad_group
+ 
 /**
- *  @} end of psd_quad_group
- * 
  * @defgroup psd_exact_group Continuous PSD Representations
  * @{
  */
@@ -181,7 +185,10 @@ public:
    /**
     * @brief Compute energy-conserved powers using exact integration.
     * 
-    * @details Integration is done from \ref Min() to \ref Max() on both sides.
+    * @note Integration is done from \ref Min() to \ref Max() on both sides.
+    * 
+    * @todo Add unit test? Interval::ComputeInterval() and Integrate() largely
+    * cover this.
     * 
     * @param freqs         Input discrete center frequencies in ascending
     *                      order, in range [ \ref Min(), \ref Max() ].
@@ -222,6 +229,8 @@ public:
    }
 
    double Integrate(double f1, double f2) const override;
+
+   using BasePSD::Discretize;
 };
 
 /**
@@ -254,12 +263,14 @@ public:
 
    double Integrate(double f1, double f2) const override;
    
+   using BasePSD::Discretize;
 };
 
-/**
- *  @} end of psd_quad_group
- *  @} end of psd_group
- */
+/// @}
+// end of psd_quad_group
+
+/// @}
+// end of psd_group
 
 } // namespace jabber
 
