@@ -74,27 +74,23 @@ void DiscretizePSDRiemann(std::span<const double> freqs,
    // TODO.
 }
 
-void BasePSD::Discretize(std::span<const double> freqs, std::span<double> powers,
-                                             Interval::Method method) const
+void BasePSD::Discretize(std::span<const double> freqs,
+                           std::span<double> powers,
+                           Interval::Method method) const
 {
-   double left_bound, right_bound;
    for (std::size_t i = 0; i < freqs.size(); i++)
    {
-      const Interval iv = Interval::ComputeInterval(freqs, i, method);
+      Interval iv = Interval::ComputeInterval(freqs, i, method);
       if (i == 0)
       {
-         left_bound = iv.f_left;
+         iv.f_left = Min();
       }
       if (i+1 == freqs.size())
       {
-         right_bound = iv.f_right;
+         iv.f_right = Max();
       }
       powers[i] = Integrate(iv.f_left, iv.f_right);
    }
-
-   // Add powers from region between border frequency bins and Min() / Max()
-   powers[0] += Integrate(Min(), left_bound);
-   powers[powers.size()-1] += Integrate(right_bound, Max());
 }
 
 double PWLinearPSD::Integrate(double f1, double f2) const
