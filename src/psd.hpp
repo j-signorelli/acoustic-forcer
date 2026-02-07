@@ -82,7 +82,7 @@ public:
     * in \p freqs using \p method.
     * 
     * @details
-    * For \ref Method::Midpoint:
+    * For \ref Method::Midpoint :
     * \f[
     * \Delta f_k = 
     * \begin{cases}
@@ -186,10 +186,10 @@ public:
     * @param freqs         Input discrete center frequencies in ascending
     *                      order, in range [ \ref Min(), \ref Max() ].
     * @param powers        Output powers.
+    * @param method        Interval::Method enumerator.
     */
-   virtual void Discretize(std::span<const double> freqs, 
-                              std::span<double> powers, 
-                              Interval::Method method) const = 0;
+   void Discretize(std::span<const double> freqs, std::span<double> powers,
+                                             Interval::Method method) const;
 };
 
 /**
@@ -201,7 +201,7 @@ class PWLinearPSD : public PWLinear, public BasePSD
 
 public:
    /**
-    * @brief Construct a new PWLinear object
+    * @brief Construct a new PWLinearPSD object
     * 
     * @param freq     Set of discrete frequencies to fit lines in log space
     *                 to. PSD bounds \ref Min() and \ref Max() are defined by
@@ -222,10 +222,6 @@ public:
    }
 
    double Integrate(double f1, double f2) const override;
-   
-   virtual void Discretize(std::span<const double> freqs, 
-                              std::span<double> powers, 
-                              Interval::Method method) const override{};
 };
 
 /**
@@ -258,9 +254,6 @@ public:
 
    double Integrate(double f1, double f2) const override;
    
-   virtual void Discretize(std::span<const double> freqs, 
-                              std::span<double> powers, 
-                              Interval::Method method) const override{};
 };
 
 /**

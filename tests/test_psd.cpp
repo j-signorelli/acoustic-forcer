@@ -317,4 +317,15 @@ TEST_CASE("PWLogLogPSD integration", "[PSD]")
    }
 }
 
+// BasePSD::Discretize is quite simple.
+// ComputeInterval + Integrate mostly covers its functionality.
+// Simple test with just PWLogLogPSD below.
+TEST_CASE("PSD Discretization", "[PSD]")
+{
+   constexpr std::array<double,4> kFreq{1e3,  10e3, 50e3, 95e3}, 
+                                    kPsd{1e-6, 1e-7, 5e-7, 5e-8};
+   constexpr std::array<double,2> kFreqSample{5e3, 50e3};
+   
+}
+
 } // namespace jabber_test
