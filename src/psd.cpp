@@ -87,7 +87,7 @@ void BasePSD::Discretize(std::span<const double> freqs, std::span<double> powers
       }
       if (i+1 == freqs.size())
       {
-         right_bound == iv.f_right;
+         right_bound = iv.f_right;
       }
       powers[i] = Integrate(iv.f_left, iv.f_right);
    }
