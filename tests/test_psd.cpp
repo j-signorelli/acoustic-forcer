@@ -16,6 +16,56 @@ using namespace Catch::Matchers;
 namespace jabber_test
 {
 
+
+double ExactLinearIntegral(double x0, double y0, double x1, double y1,
+                           double a, double b)
+{
+   const double m = (y1-y0)/(x1-x0);
+   // Definite integral of m(x-x0)+y0 computed via Wolfram Alpha
+   return 0.5*(b-a)*(m*(a+b-2*x0)+2*y0);
+}
+
+
+double ExactLogLogIntegral(double x0, double y0, double x1, double y1, 
+                           double a, double b)
+{
+   const double m = std::log10(y1/y0)/std::log10(x1/x0);
+   if (m != -1)
+   {
+      // Definite integral of y0*(x/x0)^m computed via Wolfram Alpha
+      return (y0/(m+1))*(b*std::pow(b/x0, m) - a*std::pow(a/x0, m));
+   }
+   else
+   {
+      // Definite integral of y0*(x/x0)^(-1) computed via Wolfram Alpha
+      return x0*y0*(std::log(b/a));
+   }
+}
+
+// Verify verification functions above
+TEST_CASE("Integration function verification", "[PSD]")
+{
+   SECTION("Linear integral")
+   {
+      REQUIRE_THAT(ExactLinearIntegral(1e1,1e-8,1e3,1e-12,1e1,1e3), 
+                     WithinULP(4.950495e-6, 0));
+   }
+
+   SECTION("Log-log integral")
+   {
+      SECTION("m != -1")
+      {
+         REQUIRE_THAT(ExactLogLogIntegral(1e1,1e-8,1e3,1e-12,1e1,1e3),
+                      WithinULP(9.9e-8, 0));
+      }
+      SECTION("m=-1")
+      {
+         REQUIRE_THAT(ExactLogLogIntegral(1e1, 1e-8, 1e3, 1e-10, 1e1,1e3),
+                      WithinULP(1e-7*std::log(100), 0));
+      }
+   }
+}
+
 TEST_CASE("ComputeInterval", "[Interval]")
 {
 
@@ -208,7 +258,7 @@ TEST_CASE("PWLogLogPSD integration", "[PSD]")
                                      kY{1e-6, 1e-7};
       const double kM = std::log10(kY[1]/kY[0])/std::log10(kX[1]/kX[0]);
 
-      // Ensure that kM == -1
+      // Ensure that m == -1
       REQUIRE(kM == -1);
 
       const double kA=GENERATE(0.5e3,1e3,2.5e3); 
@@ -325,7 +375,11 @@ TEST_CASE("PSD Discretization", "[PSD]")
    constexpr std::array<double,4> kFreq{1e3,  10e3, 50e3, 95e3}, 
                                     kPsd{1e-6, 1e-7, 5e-7, 5e-8};
    constexpr std::array<double,2> kFreqSample{5e3, 50e3};
-   
+
+   PWLogLogPSD psd(kFreq, kPsd);
+
+   double exact = 0.0;
+   //exact += 
 }
 
 } // namespace jabber_test
