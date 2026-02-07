@@ -43,12 +43,14 @@ TEST_CASE("Evaluation function verification", "[Interpolant]")
 {
    SECTION("Linear")
    {
-      REQUIRE_THAT(ExactLinear(1e1, 1e-8, 1e3, 1e-12, 1e2), WithinULP(9.091e-9, 0));
+      REQUIRE_THAT(ExactLinear(1e1, 1e-8, 1e3, 1e-12, 1e2), 
+                     WithinULP(9.091e-9, 0));
    }
 
    SECTION("LogLog")
    {
-      REQUIRE_THAT(ExactLogLog(1e1, 1e-8, 1e3, 1e-12, 1e2), WithinULP(1e-10, 0));
+      REQUIRE_THAT(ExactLogLog(1e1, 1e-8, 1e3, 1e-12, 1e2), 
+                     WithinULP(1e-10, 0));
    }
 }
 
