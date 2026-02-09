@@ -67,7 +67,7 @@ TEST_CASE("Integration function verification", "[PSD]")
    }
 }
 
-TEST_CASE("ComputeInterval", "[Interval]")
+TEST_CASE("ComputeInterval", "[PSD]")
 {
 
    constexpr std::array<double, 3> kFreqSample={0.1e3, 10e3, 40e3};
@@ -316,19 +316,47 @@ TEST_CASE("PWLogLogPSD integration", "[PSD]")
    }
 }
 
-// BasePSD::Discretize is quite simple.
-// ComputeInterval + Integrate mostly covers its functionality.
-// Simple test with just PWLogLogPSD below.
+// BasePSD::Integrate + Interval::ComputeInterval mostly cover PSD disc.
+// PWLogLogPSD used for simple test below.
 TEST_CASE("PSD Discretization", "[PSD]")
 {
-   constexpr std::array<double,4> kFreq{1e3,  10e3, 50e3, 95e3}, 
-                                    kPsd{1e-6, 1e-7, 5e-7, 5e-8};
-   constexpr std::array<double,2> kFreqSample{5e3, 50e3};
+   constexpr std::array<double,4> kX{1e3,  10e3, 50e3, 95e3}, 
+                                    kY{1e-6, 1e-7, 5e-7, 5e-8};
+   
+   constexpr std::array<double, 3> kFreqs{7e3, 32e3, 95e3};
 
-   PWLogLogPSD psd(kFreq, kPsd);
+   // Manually specify integration bounds for min/max handling.
+   // Use Interval::Method::MidpointLog10
+   const std::array<Interval, kFreqs.size()> kIntervals
+                             {Interval{kX[0], 
+                                       std::sqrt(kFreqs[0]*kFreqs[1])},
+                              Interval{std::sqrt(kFreqs[0]*kFreqs[1]), 
+                                       std::sqrt(kFreqs[1]*kFreqs[2])},
+                              Interval{std::sqrt(kFreqs[1]*kFreqs[2]), 
+                                       kX[kX.size()-1]}};
+   
+   PWLogLogPSD psd(kX, kY);
 
-   double exact = 0.0;
-   //exact += 
+   const std::array<double, kFreqs.size()> kPowersExact =
+   [&]()
+   {
+      std::array<double, kFreqs.size()> powers_exact;
+      for (std::size_t i = 0; i < kFreqs.size(); i++)
+      {
+         // All BasePSD::Integrate types verified in tests above.
+         powers_exact[i] = psd.Integrate(kIntervals[i].f_left, 
+                                          kIntervals[i].f_right);
+      }
+      return powers_exact;
+   }();
+
+   std::array<double, kFreqs.size()> powers_test;
+   psd.Discretize(kFreqs, powers_test, Interval::Method::MidpointLog10);
+
+   for (std::size_t i = 0; i < kFreqs.size(); i++)
+   {
+      CHECK(kPowersExact[i] == powers_test[i]);
+   }
+
 }
-
 } // namespace jabber_test
