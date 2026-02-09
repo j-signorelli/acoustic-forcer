@@ -185,7 +185,7 @@ public:
    /**
     * @brief Compute energy-conserved powers using exact integration.
     * 
-    * @note Integration is done from \ref Min() to \ref Max() on both sides.
+    * @note Integration is done from \ref Min() to \ref Max().
     * 
     * @todo Add unit test? Interval::ComputeInterval() and Integrate() largely
     * cover this.
