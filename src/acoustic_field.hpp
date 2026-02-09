@@ -19,8 +19,8 @@ struct Wave
    /// Wave phase, φ, in radians.
    double phase;
 
-   /// Wave speed flag. "true" if slow, "false" if fast.
-   bool speed_flag;
+   /// Wave speed ('S' or 'F').
+   char speed;
 
    /// **Normalized** wave directional vector.
    std::vector<double> k_hat;

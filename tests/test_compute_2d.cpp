@@ -48,7 +48,7 @@ static constexpr double kGamma = 1.4;
 static constexpr std::array<double, 2> kPAmps = {10.0, 5.0};
 static constexpr std::array<double, 2> kFreqs = {1000.0, 1250.0};
 static constexpr std::array<double, 2> kPhases = {M_PI/3, M_PI};
-static constexpr std::array<bool, 2> kSpeeds = {true, false};
+static constexpr std::array<char, 2> kSpeeds = {'S', 'F'};
 static const std::array<std::vector<double>,2> 
                      kWaveDirs = {std::vector<double>({1.0, 0.0}),
                                     std::vector<double>({6.0/10.0, 8.0/10.0})};
@@ -201,14 +201,15 @@ TEST_CASE("2D flowfield computation via kernel", "[2D][Compute][Kernels]")
          omega[w] = 2*M_PI*kFreqs[w];
 
          const std::vector<double> k_hat = kWaveDirs[w];
-         const double mod_fac = (kSpeeds[w] ? -1.0 : 1.0);
+         const double mod_fac = (kSpeeds[w] == 'S' ? -1.0 : 1.0);
 
          mod_wave_dir[w] = mod_fac*k_hat[0];
          mod_wave_dir[kNumWaves+w] = mod_fac*k_hat[1];
          const double U_bar_dot_k_hat = kUBar[0]*k_hat[0] + kUBar[1]*k_hat[1];
 
-         const double k = kSpeeds[w] ? omega[w]/(U_bar_dot_k_hat - c_bar)
-                                    : omega[w]/(U_bar_dot_k_hat + c_bar);
+         const double k = (kSpeeds[w] == 'S' 
+                                    ? omega[w]/(U_bar_dot_k_hat - c_bar)
+                                    : omega[w]/(U_bar_dot_k_hat + c_bar));
          
          for (std::size_t i = 0; i < kNumPts; i++)
          {
@@ -293,7 +294,7 @@ TEST_CASE("2D flowfield computation via app library", "[2D][Compute][App]")
          wave.direction = kWaveDirs[w];
          wave.freq = kFreqs[w];
          wave.phase = kPhases[w]*180.0/M_PI; // in degrees!
-         wave.speed = kSpeeds[w] ? SpeedOption::Slow : SpeedOption::Fast;
+         wave.speed = kSpeeds[w];
 
          // Add wave to Config sources
          config.Sources().push_back(wave);

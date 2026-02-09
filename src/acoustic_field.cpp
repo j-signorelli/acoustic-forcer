@@ -51,8 +51,8 @@ void AcousticField::Finalize()
       omega_[w] = 2*M_PI*wave.frequency;
 
       // Compute U·k_hat±c and set mod_k_hat_
-      double denom = wave.speed_flag ? -c_infty_ : c_infty_;
-      double speed_encoder = (wave.speed_flag ? -1 : 1);
+      double denom = (wave.speed == 'S' ? -c_infty_ : c_infty_);
+      double speed_encoder = (wave.speed == 'S' ? -1 : 1);
       for (int d = 0; d < Dim(); d++)
       {
          denom += U_bar_[d]*wave.k_hat[d];

@@ -49,7 +49,7 @@ static constexpr double kGamma = 1.4;
 static constexpr std::array<double, 2> kPAmps = {10.0, 5.0};
 static constexpr std::array<double, 2> kFreqs = {1000.0, 1250.0};
 static constexpr std::array<double, 2> kPhases = {M_PI/3, M_PI};
-static constexpr std::array<bool, 2> kSpeeds = {true, false};
+static constexpr std::array<char, 2> kSpeeds = {'S', 'F'};
 
 /**
  * @brief Coordinates data.
@@ -177,10 +177,10 @@ TEST_CASE("1D flowfield computation via kernel", "[1D][Compute][Kernels]")
       for (int w = 0; w < kNumWaves; w++)
       {
          omega[w] = 2*M_PI*kFreqs[w];
-         mod_wave_dir[w] = (kSpeeds[w] ? -1.0 : 1.0);
+         mod_wave_dir[w] = (kSpeeds[w] == 'S' ? -1.0 : 1.0);
 
-         const double k = kSpeeds[w] ? omega[w]/(kUBar - c_bar) 
-                                    : omega[w]/(kUBar + c_bar);
+         const double k = (kSpeeds[w] == 'S' ? omega[w]/(kUBar - c_bar)
+                                             : omega[w]/(kUBar + c_bar));
          
          for (std::size_t i = 0; i < kNumPts; i++)
          {
@@ -265,7 +265,7 @@ TEST_CASE("1D flowfield computation via app library", "[1D][Compute][App]")
          wave.direction.resize(1, 1.0);
          wave.freq = kFreqs[w];
          wave.phase = kPhases[w]*180.0/M_PI; // in degrees!
-         wave.speed = kSpeeds[w] ? SpeedOption::Slow : SpeedOption::Fast;
+         wave.speed = kSpeeds[w];
 
          // Add wave to Config sources
          config.Sources().push_back(wave);

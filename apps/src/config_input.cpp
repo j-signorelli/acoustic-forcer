@@ -4,6 +4,7 @@
 
 #include <iomanip>
 #include <format>
+#include <algorithm>
 
 // Helper type for the std::visit
 // (https://en.cppreference.com/w/cpp/utility/variant/visit)
@@ -38,8 +39,7 @@ void ConfigInput::PrintSourceParams(std::ostream &out) const
       {
          std::size_t name_i 
                         = static_cast<std::size_t>(SourceOption::SingleWave);
-         std::size_t speed_i = static_cast<std::size_t>(wave.speed);
-
+                        
          constexpr int label_width = 11;
 
          out << WriteParam("Type", SourceNames[name_i], label_width);
@@ -48,7 +48,7 @@ void ConfigInput::PrintSourceParams(std::ostream &out) const
          out << WriteParam("Direction", OutRealVec(wave.direction), 
                                                             label_width);
          out << WriteParam("Phase", OutReal(wave.phase), label_width);
-         out << WriteParam("Speed", SpeedNames[speed_i], label_width);
+         out << WriteParam("Speed", std::string(&wave.speed), label_width);
          out << std::endl;
       },
       [&out](const SourceParams<SourceOption::WaveSpectrum> &waves)
@@ -85,8 +85,7 @@ void ConfigInput::PrintSourceParams(std::ostream &out) const
          std::string speeds_str = "[";
          for (int i = 0; i < waves.speeds.size(); i++)
          {
-            std::size_t speed_i = static_cast<std::size_t>(waves.speeds[i]);
-            speeds_str += std::string(SpeedNames[speed_i]) + 
+            speeds_str += waves.speeds[i] + 
                            ((i+1 == waves.speeds.size()) ? "]\n" :
                               std::format(",\n\t{:<{}}", "", label_width+3));
          }
@@ -201,14 +200,7 @@ void TOMLConfigInput::ParseSource(std::string source_serialized)
          meta.direction = toml::get<std::vector<double>>(
                                           in_source.at("Direction"));
          meta.phase = in_source.at("Phase").as_floating();
-         std::string speed_type =  in_source.at("Speed").as_string();
-
-         const std::string_view *speed_it = std::find(SpeedNames.begin(),
-                                                      SpeedNames.end(), 
-                                                      speed_type);
-         SpeedOption speed_op = static_cast<SpeedOption>(
-                                             speed_it-SpeedNames.begin());
-         meta.speed = speed_op;
+         meta.speed = *(in_source.at("Speed").as_string().data());
 
          sources_.emplace_back(meta);
       }
@@ -224,17 +216,11 @@ void TOMLConfigInput::ParseSource(std::string source_serialized)
                                              in_source.at("Directions"));
          meta.phases = toml::get<std::vector<double>>(
                                                 in_source.at("Phases"));
-         std::vector<std::string> speed_string_vec = 
-               toml::get<std::vector<std::string>>(in_source.at("Speeds"));
-         for (const std::string &speed_string : speed_string_vec)
-         {
-            const std::string_view *speed_it = std::find(SpeedNames.begin(),
-                                                         SpeedNames.end(),
-                                                         speed_string);
-            SpeedOption speed_op = static_cast<SpeedOption>(speed_it-
-                                                      SpeedNames.begin());
-            meta.speeds.push_back(speed_op);
-         }
+         std::vector<std::string> speed_strs = 
+                     toml::get<std::vector<std::string>>(in_source.at("Speeds"));
+         meta.speeds.resize(speed_strs.size());
+         std::transform(speed_strs.begin(), speed_strs.end(), meta.speeds.begin(),
+                        [](std::string &s) -> char { return *(s.data()); });
          
          sources_.emplace_back(meta);
       }

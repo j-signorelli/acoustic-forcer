@@ -29,34 +29,6 @@ struct BaseFlowParams
 
 // ----------------------------------------------------------------------------
 
-/// Acoustic wave speed options.
-enum class SpeedOption : std::uint8_t
-{
-   /**
-    * @brief "Slow" acoustic wave. Wavenumber vector should be computed
-    *  assuming wave travels *against* freestream (wave speed < freestream).
-    */
-   Slow,
-
-   /**
-    * @brief "Fast" acoustic wave. Wavenumber vector should be computed
-    *  assuming wave travels *with* freestream (wave speed > freestream).
-    */
-   Fast,
-
-   /// Number of speed options. **This should always be exactly 2.**
-   Size
-};
-
-/// Strings associated with SpeedOption enumerators.
-static constexpr std::array<std::string_view, 
-                           static_cast<std::size_t>(SpeedOption::Size)>
-SpeedNames = 
-{
-   "Slow",      // SpeedOption::Slow
-   "Fast",      // SpeedOption::Fast
-};
-
 /// Acoustic source options.
 enum class SourceOption : std::uint8_t
 {
@@ -98,8 +70,8 @@ struct SourceParams<SourceOption::SingleWave>
    /// Planar wave directional vector, can be non-normalized.
    std::vector<double> direction;
 
-   /// Wave speed.
-   SpeedOption speed;
+   /// Wave speed ('S' or 'F').
+   char speed;
 };
 
 /// Struct for source parameters of spectrum of acoustic waves.
@@ -118,8 +90,9 @@ struct SourceParams<SourceOption::WaveSpectrum>
    /// Planar wave directional vector, can be non-normalized.
    std::vector<std::vector<double>> directions;
 
-   /// Wave speeds.
-   std::vector<SpeedOption> speeds;
+   /// Wave speeds ('S' or 'F').
+   std::vector<char> speeds;
+};
 };
 
 /// All souce parameter options.

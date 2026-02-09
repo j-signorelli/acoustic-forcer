@@ -60,8 +60,7 @@ inline jabber_app::SourceParams<s> GenerateRandomSource(int seed)
       wave.freq = GenerateRandomReal(seed++, 500.0, 1500.0);
       wave.direction = GenerateRandomVec<3>(seed++, 0.0, 1.0);
       wave.phase = GenerateRandomReal(seed++, 10.0, 180.0);
-      wave.speed = (seed % 2 == 0 ? SpeedOption::Slow
-                                  : SpeedOption::Fast);
+      wave.speed = (seed % 2 == 0 ? 'S' : 'F');
       return wave;
    }
    else if constexpr (s == SourceOption::WaveSpectrum)
@@ -80,8 +79,7 @@ inline jabber_app::SourceParams<s> GenerateRandomSource(int seed)
       waves.speeds.resize(kNumWaves);
       for (int w = 0; w < kNumWaves; w++)
       {
-            waves.speeds[w] = (w%2==0 ? SpeedOption::Slow
-                                    : SpeedOption::Fast);
+            waves.speeds[w] = (w%2==0 ? 'S' : 'F');
       }
       return waves;
    }

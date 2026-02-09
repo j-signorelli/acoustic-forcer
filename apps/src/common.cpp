@@ -68,23 +68,21 @@ AcousticField InitializeAcousticField(const ConfigInput &conf,
       {
       [&](const SourceParams<SourceOption::SingleWave> &params_wave)
       {
-         bool slow = (params_wave.speed == SpeedOption::Slow ? true : false);
          std::vector<double> k_hat(dim, 0.0);
          Normalize(params_wave.direction, k_hat);
          all_waves.emplace_back(params_wave.amp, params_wave.freq, 
-                              params_wave.phase*M_PI/180.0, slow, k_hat);
+                                 params_wave.phase*M_PI/180.0, 
+                                 params_wave.speed, k_hat);
       },
       [&](const SourceParams<SourceOption::WaveSpectrum> &params_waves)
       {
          for (int i = 0; i < params_waves.amps.size(); i++)
          {
-            bool slow = (params_waves.speeds[i] == 
-                                          SpeedOption::Slow ? true : false);
             std::vector<double> k_hat(dim, 0.0);
             Normalize(params_waves.directions[i], k_hat);
             all_waves.emplace_back(params_waves.amps[i], params_waves.freqs[i],
                                     params_waves.phases[i]*M_PI/180.0, 
-                                    slow, k_hat);
+                                    params_waves.speeds[i], k_hat);
          }
       }
       }, source);

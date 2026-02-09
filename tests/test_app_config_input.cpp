@@ -55,10 +55,7 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
       {
          SourceParams<SourceOption::SingleWave> wave; 
          wave = GenerateRandomSource<SourceOption::SingleWave>(kSeed);
-         wave.speed = GENERATE(SpeedOption::Slow, SpeedOption::Fast);
-
-         const std::string_view speed_str = 
-                     SpeedNames[static_cast<std::size_t>(wave.speed)];
+         wave.speed = GENERATE('S', 'F');
 
          const std::string source_str = 
          std::format(R"(
@@ -67,10 +64,10 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
                            Frequency={}
                            Direction=[{},{},{}]
                            Phase={}
-                           Speed="{}"
+                           Speed='{}'
                            )", SourceNames[s], wave.amp, wave.freq, 
                               wave.direction[0], wave.direction[1], 
-                              wave.direction[2], wave.phase, speed_str);
+                              wave.direction[2], wave.phase, wave.speed);
          TOMLConfigInput config;
          config.ParseSource(source_str);
          SourceParams<SourceOption::SingleWave> wave_parsed = 
@@ -88,15 +85,6 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
          waves = GenerateRandomSource<SourceOption::WaveSpectrum>(kSeed);
 
          const int kNumWaves = waves.amps.size();
-         std::vector<std::string> speed_strs(kNumWaves);
-         std::ranges::transform(waves.speeds.begin(), 
-                                 waves.speeds.end(),
-                                 speed_strs.begin(),
-               [](const SpeedOption &op) -> std::string
-               {
-                  int op_idx = static_cast<std::size_t>(op);
-                  return "\"" + std::string(SpeedNames[op_idx]) + "\"";
-               });
          
          std::string source_str = std::format("Type=\"{}\"\n",
                                                    SourceNames[s]);
@@ -109,7 +97,14 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
                vec_str += "[";
                for (int w = 0; w < vec.size(); w++)
                {
-                  vec_str += std::format("{}", vec[w]);
+                  if constexpr (std::same_as<T, char>)
+                  {
+                     vec_str += std::format("'{}'", vec[w]);
+                  }
+                  else
+                  {
+                     vec_str += std::format("{}", vec[w]);
+                  }
                   vec_str += (w+1==vec.size() ? "]" : ",");
                }
                return vec_str;
@@ -124,7 +119,7 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
                source_str += (w+1==kNumWaves ? "]\n" : ",");
          }
          source_str += "Phases=" + write_vec(waves.phases) + "\n";
-         source_str += "Speeds=" + write_vec(speed_strs);
+         source_str += "Speeds=" + write_vec(waves.speeds);
 
          TOMLConfigInput config;
          config.ParseSource(source_str);
