@@ -93,7 +93,7 @@ struct SourceParams<SourceOption::WaveSpectrum>
    /// Wave speeds ('S' or 'F').
    std::vector<char> speeds;
 };
-};
+
 
 /// All souce parameter options.
 using SourceParamsVariant 
