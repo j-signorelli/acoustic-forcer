@@ -7,6 +7,8 @@
 #include <variant>
 #include <array>
 
+#include <jabber.hpp>
+
 namespace jabber_app
 {
 
@@ -28,6 +30,153 @@ struct BaseFlowParams
 };
 
 // ----------------------------------------------------------------------------
+/// Interpolation options.
+enum class InterpolationOption : std::uint8_t
+{
+
+   /// Piecewise linear fit.
+   PiecewiseLinear,
+
+   /// Piecewise lo10-log10 fit (linear on log10-log10 scale).
+   PiecewiseLogLog,
+
+   /// Number of InterpolationOptions.
+   Size
+};
+
+/// Strings associated with InterpolationOption enumerators.
+static constexpr std::array<std::string_view, 
+                     static_cast<std::size_t>(InterpolationOption::Size)>
+InterpolationNames = 
+{
+   "PiecewiseLinear",    // InterpolationOption::PiecewiseLinear
+   "PiecewiseLogLog",    // InterpolationOption::PiecewiseLogLog
+};
+
+// ----------------------------------------------------------------------------
+/// Strings associated with jabber::Interval::Method enumerators.
+static constexpr std::array<std::string_view, 
+                     static_cast<std::size_t>(jabber::Interval::Method::Size)>
+IntervalNames = 
+{
+   "Midpoint",      // Interval::Method::Midpoint
+   "MidpointLog",    // Interval::Method::MidpointLog10
+};
+
+// ----------------------------------------------------------------------------
+/**
+ * @brief Discretization method options for discretization of a continuous
+ * function (frequency selection of continuous PSD).
+ * 
+ */
+enum class DiscMethodOption : std::uint8_t
+{
+
+   /// Random sampling.
+   Random,
+
+   /// Random but on a log10 scaling.
+   RandomLog,
+
+   /// Number of DiscMethodOptions.
+   Size
+};
+
+template<DiscMethodOption d>
+struct DiscMethodParams;
+
+/// Parameters for discretization method DiscMethod::Random.
+template<>
+struct DiscMethodParams<DiscMethodOption::Random>
+{
+   /// Seed to use in randomization.
+   int seed;
+};
+
+/// Parameters for discretization method DiscMethod::RandomLog.
+template<>
+struct DiscMethodParams<DiscMethodOption::RandomLog>
+{
+   /// Seed to use in randomization.
+   int seed;
+};
+
+/// All discretization method parameter options.
+using DiscMethodParamsVariant 
+   = std::variant<DiscMethodParams<DiscMethodOption::Random>,
+                  DiscMethodParams<DiscMethodOption::RandomLog>>;
+static_assert(std::variant_size_v<DiscMethodParamsVariant> == 
+                    static_cast<std::size_t>(DiscMethodOption::Size),
+             "Missing DiscMethodParams in DiscMethodParamsVariant.");
+
+/// Strings associated with DiscMethodOption enumerators.
+static constexpr std::array<std::string_view, 
+                     static_cast<std::size_t>(DiscMethodOption::Size)>
+DiscMethodNames = 
+{
+   "Random",       // DiscMethodOption::Random
+   "RandomLog",    // DiscMethodOption::RandomLog
+};
+
+// ----------------------------------------------------------------------------
+
+/// Wave direction options.
+enum class DirectionOption : std::uint8_t
+{
+
+   /// Constant direction.
+   Constant,
+
+   /// Random angle in XY-plane from x-axis for each wave/frequency.
+   RandomXYAngle,
+
+   /// Number of DiscMethodOptions.
+   Size
+};
+
+template<DirectionOption d>
+struct DirectionParams;
+
+/// Parameters for direction option DirectionOption::Constant.
+template<>
+struct DirectionParams<DirectionOption::Constant>
+{
+   /// Planar wave directional vector, can be non-normalized.
+   std::vector<double> direction;
+};
+
+/// Parameters for direction option DirectionOption::RandomXYAngle.
+template<>
+struct DirectionParams<DirectionOption::RandomXYAngle>
+{
+   /// Min angle of wave from x-axis, in XY-plane (CCW+, CW-) (in degrees).
+   double min_angle;
+
+   /// Max angle of wave from x-axis, in XY-plane (CCW+, CW-) (in degrees).
+   double max_angle;
+
+   /// Seed to use in randomization.
+   int seed;
+};
+
+/// All direction parameter options.
+using DirectionParamsVariant 
+   = std::variant<DirectionParams<DirectionOption::Constant>,
+                  DirectionParams<DirectionOption::RandomXYAngle>>;
+static_assert(std::variant_size_v<DirectionParamsVariant> == 
+                    static_cast<std::size_t>(DirectionOption::Size),
+             "Missing DirectionParams in DirectionParamsVariant.");
+
+/// Strings associated with DiscMethodOption enumerators.
+static constexpr std::array<std::string_view, 
+                     static_cast<std::size_t>(DirectionOption::Size)>
+DirectionNames = 
+{
+   "Constant",         // DirectionOption::Constant
+   "RandomXYAngle",    // DirectionOption::RandomXYAngle
+};
+
+// ----------------------------------------------------------------------------
 
 /// Acoustic source options.
 enum class SourceOption : std::uint8_t
@@ -38,7 +187,10 @@ enum class SourceOption : std::uint8_t
    /// Spectrum of N acoustic waves.
    WaveSpectrum,
 
-   /// Number of SourceOptions
+   /// Digitized/discrete power spectral density (PSD).
+   DigitalPSD,
+
+   /// Number of SourceOptions.
    Size
 };
 
@@ -49,6 +201,7 @@ SourceNames =
 {
    "SingleWave",      // SourceOption::SingleWave
    "WaveSpectrum",    // SourceOption::WaveSpectrum
+   "DigitalPSD",    // SourceOption::DigitalPSD
 };
 
 template<SourceOption s>
@@ -94,14 +247,52 @@ struct SourceParams<SourceOption::WaveSpectrum>
    std::vector<char> speeds;
 };
 
+/// Struct for source parameters of digital PSD.
+template<>
+struct SourceParams<SourceOption::DigitalPSD>
+{
+   /// Digital wave frequencies (not angular) to fit.
+   std::vector<double> freqs;
 
-/// All souce parameter options.
+   /// Digital wave power spectral densities to fit.
+   std::vector<double> psds;
+
+   /// (For PSD unit V^2/Hz) Factor to multiply V by for pressure amplitude.
+   double dim_fac;
+
+   /// Interpolation method for fitting continuous curve to discrete PSD data.
+   InterpolationOption interp;
+
+   /// Minimum wave frequency in discrete frequency selection range.
+   double min_disc_freq;
+
+   /// Maximum wave frequency in discrete frequency selection range.
+   double max_disc_freq;
+
+   /// Number of waves to discretize PSD to.
+   std::size_t num_waves;
+
+   /// Interval method to use for frequency bin width.
+   jabber::Interval::Method int_method;
+
+   /// Discretization method parameters.
+   DiscMethodParamsVariant disc_params;
+
+   /// Direction method parameters.
+   DirectionParamsVariant dir_params;
+
+   /// Wave speeds to use.
+   char speed;
+};
+
+/// All source parameter options.
 using SourceParamsVariant 
    = std::variant<SourceParams<SourceOption::SingleWave>,
-                  SourceParams<SourceOption::WaveSpectrum>>;
+                  SourceParams<SourceOption::WaveSpectrum>,
+                  SourceParams<SourceOption::DigitalPSD>>;
 static_assert(std::variant_size_v<SourceParamsVariant> == 
-                     static_cast<std::size_t>(SourceOption::Size),
-              "Missing SourceParams in SourceParamsVariant.");
+                    static_cast<std::size_t>(SourceOption::Size),
+             "Missing SourceParams in SourceParamsVariant.");
 
 // ----------------------------------------------------------------------------
 

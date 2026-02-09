@@ -84,6 +84,9 @@ AcousticField InitializeAcousticField(const ConfigInput &conf,
                                     params_waves.phases[i]*M_PI/180.0, 
                                     params_waves.speeds[i], k_hat);
          }
+      },
+      [&](const SourceParams<SourceOption::DigitalPSD> &params_waves)
+      {
       }
       }, source);
    }

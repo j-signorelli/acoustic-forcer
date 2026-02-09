@@ -8,9 +8,38 @@ gamma=1.4
 Type="SingleWave"
 Amplitude=1.0
 Frequency=1000.0
-Direction=[-1.0,0.5]
+DirVectors=[-1.0,0.5]
 Phase=0.0
-Speed="Slow"
+Speed='S'
+
+[[Sources]]
+Type="WaveSpectrum"
+Amplitudes= [     10.0,         10.0 ]
+Frequencies=[   2000.0,       1000.0 ]
+DirVectors= [[1.0,1.0],   [-1.0,-1.0]] 
+Phases=     [      0.0,         56.0 ]
+Speeds=     [      'S',          'F' ]
+
+[[Sources]]
+Type="DigitalPSD"
+Frequencies=[1e3, 10e3, 100e3, 500e3]
+PSDs=[1e-8, 1e-9, 1e-10, 1e-11]
+DimFactor=1.0
+Interpolation="PiecewiseLogLog"
+
+Discretization.Min=1e2
+Discretization.Max=200e3
+Discretization.N=100
+Discretization.Interval="Midpoint"
+Discretization.Method.Type="RandomLog"
+Discretization.Method.Seed=15
+
+Direction.Type="RandomXYAngle"
+Direction.MinAngle=20.0
+Direction.MaxAngle=4.0
+Direction.Seed=17
+
+Speed='S'
 
 [Computation]
 t0=0.0

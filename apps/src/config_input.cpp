@@ -96,6 +96,13 @@ void ConfigInput::PrintSourceParams(std::ostream &out) const
          out << WriteParam("Phases", phases_str, label_width);
          out << WriteParam("Speeds", speeds_str, label_width);
          out << std::endl;
+      },
+      [&out](const SourceParams<SourceOption::DigitalPSD> &waves)
+      {
+         constexpr int label_width = 13;
+
+         /// @todo: Finish this
+         out << "Unimplemented" << std::endl;
       }
       }, source);
    }
@@ -180,58 +187,124 @@ void TOMLConfigInput::ParseBaseFlow(std::string base_flow_serialized)
    base_flow_.gamma = in_base_flow.at("gamma").as_floating();
 }
 
+/// Internal helper function here for getting enumerator from string.
+template<typename T>
+requires std::is_enum_v<T> && 
+         std::same_as<std::underlying_type_t<T>, std::uint8_t>
+void GetEnumerator(const std::string_view input_str, 
+                std::span<const std::string_view> option_names,
+                T &val)
+{
+   const auto it = std::find(option_names.begin(), 
+                              option_names.end(), 
+                              input_str);
+   if (it == option_names.end())
+   {
+      throw std::invalid_argument(std::format("Invalid input argument: {}",
+                                              input_str));
+   }
+   else
+   {
+      val = static_cast<T>(std::distance(option_names.begin(), it));
+   }
+}
+
 void TOMLConfigInput::ParseSource(std::string source_serialized)
 {
    toml::value in_source = toml::parse_str(source_serialized);
    std::string mode_type = in_source.at("Type").as_string();
-   const std::string_view *it = std::find(SourceNames.begin(), 
-                                          SourceNames.end(), mode_type);
-   if (it != SourceNames.end())
+
+   SourceOption source_op;
+   GetEnumerator(mode_type, SourceNames, source_op);
+
+   if (source_op == SourceOption::SingleWave)
    {
-      SourceOption source_op = static_cast<SourceOption>(
-                                             it-SourceNames.begin());
+      SourceParams<SourceOption::SingleWave> meta;
 
-      if (source_op == SourceOption::SingleWave)
-      {
-         SourceParams<SourceOption::SingleWave> meta;
+      meta.amp = in_source.at("Amplitude").as_floating();
+      meta.freq = in_source.at("Frequency").as_floating();
+      meta.direction = toml::get<std::vector<double>>(
+                                       in_source.at("DirVector"));
+      meta.phase = in_source.at("Phase").as_floating();
+      meta.speed = *(in_source.at("Speed").as_string().data());
 
-         meta.amp = in_source.at("Amplitude").as_floating();
-         meta.freq = in_source.at("Frequency").as_floating();
-         meta.direction = toml::get<std::vector<double>>(
-                                          in_source.at("Direction"));
-         meta.phase = in_source.at("Phase").as_floating();
-         meta.speed = *(in_source.at("Speed").as_string().data());
-
-         sources_.emplace_back(meta);
-      }
-      else if (source_op == SourceOption::WaveSpectrum)
-      {
-         SourceParams<SourceOption::WaveSpectrum> meta;
-         
-         meta.amps = toml::get<std::vector<double>>(
-                                             in_source.at("Amplitudes"));
-         meta.freqs = toml::get<std::vector<double>>(
-                                             in_source.at("Frequencies"));
-         meta.directions = toml::get<std::vector<std::vector<double>>>(
-                                             in_source.at("Directions"));
-         meta.phases = toml::get<std::vector<double>>(
-                                                in_source.at("Phases"));
-         std::vector<std::string> speed_strs = 
-                     toml::get<std::vector<std::string>>(in_source.at("Speeds"));
-         meta.speeds.resize(speed_strs.size());
-         std::transform(speed_strs.begin(), speed_strs.end(), meta.speeds.begin(),
-                        [](std::string &s) -> char { return *(s.data()); });
-         
-         sources_.emplace_back(meta);
-      }
-      else
-      {
-         throw std::logic_error("Error reading Source.Type");
-      }
+      sources_.emplace_back(meta);
    }
-   else
+   else if (source_op == SourceOption::WaveSpectrum)
    {
-      throw std::invalid_argument("Invalid Source.Type");
+      SourceParams<SourceOption::WaveSpectrum> meta;
+      
+      meta.amps = toml::get<std::vector<double>>(
+                                          in_source.at("Amplitudes"));
+      meta.freqs = toml::get<std::vector<double>>(
+                                          in_source.at("Frequencies"));
+      meta.directions = toml::get<std::vector<std::vector<double>>>(
+                                          in_source.at("DirVectors"));
+      meta.phases = toml::get<std::vector<double>>(
+                                             in_source.at("Phases"));
+      std::vector<std::string> speed_strs = 
+                  toml::get<std::vector<std::string>>(in_source.at("Speeds"));
+      meta.speeds.resize(speed_strs.size());
+      std::transform(speed_strs.begin(), speed_strs.end(), meta.speeds.begin(),
+                     [](std::string &s) -> char { return *(s.data()); });
+      
+      sources_.emplace_back(meta);
+   }
+   else if (source_op == SourceOption::DigitalPSD)
+   {
+      SourceParams<SourceOption::DigitalPSD> meta;
+      meta.freqs = toml::get<std::vector<double>>(
+                                          in_source.at("Frequencies"));
+      meta.psds = toml::get<std::vector<double>>(
+                                          in_source.at("PSDs"));
+      meta.dim_fac = in_source.at("DimFactor").as_floating();
+      GetEnumerator(in_source.at("Interpolation").as_string(), 
+                     InterpolationNames,
+                     meta.interp);
+      
+      toml::value in_disc = in_source.at("Discretization");
+      meta.min_disc_freq = in_disc.at("Min").as_floating();
+      meta.max_disc_freq = in_disc.at("Max").as_floating();
+      GetEnumerator(in_disc.at("Interval").as_string(), IntervalNames,
+                      meta.int_method);
+      
+      toml::value in_disc_method = in_disc.at("Method");
+      DiscMethodOption disc_option;
+      GetEnumerator(in_disc_method.at("Type").as_string(), DiscMethodNames,
+                     disc_option);
+      if (disc_option == DiscMethodOption::Random)
+      {
+         DiscMethodParams<DiscMethodOption::Random> disc_params;
+         disc_params.seed = in_disc_method.at("Seed").as_floating();
+         meta.disc_params = disc_params;
+      }
+      else if (disc_option == DiscMethodOption::RandomLog)
+      {
+         DiscMethodParams<DiscMethodOption::RandomLog> disc_params;
+         disc_params.seed = in_disc_method.at("Seed").as_floating();
+         meta.disc_params = disc_params;
+      }
+
+      toml::value in_dir = in_source.at("Direction");
+      DirectionOption dir_option;
+      GetEnumerator(in_dir.at("Type").as_string(), DirectionNames, dir_option);
+      if (dir_option == DirectionOption::Constant)
+      {
+         DirectionParams<DirectionOption::Constant> dir_params;
+         dir_params.direction = toml::get<std::vector<double>>(
+                                                in_dir.at("Vector"));
+         meta.dir_params = dir_params;
+      }
+      else if (dir_option == DirectionOption::RandomXYAngle)
+      {
+         DirectionParams<DirectionOption::RandomXYAngle> dir_params;
+         dir_params.min_angle = in_dir.at("MinAngle").as_floating();
+         dir_params.max_angle = in_dir.at("MaxAngle").as_floating();
+         dir_params.seed = in_dir.at("Seed").as_integer();
+         meta.dir_params = dir_params;
+      }
+
+      meta.speed = *(in_source.at("Speed").as_string().data());
    }
 }
 
