@@ -351,7 +351,7 @@ TEST_CASE("PSD Discretization", "[PSD]")
    }();
 
    std::array<double, kFreqs.size()> powers_test;
-   psd.Discretize(kFreqs, powers_test, Interval::Method::MidpointLog10);
+   psd.Discretize(kFreqs, Interval::Method::MidpointLog10, powers_test);
 
    for (std::size_t i = 0; i < kFreqs.size(); i++)
    {

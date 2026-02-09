@@ -187,16 +187,14 @@ public:
     * 
     * @note Integration is done from \ref Min() to \ref Max().
     * 
-    * @todo Add unit test? Interval::ComputeInterval() and Integrate() largely
-    * cover this.
     * 
     * @param freqs         Input discrete center frequencies in ascending
     *                      order, in range [ \ref Min(), \ref Max() ].
-    * @param powers        Output powers.
     * @param method        Interval::Method enumerator.
+    * @param powers        Output powers.
     */
-   void Discretize(std::span<const double> freqs, std::span<double> powers,
-                                             Interval::Method method) const;
+   void Discretize(std::span<const double> freqs, Interval::Method method,
+                                             std::span<double> powers) const;
 };
 
 /**
