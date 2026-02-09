@@ -48,7 +48,7 @@ namespace jabber
  * provided discrete PSD are given in @ref psd_quad_group.
  * 
  * ## Interval Method
- * 
+ * @todo Finish
  */
 
 /**
@@ -81,7 +81,7 @@ public:
     * @brief Compute Interval Δf for given discrete frequency at index \p i
     * in \p freqs using \p method.
     * 
-    * @todo Update this.
+    * @todo Update docs.
     * 
     * @details
     * For \ref Method::Midpoint :
@@ -134,7 +134,7 @@ public:
  * @brief Compute energy-conserved powers from a discrete PSD using a midpoint
  * Riemann sum.
  * 
- * @todo Should I allow for an input min/max instead?
+ * @todo Manual input of min + max (integration bounds)
  * @todo Add unit test?
  * 
  * @details Specifically, this function very simply evaluates
