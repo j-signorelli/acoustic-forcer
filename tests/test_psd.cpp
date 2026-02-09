@@ -1,3 +1,5 @@
+#include "test_utils.hpp"
+
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <catch2/matchers/catch_matchers_vector.hpp>
@@ -72,12 +74,9 @@ TEST_CASE("ComputeInterval", "[PSD]")
 
    constexpr std::array<double, 3> kFreqSample={0.1e3, 10e3, 40e3};
 
-   constexpr int kNumIntervalMethods = 
-                                 static_cast<int>(Interval::Method::Size);
-
-   // Use generator to ensure that all source types are checked!
-   const int m = GENERATE_COPY(range(0, kNumIntervalMethods));
-   const Interval::Method method = static_cast<Interval::Method>(m);
+   // Use generator to ensure that all source types are checked!;
+   const Interval::Method method = GENERATE(options<Interval::Method>());
+   const std::uint8_t m = static_cast<std::uint8_t>(method);
    DYNAMIC_SECTION("Interval Method " << m)
    {
       std::array<Interval, 3> exact;
@@ -96,7 +95,7 @@ TEST_CASE("ComputeInterval", "[PSD]")
       else
       {
          const int m = static_cast<int>(method);
-         FAIL("No unit test for interval method enumerator" << m << "!");
+         FAIL("No unit test for interval method enumerator " << m);
       }
 
       for (std::size_t i = 0; i < kFreqSample.size(); i++)
