@@ -6,7 +6,8 @@ add_executable(unit-tests
                         test_app_common.cpp
                         test_app_config_input.cpp
                         test_interpolant.cpp
-                        test_psd.cpp)
+                        test_psd.cpp
+                        test_wave.cpp)
 
 set(dependencies Catch2::Catch2WithMain libjabber)
 if(JABBER_BUILD_APP)

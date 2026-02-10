@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <span>
+#include <iostream>
 
 namespace jabber
 {
@@ -25,6 +26,20 @@ struct Wave
    /// **Normalized** wave directional vector.
    std::vector<double> k_hat;
 };
+
+/**
+ * @brief Write span of \ref Wave structs to \p out as a CSV, with columns
+ * [Amplitude, Frequency, Phase, Speed, k_hat].
+ */
+void WriteWaves(std::span<const Wave> waves, std::ostream &out);
+
+/**
+ * @brief Read in Wave structs from CSV file, as outputted by 
+ * \ref WriteWaves().
+ * 
+ * @details Parsed waves are appended to \p waves.
+ */
+void ReadWaves(std::istream &in, std::vector<Wave> &waves);
 
 /**
  * @brief Class for specifying and computing a broadband-spectrum acoustic

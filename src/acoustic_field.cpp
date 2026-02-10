@@ -3,9 +3,63 @@
 
 #include <math.h>
 #include <numeric>
+#include <iostream>
+#include <format>
+#include <string>
+#include <ranges>
 
 namespace jabber
 {
+
+void WriteWaves(std::span<const Wave> waves, std::ostream &out)
+{
+   for (std::size_t i = 0; i < waves.size(); i++)
+   {
+      out << std::format("{},{},{},{},", waves[i].amplitude,
+                                          waves[i].frequency,
+                                          waves[i].phase, 
+                                          waves[i].speed);
+      for (std::size_t d = 0; d < waves[i].k_hat.size(); d++)
+      {
+         out << std::format("{},", waves[i].k_hat[d]);
+         out << (d+1==waves[i].k_hat.size() ? "\n" : "");
+      }
+   }
+}
+
+void ReadWaves(std::istream &in, std::vector<Wave> &waves)
+{
+   for (std::string line; std::getline(in, line);)
+   {
+      auto field_view = std::ranges::views::split(line, 
+                                                   std::string_view(","));
+      auto range_it = field_view.begin();
+      auto field_it = *range_it;
+
+      Wave w;
+      w.amplitude = std::stod(std::string(field_it.begin(), field_it.end()));
+      field_it = *(++range_it);
+
+      w.frequency = std::stod(std::string(field_it.begin(), field_it.end()));
+      field_it = *(++range_it);
+
+      w.phase = std::stod(std::string(field_it.begin(), field_it.end()));
+      field_it = *(++range_it);
+
+      w.speed = std::string(field_it.begin(), field_it.end())[0];
+      field_it = *(++range_it);
+      
+      // Continue parsing until empty string (marking end of row)
+      while (!field_it.empty())
+      {
+         const double val = std::stod(std::string(field_it.begin(), 
+                                                   field_it.end()));
+         w.k_hat.push_back(val);
+         field_it = *(++range_it);
+      }
+      waves.emplace_back(w);
+   }
+}
 
 AcousticField::AcousticField(int dim, std::span<const double> coords,
                   double p_bar, double rho_bar,
