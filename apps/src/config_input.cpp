@@ -253,10 +253,27 @@ void TOMLConfigInput::ParseSource(std::string source_serialized)
    else if (source_op == SourceOption::DigitalPSD)
    {
       SourceParams<SourceOption::DigitalPSD> meta;
-      meta.freqs = toml::get<std::vector<double>>(
-                                          in_source.at("Frequencies"));
-      meta.psds = toml::get<std::vector<double>>(
-                                          in_source.at("PSDs"));
+
+      toml::value in_input = in_source.at("InputData");
+      PSDInputOption input_option;
+      GetEnumerator(in_input.at("Type").as_string(), PSDInputNames, 
+                        input_option);
+      if (input_option == PSDInputOption::Here)
+      {
+         PSDInputParams<PSDInputOption::Here> input_params;
+         input_params.freqs = toml::get<std::vector<double>>(
+                                             in_input.at("Frequencies"));
+         input_params.psds = toml::get<std::vector<double>>(
+                                             in_input.at("PSDs"));
+         meta.input_params = input_params;
+      }
+      else if (input_option == PSDInputOption::FromCSV)
+      {
+         PSDInputParams<PSDInputOption::FromCSV> input_params;
+         input_params.file = in_input.at("File").as_string();
+         meta.input_params = input_params;
+      }
+      
       meta.dim_fac = in_source.at("DimFactor").as_floating();
       GetEnumerator(in_source.at("Interpolation").as_string(), 
                      InterpolationNames,

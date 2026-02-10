@@ -47,6 +47,7 @@ GenerateRandomSource<SourceOption::WaveSpectrum>(int seed)
 template<>
 SourceParams<SourceOption::DigitalPSD>
 GenerateRandomSource<SourceOption::DigitalPSD>(int seed,
+                                    PSDInputOption input_method,
                                     InterpolationOption interp_method,
                                     Interval::Method int_method,
                                     DiscMethodOption disc_method,
@@ -55,9 +56,29 @@ GenerateRandomSource<SourceOption::DigitalPSD>(int seed,
 {
 
    constexpr int kNumPts = 20;
+
    SourceParams<SourceOption::DigitalPSD> source_params;
-   source_params.freqs = GenerateRandomVec<kNumPts>(seed++, 1e3, 500e3);
-   source_params.psds = GenerateRandomVec<kNumPts>(seed++, 1e-9, 1e-12);
+
+   if (input_method == PSDInputOption::Here)
+   {
+      PSDInputParams<PSDInputOption::Here> input_params;
+      input_params.freqs = GenerateRandomVec<kNumPts>(seed++, 1e3, 500e3);
+      input_params.psds = GenerateRandomVec<kNumPts>(seed++, 1e-9, 1e-12);
+      source_params.input_params = input_params;
+   }
+   else if (input_method == PSDInputOption::FromCSV)
+   {
+      PSDInputParams<PSDInputOption::FromCSV> input_params;
+      input_params.file = "sample_file" + 
+                           std::to_string(GenerateRandomInt(seed++, 0,100)) 
+                           + ".csv";
+      source_params.input_params = input_params;
+   }
+   else
+   {
+      throw std::logic_error("Invalid or unimplemented PSDInputOption");
+   }
+
    source_params.dim_fac = GenerateRandomReal(seed++, 1.0, 10.0);
    source_params.interp = interp_method;
    source_params.min_disc_freq = GenerateRandomReal(seed++, 1.0, 100.0);

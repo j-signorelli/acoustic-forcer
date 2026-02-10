@@ -22,22 +22,35 @@ Speeds=     [      'S',          'F' ]
 
 [[Sources]]
 Type="DigitalPSD"
-Frequencies=[1e3, 10e3, 100e3, 500e3]
-PSDs=[1e-8, 1e-9, 1e-10, 1e-11]
+
+InputData.Type="Here"
+InputData.Frequencies=[1e3, 10e3, 100e3, 500e3]
+InputData.PSDs=[1e-8, 1e-9, 1e-10, 1e-11]
+# or
+# InputData.Type="FromCSV"
+# InputData.File="csv_file.csv"
+
 DimFactor=1.0
 Interpolation="PiecewiseLogLog"
 
 Discretization.Min=1e2
 Discretization.Max=200e3
 Discretization.N=100
-Discretization.Interval="Midpoint"
+Discretization.Interval="Midpoint" # or MidpointLog10
+
 Discretization.Method.Type="RandomLog"
 Discretization.Method.Seed=15
+# or
+# Discretization.Method.Type="Random"
+# Discretization.Method.Seed=15
 
 Direction.Type="RandomXYAngle"
 Direction.MinAngle=20.0
 Direction.MaxAngle=4.0
 Direction.Seed=17
+# or
+# Direction.Type="Constant"
+# Direction.Vector=[1.0,1.0,1.0]
 
 Speed='S'
 

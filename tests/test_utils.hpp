@@ -117,6 +117,7 @@ GenerateRandomSource<jabber_app::SourceOption::WaveSpectrum>(int seed);
 template<>
 jabber_app::SourceParams<jabber_app::SourceOption::DigitalPSD>
 GenerateRandomSource<jabber_app::SourceOption::DigitalPSD>(int seed,
+                       jabber_app::PSDInputOption input_method,
                        jabber_app::InterpolationOption interp_method,
                        jabber::Interval::Method int_method,
                        jabber_app::DiscMethodOption disc_method,

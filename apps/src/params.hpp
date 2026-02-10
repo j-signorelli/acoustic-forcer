@@ -30,6 +30,58 @@ struct BaseFlowParams
 };
 
 // ----------------------------------------------------------------------------
+/// Input digitized power spectral density data options.
+enum class PSDInputOption : std::uint8_t
+{
+   /// Read in frequencies and PSDs specified directly in the config file.
+   Here,
+
+   /// Read in frequencies and PSDs from CSV file.
+   FromCSV,
+
+   /// Number of PSDInputOptions.
+   Size
+};
+
+/// Strings associated with PSDInputOption enumerators.
+static constexpr std::array<std::string_view, 
+                     static_cast<std::size_t>(PSDInputOption::Size)>
+PSDInputNames = 
+{
+   "Here",       // PSDInputOption::Here
+   "FromCSV",    // PSDInputOption::FromCSV
+};
+
+template<PSDInputOption d>
+struct PSDInputParams;
+
+/// Parameters for PSDInputOption::Here.
+template<>
+struct PSDInputParams<PSDInputOption::Here>
+{
+   /// Digital wave frequencies (not angular) to fit.
+   std::vector<double> freqs;
+
+   /// Digital wave power spectral densities to fit.
+   std::vector<double> psds;
+};
+
+template<>
+struct PSDInputParams<PSDInputOption::FromCSV>
+{
+   /// CSV file address. First column are frequencies, second are PSDs.
+   std::string file;
+};
+
+/// All discretization method parameter options.
+using PSDInputParamsVariant 
+   = std::variant<PSDInputParams<PSDInputOption::Here>,
+                  PSDInputParams<PSDInputOption::FromCSV>>;
+static_assert(std::variant_size_v<PSDInputParamsVariant> == 
+                    static_cast<std::size_t>(PSDInputOption::Size),
+             "Missing PSDInputParams in PSDInputParamsVariant.");
+
+// ----------------------------------------------------------------------------
 /// Interpolation options.
 enum class InterpolationOption : std::uint8_t
 {
@@ -82,6 +134,15 @@ enum class DiscMethodOption : std::uint8_t
    Size
 };
 
+/// Strings associated with DiscMethodOption enumerators.
+static constexpr std::array<std::string_view, 
+                     static_cast<std::size_t>(DiscMethodOption::Size)>
+DiscMethodNames = 
+{
+   "Random",       // DiscMethodOption::Random
+   "RandomLog",    // DiscMethodOption::RandomLog
+};
+
 template<DiscMethodOption d>
 struct DiscMethodParams;
 
@@ -109,15 +170,6 @@ static_assert(std::variant_size_v<DiscMethodParamsVariant> ==
                     static_cast<std::size_t>(DiscMethodOption::Size),
              "Missing DiscMethodParams in DiscMethodParamsVariant.");
 
-/// Strings associated with DiscMethodOption enumerators.
-static constexpr std::array<std::string_view, 
-                     static_cast<std::size_t>(DiscMethodOption::Size)>
-DiscMethodNames = 
-{
-   "Random",       // DiscMethodOption::Random
-   "RandomLog",    // DiscMethodOption::RandomLog
-};
-
 // ----------------------------------------------------------------------------
 
 /// Wave direction options.
@@ -132,6 +184,15 @@ enum class DirectionOption : std::uint8_t
 
    /// Number of DiscMethodOptions.
    Size
+};
+
+/// Strings associated with DiscMethodOption enumerators.
+static constexpr std::array<std::string_view, 
+                     static_cast<std::size_t>(DirectionOption::Size)>
+DirectionNames = 
+{
+   "Constant",         // DirectionOption::Constant
+   "RandomXYAngle",    // DirectionOption::RandomXYAngle
 };
 
 template<DirectionOption d>
@@ -166,15 +227,6 @@ using DirectionParamsVariant
 static_assert(std::variant_size_v<DirectionParamsVariant> == 
                     static_cast<std::size_t>(DirectionOption::Size),
              "Missing DirectionParams in DirectionParamsVariant.");
-
-/// Strings associated with DiscMethodOption enumerators.
-static constexpr std::array<std::string_view, 
-                     static_cast<std::size_t>(DirectionOption::Size)>
-DirectionNames = 
-{
-   "Constant",         // DirectionOption::Constant
-   "RandomXYAngle",    // DirectionOption::RandomXYAngle
-};
 
 // ----------------------------------------------------------------------------
 
@@ -251,11 +303,9 @@ struct SourceParams<SourceOption::WaveSpectrum>
 template<>
 struct SourceParams<SourceOption::DigitalPSD>
 {
-   /// Digital wave frequencies (not angular) to fit.
-   std::vector<double> freqs;
 
-   /// Digital wave power spectral densities to fit.
-   std::vector<double> psds;
+   /// Digitized data (frequencies and PSDs) input parameters.
+   PSDInputParamsVariant input_params;
 
    /// (For PSD unit V^2/Hz) Factor to multiply V by for pressure amplitude.
    double dim_fac;

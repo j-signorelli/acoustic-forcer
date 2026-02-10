@@ -147,6 +147,8 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
       {
          SourceParams<SourceOption::DigitalPSD> source_params;
 
+         const PSDInputOption input_option = 
+                                 GENERATE(options<PSDInputOption>());
          const InterpolationOption interp_option = 
                                  GENERATE(options<InterpolationOption>());
          const Interval::Method int_method_option = 
@@ -158,14 +160,9 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
 
          const char speed = GENERATE('S', 'F');         
          
-         
-         CAPTURE(interp_option);
-         CAPTURE(int_method_option);
-         CAPTURE(dm_option);
-         CAPTURE(dir_option);
-         CAPTURE(speed);
          source_params = GenerateRandomSource<SourceOption::DigitalPSD>(
                                     kSeed,
+                                    input_option,
                                     interp_option,
                                     int_method_option,
                                     dm_option,
@@ -174,8 +171,6 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
          std::string source_str = 
          std::format(R"(
             Type="{}"
-            Frequencies={}
-            PSDs={}
             DimFactor={}
             Interpolation="{}"
             Speed='{}'
@@ -183,17 +178,39 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
             Discretization.Max={}
             Discretization.N={}
             Discretization.Interval="{}"
+            InputData.Type="{}"
             Discretization.Method.Type="{}"
             Direction.Type="{}"
-            )", SourceNames[s], WriteVector(source_params.freqs),
-            WriteVector(source_params.psds),
+            )", SourceNames[s],
             source_params.dim_fac,
             InterpolationNames[static_cast<std::uint8_t>(source_params.interp)],
             source_params.speed, source_params.min_disc_freq, 
             source_params.max_disc_freq, source_params.num_waves,
             IntervalNames[static_cast<std::uint8_t>(source_params.int_method)],
+            PSDInputNames[static_cast<std::uint8_t>(input_option)],
             DiscMethodNames[static_cast<std::uint8_t>(dm_option)],
             DirectionNames[static_cast<std::uint8_t>(dir_option)]);
+         
+         std::visit(
+         overloads
+         {
+         [&](const PSDInputParams<PSDInputOption::Here> input_params)
+         {
+            source_str = std::format(R"(
+                           {}
+                           InputData.Frequencies={}
+                           InputData.PSDs={}
+                           )", source_str, WriteVector(input_params.freqs),
+                              WriteVector(input_params.psds));
+         },
+         [&](const PSDInputParams<PSDInputOption::FromCSV> input_params)
+         {
+            source_str = std::format(R"(
+                           {}
+                           InputData.File="{}"
+                           )", source_str, input_params.file);
+         }
+         }, source_params.input_params);
          
          std::visit(
          overloads
@@ -242,8 +259,6 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
                std::get<SourceParams<SourceOption::DigitalPSD>>(
                                                    config.Sources()[0]);
 
-         CHECK_THAT(parsed_source.freqs, Equals(source_params.freqs));
-         CHECK_THAT(parsed_source.psds, Equals(source_params.psds));
          CHECK(parsed_source.dim_fac == source_params.dim_fac);
          CHECK(parsed_source.interp == source_params.interp);
          CHECK(parsed_source.speed == source_params.speed);
@@ -251,6 +266,34 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
          CHECK(parsed_source.max_disc_freq == source_params.max_disc_freq);
          CHECK(parsed_source.num_waves == source_params.num_waves);
          CHECK(parsed_source.int_method== source_params.int_method);
+
+         std::visit(
+         overloads
+         {
+         [&](const PSDInputParams<PSDInputOption::Here> parsed_input_params)
+         {
+            CHECK(input_option == PSDInputOption::Here);
+            if (input_option == PSDInputOption::Here)
+            {
+               PSDInputParams<PSDInputOption::Here> input_params = 
+                  std::get<PSDInputParams<PSDInputOption::Here>>(
+                                                source_params.input_params);
+               CHECK_THAT(parsed_input_params.freqs, Equals(input_params.freqs));
+               CHECK_THAT(parsed_input_params.psds, Equals(input_params.psds));
+            }
+         },
+         [&](const PSDInputParams<PSDInputOption::FromCSV> parsed_input_params)
+         {
+            CHECK(input_option == PSDInputOption::FromCSV);
+            if (input_option == PSDInputOption::FromCSV)
+            {
+               PSDInputParams<PSDInputOption::FromCSV> input_params = 
+                  std::get<PSDInputParams<PSDInputOption::FromCSV>>(
+                                                source_params.input_params);
+               CHECK(parsed_input_params.file == input_params.file);
+            }
+         }
+         }, parsed_source.input_params);
 
          std::visit(
          overloads
