@@ -187,6 +187,7 @@ public:
     * 
     * @note Integration is done from \ref Min() to \ref Max().
     * 
+    * @warning Frequencies \p freqs must be sorted!
     * 
     * @param freqs         Input discrete center frequencies in ascending
     *                      order, in range [ \ref Min(), \ref Max() ].
