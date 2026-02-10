@@ -192,12 +192,12 @@ public:
 
    /// Add a Wave to the acoustic field.
    void AddWave(const Wave &w) { waves_.push_back(w); }
-   
-   /// Get reference to Wave \p i from acoustic field.
-   Wave& GetWave(int i) { return waves_[i]; }
-   
-   /// Get const reference to Wave \p i from acoustic field.
-   const Wave& GetWave(int i) const { return waves_[i]; }
+
+   /// Get reference to Wave vector.
+   std::vector<Wave>& Waves() { return waves_; }
+
+   /// Get const reference to Wave vector.
+   const std::vector<Wave>& Waves() const { return waves_; }
 
    /**
     * @brief Finalize the acoustic field, to be called after specifying all

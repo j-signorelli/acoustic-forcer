@@ -96,7 +96,7 @@ void AcousticField::Finalize()
    // Note that performance of below was not carefully considered
    for (int w = 0; w < NumWaves(); w++)
    {
-      const Wave &wave = GetWave(w);
+      const Wave &wave = Waves()[w];
 
       // Set amplitude
       amplitude_[w] = wave.amplitude;

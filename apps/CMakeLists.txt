@@ -19,7 +19,6 @@ if (JABBER_BUILD_PARTICIPANT)
                                  precice::precice)
 endif()
 
-
 # Build Jabber acoustic field visualizer app
 if (JABBER_BUILD_VIZ)
 
@@ -49,6 +48,23 @@ if (JABBER_BUILD_PROFILER)
                                                    jabber_profile)
 
    target_link_libraries(jabber_profile PRIVATE 
+                                       compiler_flag_requirements
+                                       libjabber
+                                       libjabber_app
+                                       cxxopts::cxxopts)
+
+endif()
+
+
+# Build Jabber out app
+# Build Jabber profiler app
+if (JABBER_BUILD_OUT)
+
+   add_executable(jabber_out out.cpp)
+   set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY 
+                                                   jabber_out)
+
+   target_link_libraries(jabber_out PRIVATE 
                                        compiler_flag_requirements
                                        libjabber
                                        libjabber_app

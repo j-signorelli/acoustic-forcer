@@ -16,19 +16,22 @@ option(JABBER_BUILD_VIZ
 option(JABBER_BUILD_PROFILER 
    "Build Jabber compute profiler." ON)
 
+option(JABBER_BUILD_OUT 
+   "Build Jabber outputter." ON)
+
 option(JABBER_BUILD_DOCS 
-   "Build Jabber documentation w/ Doxygen." OFF)
+   "Build Jabber documentation w/ Doxygen." ON)
 
 option(JABBER_INSTALL_APP_LIB 
-   "Install the jabber_app library" OFF)
+   "Install the jabber_app library" ON)
 
 option(JABBER_BUILD_TESTS 
-   "Build unit tests" OFF)
+   "Build unit tests" ON)
 
 # If building any apps
 set(JABBER_BUILD_APP OFF)
 if (JABBER_BUILD_PARTICIPANT OR JABBER_BUILD_VIZ OR JABBER_BUILD_PROFILER
-                                                   OR JABBER_INSTALL_APP_LIB)
+      OR JABBER_BUILD_OUT OR JABBER_INSTALL_APP_LIB)
    set(JABBER_BUILD_APP ON)
    add_compile_definitions(JABBER_WITH_APP)
 endif()
