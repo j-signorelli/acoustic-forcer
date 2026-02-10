@@ -8,17 +8,12 @@ gamma=1.4
 Type="SingleWave"
 Amplitude=10.0
 Frequency=1200.0
-Direction=[1.0,0.0]
+DirVector=[1.0,0.0]
 Phase=0.0
-Speed="Slow"
-
-[TransferFunction]
-Type="None"
+Speed='S'
 
 [Computation]
 t0=0.0
-Data=["p'"]
-Nondimensionalization="None"
 
 [preCICE]
 ParticipantName="Jabber"
