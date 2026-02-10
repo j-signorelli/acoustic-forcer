@@ -18,6 +18,7 @@ public:
 
    /// Evaluate function at \p x.
    virtual double operator() (const double &x) const = 0;
+   virtual ~Function() = default;
 };
 
 /// Piecewise-linear interpolant.
