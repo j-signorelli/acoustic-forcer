@@ -15,13 +15,13 @@ void WriteWaves(std::span<const Wave> waves, std::ostream &out)
 {
    for (std::size_t i = 0; i < waves.size(); i++)
    {
-      out << std::format("{},{},{},{},", waves[i].amplitude,
+      out << std::format("{},{},{},{}", waves[i].amplitude,
                                           waves[i].frequency,
                                           waves[i].phase, 
                                           waves[i].speed);
       for (std::size_t d = 0; d < waves[i].k_hat.size(); d++)
       {
-         out << std::format("{},", waves[i].k_hat[d]);
+         out << std::format(",{}", waves[i].k_hat[d]);
          out << (d+1==waves[i].k_hat.size() ? "\n" : "");
       }
    }
@@ -49,13 +49,11 @@ void ReadWaves(std::istream &in, std::vector<Wave> &waves)
       w.speed = std::string(field_it.begin(), field_it.end())[0];
       field_it = *(++range_it);
       
-      // Continue parsing until empty string (marking end of row)
-      while (!field_it.empty())
+      for (;range_it != field_view.end(); field_it = *(++range_it))
       {
          const double val = std::stod(std::string(field_it.begin(), 
                                                    field_it.end()));
          w.k_hat.push_back(val);
-         field_it = *(++range_it);
       }
       waves.emplace_back(w);
    }
