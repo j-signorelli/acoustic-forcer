@@ -66,11 +66,15 @@ int main(int argc, char *argv[])
    }
 
    matplot::figure_handle f = matplot::figure(true);
-
+   f->size(1920, 1080);
+   f->font_size(16);
    matplot::axes_handle ax = f->current_axes();
    ax->title("Wave Amplitude v. Frequency");
    ax->xlabel("Frequencies");
    ax->ylabel("Amplitudes");
+   ax->font_size(16);
+   ax->x_axis().label_font_size(16);
+   ax->y_axis().label_font_size(16);
    if (loglog)
    {
       ax->x_axis().scale(matplot::axis_type::axis_scale::log);
@@ -78,9 +82,10 @@ int main(int argc, char *argv[])
    }
 
    matplot::line_handle line = ax->scatter(freqs, amps);
-   line->marker_style("x");
+   line->marker_style("o");
    line->color("black");
-   line->marker_size(15);
+   line->marker_size(8);
+   line->marker_face(true);
 
    f->show();
 
