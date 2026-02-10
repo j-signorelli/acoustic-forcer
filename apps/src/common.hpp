@@ -85,7 +85,8 @@ struct DiscMethodVisitor
 struct DirectionVisitor
 {
    /// **Sized** vector of direction vectors for each wave.
-   std::vector<std::vector<double>> k_hats;
+   std::vector<std::vector<double>> &k_hats;
+
    void operator() (const DirectionParams<DirectionOption::Constant> &dp);
    void operator() (const DirectionParams<DirectionOption::RandomXYAngle> &dp);
 };
