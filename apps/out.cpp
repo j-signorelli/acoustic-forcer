@@ -52,13 +52,10 @@ int main(int argc, char *argv[])
    TOMLConfigInput conf(config_file, &std::cout);
    std::cout << LINE << std::endl;
 
-   // Take the dim to be the size of the freestream vector
-   const int dim = conf.BaseFlow().U.size();
-
    // Initialize a dummy AcousticField w/ 1-point grid
    AcousticField field = InitializeAcousticField(conf, 
-                                       std::vector<double>(dim,0.0),
-                                       dim);
+                                       std::vector<double>(3,0.0),
+                                       3);
    
    // Write the Wave data
    std::ofstream os(out_file);
