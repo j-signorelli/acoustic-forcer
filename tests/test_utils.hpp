@@ -18,6 +18,15 @@ inline double GenerateRandomReal(int seed, double s0, double s1)
    std::uniform_real_distribution<double> real_dist(s0, s1);
    return real_dist(gen);
 }
+
+/// Generate random integer within \p s0 and \p s1 using \p seed.
+inline int GenerateRandomInt(int seed, int s0, int s1)
+{
+   std::mt19937 gen(seed);
+   std::uniform_int_distribution<int> int_dist(s0, s1);
+   return int_dist(gen);
+}
+
 /**
  * @brief Generate std::array of random doubles within \p s0 and \p s1 
  * using \p seed.
@@ -89,48 +98,31 @@ Catch::Generators::GeneratorWrapper<T> options()
 }
 
 #ifdef JABBER_WITH_APP
+
 /**
  * @brief Generate (largely) randomized source params type.
  */
-template<jabber_app::SourceOption s>
-inline jabber_app::SourceParams<s> GenerateRandomSource(int seed)
-{
-   using namespace jabber_app;
-   if constexpr (s == SourceOption::SingleWave)
-   {
-      SourceParams<SourceOption::SingleWave> wave;
-      wave.amp = GenerateRandomReal(seed++,0.1,10.0);
-      wave.freq = GenerateRandomReal(seed++, 500.0, 1500.0);
-      wave.direction = GenerateRandomVec<3>(seed++, 0.0, 1.0);
-      wave.phase = GenerateRandomReal(seed++, 10.0, 180.0);
-      wave.speed = (seed % 2 == 0 ? 'S' : 'F');
-      return wave;
-   }
-   else if constexpr (s == SourceOption::WaveSpectrum)
-   {
-      constexpr int kNumWaves = 5;
-      SourceParams<SourceOption::WaveSpectrum> waves;
-      waves.amps = GenerateRandomVec<kNumWaves>(seed++, 1.0, 10.0);
-      waves.freqs = GenerateRandomVec<kNumWaves>(seed++, 500.0, 
-                                                            1500.0);
-      waves.directions.resize(kNumWaves);
-      for (std::vector<double> &w_dir : waves.directions)
-      {
-            w_dir = GenerateRandomVec<3>(seed++, 0.0, 1.0);
-      }
-      waves.phases = GenerateRandomVec<kNumWaves>(seed++,0.0,180.0);
-      waves.speeds.resize(kNumWaves);
-      for (int w = 0; w < kNumWaves; w++)
-      {
-            waves.speeds[w] = (w%2==0 ? 'S' : 'F');
-      }
-      return waves;
-   }
-   else
-   {
-      static_assert("Type not implemented.");
-   }
-}
+template<jabber_app::SourceOption s, typename... SubOptions>
+jabber_app::SourceParams<s> GenerateRandomSource(int seed, SubOptions... opts);
+
+template<>
+jabber_app::SourceParams<jabber_app::SourceOption::SingleWave>
+GenerateRandomSource<jabber_app::SourceOption::SingleWave>(int seed,
+                                                            char speed);
+
+template<>
+jabber_app::SourceParams<jabber_app::SourceOption::WaveSpectrum>
+GenerateRandomSource<jabber_app::SourceOption::WaveSpectrum>(int seed);
+
+template<>
+jabber_app::SourceParams<jabber_app::SourceOption::DigitalPSD>
+GenerateRandomSource<jabber_app::SourceOption::DigitalPSD>(int seed,
+                       jabber_app::InterpolationOption interp_method,
+                       jabber::Interval::Method int_method,
+                       jabber_app::DiscMethodOption disc_method,
+                       jabber_app::DirectionOption dir_method,
+                       char speed);
+
 #endif // JABBER_WITH_APP
 
 } // namespace jabber_test

@@ -265,6 +265,7 @@ void TOMLConfigInput::ParseSource(std::string source_serialized)
       toml::value in_disc = in_source.at("Discretization");
       meta.min_disc_freq = in_disc.at("Min").as_floating();
       meta.max_disc_freq = in_disc.at("Max").as_floating();
+      meta.num_waves = in_disc.at("N").as_integer();
       GetEnumerator(in_disc.at("Interval").as_string(), IntervalNames,
                       meta.int_method);
       
@@ -275,13 +276,13 @@ void TOMLConfigInput::ParseSource(std::string source_serialized)
       if (disc_option == DiscMethodOption::Random)
       {
          DiscMethodParams<DiscMethodOption::Random> disc_params;
-         disc_params.seed = in_disc_method.at("Seed").as_floating();
+         disc_params.seed = in_disc_method.at("Seed").as_integer();
          meta.disc_params = disc_params;
       }
       else if (disc_option == DiscMethodOption::RandomLog)
       {
          DiscMethodParams<DiscMethodOption::RandomLog> disc_params;
-         disc_params.seed = in_disc_method.at("Seed").as_floating();
+         disc_params.seed = in_disc_method.at("Seed").as_integer();
          meta.disc_params = disc_params;
       }
 
@@ -305,6 +306,8 @@ void TOMLConfigInput::ParseSource(std::string source_serialized)
       }
 
       meta.speed = *(in_source.at("Speed").as_string().data());
+
+      sources_.emplace_back(meta);
    }
 }
 
