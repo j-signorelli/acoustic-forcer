@@ -195,6 +195,8 @@ public:
     */
    void Discretize(std::span<const double> freqs, Interval::Method method,
                                              std::span<double> powers) const;
+   
+   virtual ~BasePSD() = default;
 };
 
 /**
