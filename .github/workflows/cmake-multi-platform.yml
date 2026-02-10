@@ -50,6 +50,7 @@ jobs:
         -DJABBER_BUILD_PARTICIPANT=OFF
         -DJABBER_BUILD_VIZ=OFF
         -DJABBER_BUILD_PROFILER=OFF
+        -DJABBER_BUILD_OUT=OFF
         -DJABBER_INSTALL_APP_LIB=ON
         -DJABBER_BUILD_TESTS=ON
         -S ${{ github.workspace }}
