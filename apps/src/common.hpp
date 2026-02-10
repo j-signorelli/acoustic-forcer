@@ -19,23 +19,18 @@ void PrintBanner(std::ostream &out);
 void Normalize(std::span<const double> vec, std::span<double> norm_vec);
 
 /**
- * @brief Read in a digitzed power spectral density from a CSF file, where
- * first column are frequencies and second column are PSDs.
+ * @brief All visitor options for each SourceParams, for initializing 
+ * \ref jabber::Wave's for each type and appending to \p waves.
  * 
- * @todo unit test.
- * 
- * @param file_name                                CSV file name.
- * @return std::vector<std::pair<double,double>>   Vector of CSV file rows,
- *                                                 where the pair's first
- *                                                 value is the frequency
- *                                                 and second is PSD.
  */
-std::vector<std::pair<double,double>> ReadPSDFromCSV(std::string file_name);
-
-std::vector<jabber::Wave>
-InitializeFromPSD(const SourceParams<SourceOption::DigitalPSD> &source_params);
-
-
+struct SourceParamsInitializer
+{
+   std::vector<jabber::Wave> &waves;
+   void operator() (const SourceParams<SourceOption::SingleWave> &sp);
+   void operator() (const SourceParams<SourceOption::WaveSpectrum> &sp);
+   void operator() (const SourceParams<SourceOption::DigitalPSD> &sp);
+   void operator() (const SourceParams<SourceOption::WaveCSV> &sp);
+};
 
 /**
  * @brief Initialize a \ref jabber::AcousticField object from user input and 
@@ -47,8 +42,8 @@ InitializeFromPSD(const SourceParams<SourceOption::DigitalPSD> &source_params);
  * @return jabber::AcousticField    Finalized acoustic field.
  */
 jabber::AcousticField InitializeAcousticField(const ConfigInput &conf, 
-                                             std::span<const double> coords,
-                                             int dim);
+                                                std::span<const double> coords,
+                                                int dim);
 
 } // namespace jabber_app
 

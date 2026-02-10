@@ -4,6 +4,7 @@
 #include <memory>
 #include <random>
 #include <fstream>
+#include <ranges>
 
 using namespace jabber;
 
@@ -51,17 +52,31 @@ void Normalize(std::span<const double> vec, std::span<double> norm_vec)
    }
 }
 
-std::vector<std::pair<double,double>> ReadPSDFromCSV(std::string file_name)
+void SourceParamsInitializer::operator()
+   (const SourceParams<SourceOption::SingleWave> &sp)
 {
-
+   std::vector<double> k_hat(sp.direction.size(), 0.0);
+   Normalize(sp.direction, k_hat);
+   waves.emplace_back(sp.amp, sp.freq, sp.phase*M_PI/180.0, sp.speed, k_hat);
 }
 
-std::vector<Wave>
-InitializeFromPSD(const SourceParams<SourceOption::DigitalPSD> &source_params)
+void SourceParamsInitializer::operator()
+   (const SourceParams<SourceOption::WaveSpectrum> &sp)
+{
+   for (int i = 0; i < sp.amps.size(); i++)
+   {
+      std::vector<double> k_hat(sp.directions[i].size(), 0.0);
+      Normalize(sp.directions[i], k_hat);
+      waves.emplace_back(sp.amps[i], sp.freqs[i], sp.phases[i]*M_PI/180.0, 
+                           sp.speeds[i], k_hat);
+   }
+}
+
+void SourceParamsInitializer::operator()
+   (const SourceParams<SourceOption::DigitalPSD> &sp)
 {
    // Process input data into freqs, PSDs vector
    std::vector<double> d_freqs, d_psds;
-
    std::visit(
    overloads
    {
@@ -72,33 +87,40 @@ InitializeFromPSD(const SourceParams<SourceOption::DigitalPSD> &source_params)
    },
    [&](const PSDInputParams<PSDInputOption::FromCSV> &input_params)
    {
-      std::vector<std::pair<double, double>> csv_data = 
-                                          ReadPSDFromCSV(input_params.file);
-      d_freqs.reserve(csv_data.size());
-      d_psds.reserve(csv_data.size());
-      for (const std::pair<double, double> &row : csv_data)
+      std::ifstream is(input_params.file);
+      if (!is.is_open())
       {
-         d_freqs.push_back(row.first);
-         d_psds.push_back(row.second);
+         throw std::invalid_argument("Cannot find PSD CSV file.");
+      }
+      for (std::string line; std::getline(is, line);)
+      {
+         auto row_view = std::ranges::views::split(line,std::string_view(","));
+         auto row_it = row_view.begin();
+         auto val_it = *row_it;
+         d_freqs.push_back(std::stod(std::string(val_it.begin(), 
+                                                   val_it.end())));
+         val_it = *(++row_it);
+         d_psds.push_back(std::stod(std::string(val_it.begin(), 
+                                                   val_it.end())));
       }
    }
-   }, source_params.input_params);
+   }, sp.input_params);
 
    // Initialize the interpolated PSD curve
    std::unique_ptr<BasePSD> psd;
-   if (source_params.interp == InterpolationOption::PiecewiseLinear)
+   if (sp.interp == InterpolationOption::PiecewiseLinear)
    {
       psd = std::make_unique<PWLinearPSD>(d_freqs, d_psds);
    }
-   else if (source_params.interp == InterpolationOption::PiecewiseLogLog)
+   else if (sp.interp == InterpolationOption::PiecewiseLogLog)
    {
       psd = std::make_unique<PWLogLogPSD>(d_freqs, d_psds);
    }
 
    // Apply the discretization method for selecting center frequencies
-   std::vector<double> freqs(source_params.num_waves);
-   const double min_freq = source_params.min_disc_freq;
-   const double max_freq = source_params.max_disc_freq;
+   std::vector<double> freqs(sp.num_waves);
+   const double min_freq = sp.min_disc_freq;
+   const double max_freq = sp.max_disc_freq;
    std::visit(
    overloads
    {
@@ -121,24 +143,22 @@ InitializeFromPSD(const SourceParams<SourceOption::DigitalPSD> &source_params)
          freqs[i] = std::pow(10.0, real_dist(gen));
       }
    }
-   }, source_params.disc_params);
-
+   }, sp.disc_params);
 
    // Compute the powers of each wave
    std::vector<double> powers(freqs.size());
-   psd->Discretize(freqs, source_params.int_method, powers);
+   psd->Discretize(freqs, sp.int_method, powers);
 
-   /// @todo Apply transfer function
    // Compute the amplitudes of each wave, with dimensionalization factor
    std::vector<double> amps(freqs.size());
    for (std::size_t i = 0; i < amps.size(); i++)
    {
-      amps[i] = std::sqrt(2*powers[i])*source_params.dim_fac;
+      amps[i] = std::sqrt(2*powers[i])*sp.dim_fac;
    }
 
    // Compute the phases of each wave
    std::vector<double> phases(freqs.size());
-   std::mt19937 phase_gen(source_params.phase_seed);
+   std::mt19937 phase_gen(sp.phase_seed);
    std::uniform_real_distribution<double> phase_dist(0,2*M_PI);
    for (std::size_t i = 0; i < phases.size(); i++)
    {
@@ -147,30 +167,49 @@ InitializeFromPSD(const SourceParams<SourceOption::DigitalPSD> &source_params)
 
    // Compute the normalized directions of each wave
    std::vector<std::vector<double>> k_hats(freqs.size());
-
    std::visit(
    overloads
    {
    [&](const DirectionParams<DirectionOption::Constant> &dir_params)
    {
-
+      for (std::size_t i = 0; i < k_hats.size(); i++)
+      {
+         k_hats[i] = dir_params.direction;
+      }
    },
    [&](const DirectionParams<DirectionOption::RandomXYAngle> &dir_params)
    {
-
+      std::mt19937 dir_gen(dir_params.seed);
+      std::uniform_real_distribution<double> dir_dist(
+                                       dir_params.min_angle*M_PI/180.0,
+                                       dir_params.max_angle*M_PI/180.0);
+      for (std::size_t i = 0; i < k_hats.size(); i++)
+      {
+         k_hats[i].resize(3, 0.0);
+         const double angle = dir_dist(dir_gen);
+         k_hats[i][0] = std::cos(angle);
+         k_hats[i][1] = std::sin(angle);
+      }
    }
-   }, source_params.dir_params);
+   }, sp.dir_params);
 
    // Finally, assemble the individual Wave structs
-   std::vector<Wave> waves(powers.size());
-   for (std::size_t i = 0; i < source_params.num_waves; i++)
+   for (std::size_t i = 0; i < sp.num_waves; i++)
    {
-      const Wave w{amps[i], freqs[i], phases[i], 
-                     source_params.speed, k_hats[i]};
+      const Wave w{amps[i], freqs[i], phases[i], sp.speed, k_hats[i]};
       waves.emplace_back(w);
    }
+}
 
-   return std::move(waves);
+void SourceParamsInitializer::operator()
+   (const SourceParams<SourceOption::WaveCSV> &sp)
+{
+   std::ifstream is(sp.file);
+   if (!is.is_open())
+   {
+      throw std::invalid_argument("Wave CSV file not found.");
+   }
+   ReadWaves(is, waves);
 }
 
 AcousticField InitializeAcousticField(const ConfigInput &conf, 
@@ -185,53 +224,10 @@ AcousticField InitializeAcousticField(const ConfigInput &conf,
    AcousticField field(dim, coords, base_conf.p, base_conf.rho,
                         base_conf.U, base_conf.gamma);
 
-      // Assemble vector of wave structs based on input source
-   std::vector<Wave> all_waves;
-
+   // Assemble vector of wave structs based on input source
    for (const SourceParamsVariant &source : sources_conf)
    {
-      std::visit(
-      overloads
-      {
-      [&](const SourceParams<SourceOption::SingleWave> &params_wave)
-      {
-         std::vector<double> k_hat(dim, 0.0);
-         Normalize(params_wave.direction, k_hat);
-         all_waves.emplace_back(params_wave.amp, params_wave.freq, 
-                                 params_wave.phase*M_PI/180.0, 
-                                 params_wave.speed, k_hat);
-      },
-      [&](const SourceParams<SourceOption::WaveSpectrum> &params_waves)
-      {
-         for (int i = 0; i < params_waves.amps.size(); i++)
-         {
-            std::vector<double> k_hat(dim, 0.0);
-            Normalize(params_waves.directions[i], k_hat);
-            all_waves.emplace_back(params_waves.amps[i], params_waves.freqs[i],
-                                    params_waves.phases[i]*M_PI/180.0, 
-                                    params_waves.speeds[i], k_hat);
-         }
-      },
-      [&](const SourceParams<SourceOption::DigitalPSD> &params_psd)
-      {
-         
-      },
-      [&](const SourceParams<SourceOption::WaveCSV> &params_wcsv)
-      {
-         std::ifstream is(params_wcsv.file);
-         if (!is.is_open())
-         {
-            throw std::invalid_argument("Wave CSV file not found.");
-         }
-         ReadWaves(is, all_waves);
-      }
-      }, source);
-   }
-
-   for (const Wave &wave : all_waves)
-   {  
-      // Add wave to acoustic field
-      field.AddWave(wave);
+      std::visit(SourceParamsInitializer{field.Waves()}, source);
    }
 
    // Finalize the acoustic field initialization
