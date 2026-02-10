@@ -85,6 +85,7 @@ GenerateRandomSource<SourceOption::DigitalPSD>(int seed,
    source_params.max_disc_freq = GenerateRandomReal(seed++, 250e3,450e3);
    source_params.num_waves = GenerateRandomInt(seed++, 1, 100);
    source_params.int_method = int_method;
+   source_params.phase_speed = GenerateRandomInt(seed++, 1, 100);
    
    if (disc_method == DiscMethodOption::Random)
    {

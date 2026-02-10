@@ -46,12 +46,13 @@ Discretization.Method.Seed=15
 
 Direction.Type="RandomXYAngle"
 Direction.MinAngle=20.0
-Direction.MaxAngle=4.0
+Direction.MaxAngle=40.0
 Direction.Seed=17
 # or
 # Direction.Type="Constant"
 # Direction.Vector=[1.0,1.0,1.0]
 
+PhaseSeed=1
 Speed='S'
 
 [Computation]

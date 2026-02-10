@@ -322,6 +322,7 @@ void TOMLConfigInput::ParseSource(std::string source_serialized)
          meta.dir_params = dir_params;
       }
 
+      meta.phase_seed = in_source.at("PhaseSeed").as_integer();
       meta.speed = *(in_source.at("Speed").as_string().data());
 
       sources_.emplace_back(meta);

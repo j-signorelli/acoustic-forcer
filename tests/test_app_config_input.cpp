@@ -173,6 +173,7 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
             Type="{}"
             DimFactor={}
             Interpolation="{}"
+            PhaseSeed={}
             Speed='{}'
             Discretization.Min={}
             Discretization.Max={}
@@ -184,6 +185,7 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
             )", SourceNames[s],
             source_params.dim_fac,
             InterpolationNames[static_cast<std::uint8_t>(source_params.interp)],
+            source_params.phase_seed,
             source_params.speed, source_params.min_disc_freq, 
             source_params.max_disc_freq, source_params.num_waves,
             IntervalNames[static_cast<std::uint8_t>(source_params.int_method)],
@@ -261,6 +263,7 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
 
          CHECK(parsed_source.dim_fac == source_params.dim_fac);
          CHECK(parsed_source.interp == source_params.interp);
+         CHECK(parsed_source.phase_seed == source_params.phase_seed);
          CHECK(parsed_source.speed == source_params.speed);
          CHECK(parsed_source.min_disc_freq == source_params.min_disc_freq);
          CHECK(parsed_source.max_disc_freq == source_params.max_disc_freq);

@@ -124,10 +124,10 @@ IntervalNames =
 enum class DiscMethodOption : std::uint8_t
 {
 
-   /// Random sampling.
+   /// Random sampling of uniform distribution.
    Random,
 
-   /// Random but on a log10 scaling.
+   /// Random sampling of uniform distribution but on log10 scale.
    RandomLog,
 
    /// Number of DiscMethodOptions.
@@ -330,6 +330,9 @@ struct SourceParams<SourceOption::DigitalPSD>
 
    /// Direction method parameters.
    DirectionParamsVariant dir_params;
+
+   /// Seed to use for wave phase randomization.
+   int phase_seed;
 
    /// Wave speeds to use.
    char speed;
