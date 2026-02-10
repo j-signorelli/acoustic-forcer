@@ -5,6 +5,7 @@
 #include <random>
 #include <fstream>
 #include <ranges>
+#include <algorithm>
 
 using namespace jabber;
 
@@ -144,6 +145,9 @@ void SourceParamsInitializer::operator()
       }
    }
    }, sp.disc_params);
+
+   // Sort the frequencies
+   std::sort(freqs.begin(), freqs.end());
 
    // Compute the powers of each wave
    std::vector<double> powers(freqs.size());
