@@ -53,6 +53,7 @@ jobs:
         -DJABBER_BUILD_OUT=OFF
         -DJABBER_INSTALL_APP_LIB=ON
         -DJABBER_BUILD_TESTS=ON
+        -DJABBER_BUILD_DOCS=OFF
         -S ${{ github.workspace }}
 
     - name: Build
