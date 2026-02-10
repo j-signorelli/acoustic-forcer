@@ -361,6 +361,22 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
          }, parsed_source.dir_params);
 
       }
+      else if (option == SourceOption::WaveCSV)
+      {
+         SourceParams<SourceOption::WaveCSV> source_params;
+         source_params.file = "test_waves." + 
+                              std::to_string(GenerateRandomInt(0, 0, 100)) 
+                              + ".csv";
+         std::string source_str = std::format(R"(
+                                    Type="{}"
+                                    File="{}")", SourceNames[s], 
+                                    source_params.file);
+         TOMLConfigInput config;
+         config.ParseSource(source_str);
+         SourceParams<SourceOption::WaveCSV> parsed_source = 
+            std::get<SourceParams<SourceOption::WaveCSV>>(config.Sources()[0]);
+         CHECK(parsed_source.file == source_params.file);
+      }
       else
       {
          FAIL("No unit test for source type " << SourceNames[s] << "!");

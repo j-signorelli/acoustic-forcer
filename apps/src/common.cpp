@@ -3,6 +3,7 @@
 #include <cmath>
 #include <memory>
 #include <random>
+#include <fstream>
 
 using namespace jabber;
 
@@ -10,6 +11,8 @@ using namespace jabber;
 // (https://en.cppreference.com/w/cpp/utility/variant/visit)
 template<class... Ts>
 struct overloads : Ts... { using Ts::operator()...; };
+
+using namespace jabber;
 
 namespace jabber_app
 {
@@ -212,6 +215,15 @@ AcousticField InitializeAcousticField(const ConfigInput &conf,
       [&](const SourceParams<SourceOption::DigitalPSD> &params_psd)
       {
          
+      },
+      [&](const SourceParams<SourceOption::WaveCSV> &params_wcsv)
+      {
+         std::ifstream is(params_wcsv.file);
+         if (!is.is_open())
+         {
+            throw std::invalid_argument("Wave CSV file not found.");
+         }
+         ReadWaves(is, all_waves);
       }
       }, source);
    }

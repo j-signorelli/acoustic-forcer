@@ -242,6 +242,9 @@ enum class SourceOption : std::uint8_t
    /// Digitized/discrete power spectral density (PSD).
    DigitalPSD,
 
+   /// Read in CSV file of Wave data (output from \ref jabber::WriteWaves()).
+   WaveCSV,
+
    /// Number of SourceOptions.
    Size
 };
@@ -253,7 +256,8 @@ SourceNames =
 {
    "SingleWave",      // SourceOption::SingleWave
    "WaveSpectrum",    // SourceOption::WaveSpectrum
-   "DigitalPSD",    // SourceOption::DigitalPSD
+   "DigitalPSD",      // SourceOption::DigitalPSD
+   "WaveCSV"          // SourceOption::WaveCSV
 };
 
 template<SourceOption s>
@@ -338,11 +342,19 @@ struct SourceParams<SourceOption::DigitalPSD>
    char speed;
 };
 
+template<>
+struct SourceParams<SourceOption::WaveCSV>
+{
+   /// Wave CSV file (output from \ref jabber::WriteWaves()).
+   std::string file;
+};
+
 /// All source parameter options.
 using SourceParamsVariant 
    = std::variant<SourceParams<SourceOption::SingleWave>,
                   SourceParams<SourceOption::WaveSpectrum>,
-                  SourceParams<SourceOption::DigitalPSD>>;
+                  SourceParams<SourceOption::DigitalPSD>,
+                  SourceParams<SourceOption::WaveCSV>>;
 static_assert(std::variant_size_v<SourceParamsVariant> == 
                     static_cast<std::size_t>(SourceOption::Size),
              "Missing SourceParams in SourceParamsVariant.");

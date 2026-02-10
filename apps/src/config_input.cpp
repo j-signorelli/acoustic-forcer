@@ -102,7 +102,14 @@ void ConfigInput::PrintSourceParams(std::ostream &out) const
          constexpr int label_width = 13;
 
          /// @todo: Finish this
-         out << "Unimplemented" << std::endl;
+         out << "Unimplemented verbose output for source type" << std::endl;
+      },
+      [&out](const SourceParams<SourceOption::WaveCSV> &waves)
+      {
+         constexpr int label_width = 7;
+
+         out << WriteParam("File", waves.file, label_width);
+         out << std::endl;
       }
       }, source);
    }
@@ -325,6 +332,12 @@ void TOMLConfigInput::ParseSource(std::string source_serialized)
       meta.phase_seed = in_source.at("PhaseSeed").as_integer();
       meta.speed = *(in_source.at("Speed").as_string().data());
 
+      sources_.emplace_back(meta);
+   }
+   else if (source_op == SourceOption::WaveCSV)
+   {
+      SourceParams<SourceOption::WaveCSV> meta;
+      meta.file = in_source.at("File").as_string();
       sources_.emplace_back(meta);
    }
 }
