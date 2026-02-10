@@ -87,7 +87,17 @@ GenerateRandomSource<SourceOption::DigitalPSD>(int seed,
    source_params.int_method = int_method;
    source_params.phase_seed = GenerateRandomInt(seed++, 1, 100);
    
-   if (disc_method == DiscMethodOption::Random)
+   if (disc_method == DiscMethodOption::Uniform)
+   {
+      source_params.disc_params = 
+                     DiscMethodParams<DiscMethodOption::Uniform>{};
+   }
+   else if (disc_method == DiscMethodOption::UniformLog)
+   {
+      source_params.disc_params = 
+                     DiscMethodParams<DiscMethodOption::UniformLog>{};
+   }
+   else if (disc_method == DiscMethodOption::Random)
    {
       DiscMethodParams<DiscMethodOption::Random> disc_params;
       disc_params.seed = GenerateRandomInt(seed++, 1, 1000);

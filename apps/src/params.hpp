@@ -123,6 +123,17 @@ IntervalNames =
  */
 enum class DiscMethodOption : std::uint8_t
 {
+   /**
+    * @brief Uniformly sample across interval. **Harmonic interaction
+    * may occur**.
+    */
+   Uniform,
+
+   /**
+    * @brief Uniformly sample across interval in log10 scaling. **Harmonic
+    * interaction may occur**.
+    */
+   UniformLog,
 
    /// Random sampling of uniform distribution.
    Random,
@@ -139,14 +150,19 @@ static constexpr std::array<std::string_view,
                      static_cast<std::size_t>(DiscMethodOption::Size)>
 DiscMethodNames = 
 {
+   "Uniform",      // DiscMethodOption::Uniform
+   "UniformLog",   // DiscMethodOption::UniformLog
    "Random",       // DiscMethodOption::Random
    "RandomLog",    // DiscMethodOption::RandomLog
 };
 
 template<DiscMethodOption d>
-struct DiscMethodParams;
+struct DiscMethodParams
+{
+   // Default struct has zero params.
+};
 
-/// Parameters for discretization method DiscMethod::Random.
+/// Parameters for discretization method DiscMethodOption::Random.
 template<>
 struct DiscMethodParams<DiscMethodOption::Random>
 {
@@ -154,7 +170,7 @@ struct DiscMethodParams<DiscMethodOption::Random>
    int seed;
 };
 
-/// Parameters for discretization method DiscMethod::RandomLog.
+/// Parameters for discretization method DiscMethodOption::RandomLog.
 template<>
 struct DiscMethodParams<DiscMethodOption::RandomLog>
 {
@@ -164,7 +180,9 @@ struct DiscMethodParams<DiscMethodOption::RandomLog>
 
 /// All discretization method parameter options.
 using DiscMethodParamsVariant 
-   = std::variant<DiscMethodParams<DiscMethodOption::Random>,
+   = std::variant<DiscMethodParams<DiscMethodOption::Uniform>,
+                  DiscMethodParams<DiscMethodOption::UniformLog>,
+                  DiscMethodParams<DiscMethodOption::Random>,
                   DiscMethodParams<DiscMethodOption::RandomLog>>;
 static_assert(std::variant_size_v<DiscMethodParamsVariant> == 
                     static_cast<std::size_t>(DiscMethodOption::Size),

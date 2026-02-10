@@ -125,6 +125,24 @@ void SourceParamsInitializer::operator()
    std::visit(
    overloads
    {
+   [&](const DiscMethodParams<DiscMethodOption::Uniform> &disc_params)
+   {
+      const double df = (max_freq - min_freq)/(freqs.size()-1);
+      for (std::size_t i = 0; i < freqs.size(); i++)
+      {
+         freqs[i] = min_freq + df*i;
+      }
+   },
+   [&](const DiscMethodParams<DiscMethodOption::UniformLog> &disc_params)
+   {
+      const double df = std::log10(max_freq/min_freq)/(freqs.size()-1);
+      const double fac = std::pow(10.0, df);
+      freqs[0] = min_freq;
+      for (std::size_t i = 1; i < freqs.size(); i++)
+      {
+         freqs[i] = freqs[i-1]*std::pow(10.0, df);
+      }
+   },
    [&](const DiscMethodParams<DiscMethodOption::Random> &disc_params)
    {
       std::mt19937 gen(disc_params.seed);

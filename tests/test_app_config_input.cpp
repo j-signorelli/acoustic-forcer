@@ -217,6 +217,14 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
          std::visit(
          overloads
          {
+         [&](const DiscMethodParams<DiscMethodOption::Uniform> &disc_params)
+         {
+            // No params
+         },
+         [&](const DiscMethodParams<DiscMethodOption::UniformLog> &disc_params)
+         {
+            // No params
+         },
          [&](const DiscMethodParams<DiscMethodOption::Random> dm_params)
          {
             source_str = std::format(R"(
@@ -301,6 +309,16 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
          std::visit(
          overloads
          {
+         [&](const DiscMethodParams<DiscMethodOption::Uniform> &disc_params)
+         {
+            // No params
+            CHECK(dm_option == DiscMethodOption::Uniform);
+         },
+         [&](const DiscMethodParams<DiscMethodOption::UniformLog> &disc_params)
+         {
+            // No params
+            CHECK(dm_option == DiscMethodOption::UniformLog);
+         },
          [&](const DiscMethodParams<DiscMethodOption::Random> 
                                                             parsed_disc_params)
          {

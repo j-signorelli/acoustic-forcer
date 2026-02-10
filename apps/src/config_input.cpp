@@ -297,7 +297,15 @@ void TOMLConfigInput::ParseSource(std::string source_serialized)
       DiscMethodOption disc_option;
       GetEnumerator(in_disc_method.at("Type").as_string(), DiscMethodNames,
                      disc_option);
-      if (disc_option == DiscMethodOption::Random)
+      if (disc_option == DiscMethodOption::Uniform)
+      {
+         meta.disc_params = DiscMethodParams<DiscMethodOption::Uniform>{};
+      }
+      else if (disc_option == DiscMethodOption::UniformLog)
+      {
+         meta.disc_params = DiscMethodParams<DiscMethodOption::UniformLog>{};
+      }
+      else if (disc_option == DiscMethodOption::Random)
       {
          DiscMethodParams<DiscMethodOption::Random> disc_params;
          disc_params.seed = in_disc_method.at("Seed").as_integer();
