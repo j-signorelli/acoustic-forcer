@@ -52,14 +52,15 @@ int main(int argc, char *argv[])
    TOMLConfigInput conf(config_file, &std::cout);
    std::cout << LINE << std::endl;
 
-   // Initialize a dummy AcousticField w/ 1-point grid
-   AcousticField field = InitializeAcousticField(conf, 
-                                       std::vector<double>(3,0.0),
-                                       3);
-   
+   std::vector<Wave> waves;
+   for (const SourceParamsVariant &spv : conf.Sources())
+   {
+      std::visit(SourceParamsInitializer{waves}, spv);
+   }
+
    // Write the Wave data
    std::ofstream os(out_file);
-   WriteWaves(field.Waves(), os);
+   WriteWaves(waves, os);
 
    return 0;
 }
