@@ -8,19 +8,22 @@ target_compile_features(compiler_flag_requirements INTERFACE cxx_std_20)
 
 # Main Jabber compiler options:
 option(JABBER_BUILD_PARTICIPANT 
-   "Build Jabber preCICE participant (requires preCICE)." ON)
+   "Build Jabber preCICE participant app (requires preCICE)." OFF)
 
 option(JABBER_BUILD_VIZ 
-   "Build Jabber flowfield visualizer (requires MFEM)." ON)
+   "Build Jabber flowfield visualizer app (requires MFEM)." OFF)
 
 option(JABBER_BUILD_PROFILER 
-   "Build Jabber compute profiler." ON)
+   "Build Jabber compute profiler app." ON)
 
 option(JABBER_BUILD_OUT 
-   "Build Jabber outputter." ON)
+   "Build Jabber output app." ON)
+
+option(JABBER_BUILD_PLOT 
+   "Build Jabber plot app." ON)
 
 option(JABBER_BUILD_DOCS 
-   "Build Jabber documentation w/ Doxygen." ON)
+   "Build Jabber documentation w/ Doxygen." OFF)
 
 option(JABBER_INSTALL_APP_LIB 
    "Install the jabber_app library" ON)
@@ -31,7 +34,7 @@ option(JABBER_BUILD_TESTS
 # If building any apps
 set(JABBER_BUILD_APP OFF)
 if (JABBER_BUILD_PARTICIPANT OR JABBER_BUILD_VIZ OR JABBER_BUILD_PROFILER
-      OR JABBER_BUILD_OUT OR JABBER_INSTALL_APP_LIB)
+      OR JABBER_BUILD_OUT OR JABBER_BUILD_PLOT OR JABBER_INSTALL_APP_LIB)
    set(JABBER_BUILD_APP ON)
    add_compile_definitions(JABBER_WITH_APP)
 endif()
@@ -48,7 +51,8 @@ if (JABBER_BUILD_APP)
    # Add external dependencies - required for apps
    add_subdirectory(externals/cxxopts)
    add_subdirectory(externals/toml11)
-   
+   add_subdirectory(externals/matplotplusplus)
+
    # Add app subdirectory
    add_subdirectory(apps)
    

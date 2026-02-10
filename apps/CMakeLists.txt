@@ -57,7 +57,6 @@ endif()
 
 
 # Build Jabber out app
-# Build Jabber profiler app
 if (JABBER_BUILD_OUT)
 
    add_executable(jabber_out out.cpp)
@@ -69,5 +68,19 @@ if (JABBER_BUILD_OUT)
                                        libjabber
                                        libjabber_app
                                        cxxopts::cxxopts)
+endif()
 
+# Build Jabber plot app
+if (JABBER_BUILD_PLOT)
+
+   add_executable(jabber_plot plot.cpp)
+   set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY 
+                                                   jabber_plot)
+
+   target_link_libraries(jabber_plot PRIVATE 
+                                       compiler_flag_requirements
+                                       libjabber
+                                       libjabber_app
+                                       cxxopts::cxxopts
+                                       matplot)
 endif()
