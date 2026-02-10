@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
    std::vector<Wave> waves;
    for (const SourceParamsVariant &spv : conf.Sources())
    {
-      std::visit(SourceParamsInitializer{waves}, spv);
+      std::visit(SourceVisitor{waves}, spv);
    }
 
    std::vector<double> freqs(waves.size()), amps(waves.size());

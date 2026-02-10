@@ -53,7 +53,7 @@ void Normalize(std::span<const double> vec, std::span<double> norm_vec)
    }
 }
 
-void SourceParamsInitializer::operator()
+void SourceVisitor::operator()
    (const SourceParams<SourceOption::SingleWave> &sp)
 {
    std::vector<double> k_hat(sp.direction.size(), 0.0);
@@ -61,7 +61,7 @@ void SourceParamsInitializer::operator()
    waves.emplace_back(sp.amp, sp.freq, sp.phase*M_PI/180.0, sp.speed, k_hat);
 }
 
-void SourceParamsInitializer::operator()
+void SourceVisitor::operator()
    (const SourceParams<SourceOption::WaveSpectrum> &sp)
 {
    for (int i = 0; i < sp.amps.size(); i++)
@@ -73,39 +73,12 @@ void SourceParamsInitializer::operator()
    }
 }
 
-void SourceParamsInitializer::operator()
+void SourceVisitor::operator()
    (const SourceParams<SourceOption::DigitalPSD> &sp)
 {
    // Process input data into freqs, PSDs vector
    std::vector<double> d_freqs, d_psds;
-   std::visit(
-   overloads
-   {
-   [&](const PSDInputParams<PSDInputOption::Here> &input_params)
-   {
-      d_freqs = input_params.freqs;
-      d_psds = input_params.psds;
-   },
-   [&](const PSDInputParams<PSDInputOption::FromCSV> &input_params)
-   {
-      std::ifstream is(input_params.file);
-      if (!is.is_open())
-      {
-         throw std::invalid_argument("Cannot find PSD CSV file.");
-      }
-      for (std::string line; std::getline(is, line);)
-      {
-         auto row_view = std::ranges::views::split(line,std::string_view(","));
-         auto row_it = row_view.begin();
-         auto val_it = *row_it;
-         d_freqs.push_back(std::stod(std::string(val_it.begin(), 
-                                                   val_it.end())));
-         val_it = *(++row_it);
-         d_psds.push_back(std::stod(std::string(val_it.begin(), 
-                                                   val_it.end())));
-      }
-   }
-   }, sp.input_params);
+   std::visit(PSDInputVisitor{d_freqs, d_psds}, sp.input_params);
 
    // Initialize the interpolated PSD curve
    std::unique_ptr<BasePSD> psd;
@@ -122,46 +95,7 @@ void SourceParamsInitializer::operator()
    std::vector<double> freqs(sp.num_waves);
    const double min_freq = sp.min_disc_freq;
    const double max_freq = sp.max_disc_freq;
-   std::visit(
-   overloads
-   {
-   [&](const DiscMethodParams<DiscMethodOption::Uniform> &disc_params)
-   {
-      const double df = (max_freq - min_freq)/(freqs.size()-1);
-      for (std::size_t i = 0; i < freqs.size(); i++)
-      {
-         freqs[i] = min_freq + df*i;
-      }
-   },
-   [&](const DiscMethodParams<DiscMethodOption::UniformLog> &disc_params)
-   {
-      const double log_df = std::log10(max_freq/min_freq)/(freqs.size()-1);
-      const double log_min_freq = std::log10(min_freq);
-      for (std::size_t i = 0; i < freqs.size(); i++)
-      {
-         freqs[i] = std::pow(10.0, std::log10(min_freq) + log_df*i);
-      }
-   },
-   [&](const DiscMethodParams<DiscMethodOption::Random> &disc_params)
-   {
-      std::mt19937 gen(disc_params.seed);
-      std::uniform_real_distribution<double> real_dist(min_freq, max_freq);
-      for (std::size_t i = 0; i < freqs.size(); i++)
-      {
-         freqs[i] = real_dist(gen);
-      }
-   },
-   [&](const DiscMethodParams<DiscMethodOption::RandomLog> &disc_params)
-   {
-      std::mt19937 gen(disc_params.seed);
-      std::uniform_real_distribution<double> real_dist(std::log10(min_freq),
-                                                       std::log10(max_freq));
-      for (std::size_t i = 0; i < freqs.size(); i++)
-      {
-         freqs[i] = std::pow(10.0, real_dist(gen));
-      }
-   }
-   }, sp.disc_params);
+   std::visit(DiscMethodVisitor{min_freq,max_freq, freqs}, sp.disc_params);
 
    // Sort the frequencies
    std::sort(freqs.begin(), freqs.end());
@@ -188,31 +122,7 @@ void SourceParamsInitializer::operator()
 
    // Compute the normalized directions of each wave
    std::vector<std::vector<double>> k_hats(freqs.size());
-   std::visit(
-   overloads
-   {
-   [&](const DirectionParams<DirectionOption::Constant> &dir_params)
-   {
-      for (std::size_t i = 0; i < k_hats.size(); i++)
-      {
-         k_hats[i] = dir_params.direction;
-      }
-   },
-   [&](const DirectionParams<DirectionOption::RandomXYAngle> &dir_params)
-   {
-      std::mt19937 dir_gen(dir_params.seed);
-      std::uniform_real_distribution<double> dir_dist(
-                                       dir_params.min_angle*M_PI/180.0,
-                                       dir_params.max_angle*M_PI/180.0);
-      for (std::size_t i = 0; i < k_hats.size(); i++)
-      {
-         k_hats[i].resize(3, 0.0);
-         const double angle = dir_dist(dir_gen);
-         k_hats[i][0] = std::cos(angle);
-         k_hats[i][1] = std::sin(angle);
-      }
-   }
-   }, sp.dir_params);
+   std::visit(DirectionVisitor{k_hats}, sp.dir_params);
 
    // Finally, assemble the individual Wave structs
    for (std::size_t i = 0; i < sp.num_waves; i++)
@@ -222,7 +132,7 @@ void SourceParamsInitializer::operator()
    }
 }
 
-void SourceParamsInitializer::operator()
+void SourceVisitor::operator()
    (const SourceParams<SourceOption::WaveCSV> &sp)
 {
    std::ifstream is(sp.file);
@@ -231,6 +141,104 @@ void SourceParamsInitializer::operator()
       throw std::invalid_argument("Wave CSV file not found.");
    }
    ReadWaves(is, waves);
+}
+
+
+void PSDInputVisitor::operator()
+   (const PSDInputParams<PSDInputOption::Here> &ip)
+{
+   d_freqs = ip.freqs;
+   d_psds = ip.psds;
+}
+
+void PSDInputVisitor::operator()
+   (const PSDInputParams<PSDInputOption::FromCSV> &ip)
+{
+   std::ifstream is(ip.file);
+   if (!is.is_open())
+   {
+      throw std::invalid_argument("Cannot find PSD CSV file.");
+   }
+   for (std::string line; std::getline(is, line);)
+   {
+      auto row_view = std::ranges::views::split(line,std::string_view(","));
+      auto row_it = row_view.begin();
+      auto val_it = *row_it;
+      d_freqs.push_back(std::stod(std::string(val_it.begin(), 
+                                                val_it.end())));
+      val_it = *(++row_it);
+      d_psds.push_back(std::stod(std::string(val_it.begin(), 
+                                                val_it.end())));
+   }
+}
+
+void DiscMethodVisitor::operator()
+   (const DiscMethodParams<DiscMethodOption::Uniform> &dp)
+{
+   const double df = (max_freq - min_freq)/(freqs.size()-1);
+   for (std::size_t i = 0; i < freqs.size(); i++)
+   {
+      freqs[i] = min_freq + df*i;
+   }
+}
+
+void DiscMethodVisitor::operator()
+   (const DiscMethodParams<DiscMethodOption::UniformLog> &dp)
+{
+   const double log_df = std::log10(max_freq/min_freq)/(freqs.size()-1);
+   const double log_min_freq = std::log10(min_freq);
+   for (std::size_t i = 0; i < freqs.size(); i++)
+   {
+      freqs[i] = std::pow(10.0, std::log10(min_freq) + log_df*i);
+   }
+}
+
+void DiscMethodVisitor::operator()
+   (const DiscMethodParams<DiscMethodOption::Random> &dp)
+{
+   std::mt19937 gen(dp.seed);
+   std::uniform_real_distribution<double> real_dist(min_freq, max_freq);
+   for (std::size_t i = 0; i < freqs.size(); i++)
+   {
+      freqs[i] = real_dist(gen);
+   }
+}
+
+void DiscMethodVisitor::operator()
+   (const DiscMethodParams<DiscMethodOption::RandomLog> &dp)
+{
+   std::mt19937 gen(dp.seed);
+   std::uniform_real_distribution<double> real_dist(std::log10(min_freq),
+                                                      std::log10(max_freq));
+   for (std::size_t i = 0; i < freqs.size(); i++)
+   {
+      freqs[i] = std::pow(10.0, real_dist(gen));
+   }
+}
+
+void DirectionVisitor::operator()
+   (const DirectionParams<DirectionOption::Constant> &dp)
+{
+   for (std::size_t i = 0; i < k_hats.size(); i++)
+   {
+      k_hats[i] = dp.direction;
+   }
+}
+
+void DirectionVisitor::operator()
+   (const DirectionParams<DirectionOption::RandomXYAngle> &dp)
+{
+   std::mt19937 dir_gen(dp.seed);
+   std::uniform_real_distribution<double> dir_dist(
+                                    dp.min_angle*M_PI/180.0,
+                                    dp.max_angle*M_PI/180.0);
+   for (std::size_t i = 0; i < k_hats.size(); i++)
+   {
+      k_hats[i].resize(3, 0.0);
+      const double angle = dir_dist(dir_gen);
+      k_hats[i][0] = std::cos(angle);
+      k_hats[i][1] = std::sin(angle);
+   }
 }
 
 AcousticField InitializeAcousticField(const ConfigInput &conf, 
@@ -248,7 +256,7 @@ AcousticField InitializeAcousticField(const ConfigInput &conf,
    // Assemble vector of wave structs based on input source
    for (const SourceParamsVariant &source : sources_conf)
    {
-      std::visit(SourceParamsInitializer{field.Waves()}, source);
+      std::visit(SourceVisitor{field.Waves()}, source);
    }
 
    // Finalize the acoustic field initialization
