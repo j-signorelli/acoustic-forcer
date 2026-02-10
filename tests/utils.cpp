@@ -1,4 +1,4 @@
-#include "test_utils.hpp"
+#include "utils.hpp"
 
 using namespace jabber;
 using namespace jabber_app;
