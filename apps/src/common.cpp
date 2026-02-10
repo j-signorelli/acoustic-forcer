@@ -135,12 +135,11 @@ void SourceParamsInitializer::operator()
    },
    [&](const DiscMethodParams<DiscMethodOption::UniformLog> &disc_params)
    {
-      const double df = std::log10(max_freq/min_freq)/(freqs.size()-1);
-      const double fac = std::pow(10.0, df);
-      freqs[0] = min_freq;
-      for (std::size_t i = 1; i < freqs.size(); i++)
+      const double log_df = std::log10(max_freq/min_freq)/(freqs.size()-1);
+      const double log_min_freq = std::log10(min_freq);
+      for (std::size_t i = 0; i < freqs.size(); i++)
       {
-         freqs[i] = freqs[i-1]*std::pow(10.0, df);
+         freqs[i] = std::pow(10.0, std::log10(min_freq) + log_df*i);
       }
    },
    [&](const DiscMethodParams<DiscMethodOption::Random> &disc_params)
