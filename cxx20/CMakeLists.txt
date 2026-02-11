@@ -2,6 +2,7 @@
 include(CheckIncludeFileCXX)
 check_include_file_cxx("format" CXX_FORMAT_SUPPORT)
 if (NOT CXX_FORMAT_SUPPORT)
+    message("Format not found! ")
     find_package(fmt QUIET)
     if (NOT fmt_FOUND)
         include(FetchContent)
@@ -12,10 +13,8 @@ if (NOT CXX_FORMAT_SUPPORT)
         FetchContent_MakeAvailable(fmt)
     endif()
     target_link_libraries(compiler_flag_requirements INTERFACE fmt::fmt)
-    add_compile_definitions(USE_FMTLIB_POLYFILL)
+    target_compile_definitions(compiler_flag_requirements PUBLIC USE_FMTLIB_POLYFILL)
 endif()
-
-configure_file(format.hpp.in format.hpp)
 
 target_include_directories(compiler_flag_requirements INTERFACE 
                             ${CMAKE_CURRENT_BINARY_DIR})
