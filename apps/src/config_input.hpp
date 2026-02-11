@@ -6,6 +6,7 @@
 #include <iostream>
 #include <format.hpp>
 #include <sstream>
+#include <optional>
 
 namespace jabber_app
 {
