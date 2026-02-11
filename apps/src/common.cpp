@@ -8,14 +8,6 @@
 #include <algorithm>
 
 using namespace jabber;
-
-// Helper type for the std::visit
-// (https://en.cppreference.com/w/cpp/utility/variant/visit)
-template<class... Ts>
-struct overloads : Ts... { using Ts::operator()...; };
-
-using namespace jabber;
-
 namespace jabber_app
 {
 
