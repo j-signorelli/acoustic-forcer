@@ -5,6 +5,7 @@ project(jabber LANGUAGES CXX VERSION 1.0.0)
 # Create interface library for compiler flag requirements (requiring C++20)
 add_library(compiler_flag_requirements INTERFACE)
 target_compile_features(compiler_flag_requirements INTERFACE cxx_std_20)
+add_subdirectory(cxx20)
 
 # Main Jabber compiler options:
 option(JABBER_BUILD_PARTICIPANT 
