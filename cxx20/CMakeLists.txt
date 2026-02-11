@@ -2,7 +2,6 @@
 include(CheckIncludeFileCXX)
 check_include_file_cxx("format" CXX_FORMAT_SUPPORT)
 if (NOT CXX_FORMAT_SUPPORT)
-    message("Format not found! ")
     find_package(fmt QUIET)
     if (NOT fmt_FOUND)
         include(FetchContent)
