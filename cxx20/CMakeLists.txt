@@ -1,7 +1,7 @@
 # https://stackoverflow.com/a/66989192
 include(CheckIncludeFileCXX)
 check_include_file_cxx("format" CXX_FORMAT_SUPPORT)
-if (CXX_FORMAT_SUPPORT)
+if (NOT CXX_FORMAT_SUPPORT)
     find_package(fmt)
     if (NOT fmt_FOUND)
         include(FetchContent)
