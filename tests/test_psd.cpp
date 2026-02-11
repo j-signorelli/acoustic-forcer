@@ -33,7 +33,7 @@ double ExactLogLogIntegral(double x0, double y0, double x1, double y1,
                            double a, double b)
 {
    const double m = std::log10(y1/y0)/std::log10(x1/x0);
-   if (m != -1)
+   if (std::abs(m+1) > std::numeric_limits<double>::epsilon())
    {
       // Definite integral of y0*(x/x0)^m computed via Wolfram Alpha
       return (y0/(m+1))*(b*std::pow(b/x0, m) - a*std::pow(a/x0, m));
