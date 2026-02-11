@@ -12,7 +12,7 @@ if (NOT CXX_FORMAT_SUPPORT)
         FetchContent_MakeAvailable(fmt)
     endif()
     target_link_libraries(compiler_flag_requirements INTERFACE fmt::fmt)
-    target_compile_definitions(compiler_flag_requirements PUBLIC USE_FMTLIB_POLYFILL)
+    target_compile_definitions(compiler_flag_requirements INTERFACE USE_FMTLIB_POLYFILL)
 endif()
 
 target_include_directories(compiler_flag_requirements INTERFACE 
