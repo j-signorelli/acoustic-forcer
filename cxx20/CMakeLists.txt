@@ -16,4 +16,4 @@ if (NOT CXX_FORMAT_SUPPORT)
 endif()
 
 target_include_directories(compiler_flag_requirements INTERFACE 
-                            ${CMAKE_CURRENT_BINARY_DIR})
+                            ${CMAKE_CURRENT_SOURCE_DIR})
