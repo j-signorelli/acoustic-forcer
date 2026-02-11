@@ -18,6 +18,11 @@ using namespace Catch::Generators;
 template<class... Ts>
 struct overloads : Ts... { using Ts::operator()...; };
 
+#if __cpp_deduction_guides < 201907L
+template<class... Ts>
+overloads(Ts...) -> overloads<Ts...>;
+#endif
+
 namespace jabber_test
 {
 
