@@ -51,8 +51,10 @@ if (JABBER_BUILD_APP)
    # Add external dependencies - required for apps
    add_subdirectory(externals/cxxopts)
    add_subdirectory(externals/toml11)
-   add_subdirectory(externals/matplotplusplus)
 
+   if (JABBER_BUILD_PLOT)
+      add_subdirectory(externals/matplotplusplus)
+   endif()
    # Add app subdirectory
    add_subdirectory(apps)
    
