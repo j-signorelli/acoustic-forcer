@@ -1,7 +1,14 @@
 #include "utils.hpp"
 
+#include <jabber.hpp>
+#ifdef JABBER_WITH_APP
+#include <jabber_app.hpp>
+#endif // JABBER_WITH_APP
+
 using namespace jabber;
+#ifdef JABBER_WITH_APP
 using namespace jabber_app;
+#endif // JABBER_WITH_APP
 
 namespace jabber_test
 {
