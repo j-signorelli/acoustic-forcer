@@ -50,7 +50,7 @@ void SourceVisitor::operator()
 {
    std::vector<double> k_hat(sp.direction.size(), 0.0);
    Normalize(sp.direction, k_hat);
-   waves.emplace_back(sp.amp, sp.freq, sp.phase*M_PI/180.0, sp.speed, k_hat);
+   waves.push_back(Wave{sp.amp, sp.freq, sp.phase*M_PI/180.0, sp.speed, k_hat});
 }
 
 void SourceVisitor::operator()
@@ -60,8 +60,8 @@ void SourceVisitor::operator()
    {
       std::vector<double> k_hat(sp.directions[i].size(), 0.0);
       Normalize(sp.directions[i], k_hat);
-      waves.emplace_back(sp.amps[i], sp.freqs[i], sp.phases[i]*M_PI/180.0, 
-                           sp.speeds[i], k_hat);
+      waves.push_back(Wave{sp.amps[i], sp.freqs[i], sp.phases[i]*M_PI/180.0, 
+                           sp.speeds[i], k_hat});
    }
 }
 
@@ -120,7 +120,7 @@ void SourceVisitor::operator()
    for (std::size_t i = 0; i < sp.num_waves; i++)
    {
       const Wave w{amps[i], freqs[i], phases[i], sp.speed, k_hats[i]};
-      waves.emplace_back(w);
+      waves.push_back(w);
    }
 }
 

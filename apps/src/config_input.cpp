@@ -240,7 +240,7 @@ void TOMLConfigInput::ParseSource(std::string source_serialized)
       meta.phase = in_source.at("Phase").as_floating();
       meta.speed = *(in_source.at("Speed").as_string().data());
 
-      sources_.emplace_back(meta);
+      sources_.push_back(meta);
    }
    else if (source_op == SourceOption::WaveSpectrum)
    {
@@ -260,7 +260,7 @@ void TOMLConfigInput::ParseSource(std::string source_serialized)
       std::transform(speed_strs.begin(), speed_strs.end(), meta.speeds.begin(),
                      [](std::string &s) -> char { return *(s.data()); });
       
-      sources_.emplace_back(meta);
+      sources_.push_back(meta);
    }
    else if (source_op == SourceOption::DigitalPSD)
    {
@@ -345,13 +345,13 @@ void TOMLConfigInput::ParseSource(std::string source_serialized)
       meta.phase_seed = in_source.at("PhaseSeed").as_integer();
       meta.speed = *(in_source.at("Speed").as_string().data());
 
-      sources_.emplace_back(meta);
+      sources_.push_back(meta);
    }
    else if (source_op == SourceOption::WaveCSV)
    {
       SourceParams<SourceOption::WaveCSV> meta;
       meta.file = in_source.at("File").as_string();
-      sources_.emplace_back(meta);
+      sources_.push_back(meta);
    }
 }
 

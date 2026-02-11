@@ -55,7 +55,7 @@ void ReadWaves(std::istream &in, std::vector<Wave> &waves)
                                                    field_it.end()));
          w.k_hat.push_back(val);
       }
-      waves.emplace_back(w);
+      waves.push_back(w);
    }
 }
 
