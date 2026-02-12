@@ -49,7 +49,7 @@ add_subdirectory(src)
 if (JABBER_BUILD_APP)
 
    # Add external dependencies - required for apps
-   add_subdirectory(externals/cxxopts)
+   add_subdirectory(externals/cxxopts) # not needed if just library...
    add_subdirectory(externals/toml11)
 
    if (JABBER_BUILD_PLOT)
