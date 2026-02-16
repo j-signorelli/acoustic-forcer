@@ -35,7 +35,7 @@ option(JABBER_BUILD_TESTS
 set_property(GLOBAL PROPERTY JABBER_TARGETS_PROPERTY)
 
 # Build Jabber library
-add_subdirectory(src)
+add_subdirectory(src/core)
 
 # If building any apps
 if (JABBER_BUILD_APP_LIB)
@@ -43,6 +43,8 @@ if (JABBER_BUILD_APP_LIB)
 
    # Add TOML11 -- required for app library
    add_subdirectory(externals/toml11)
+
+   add_subdirectory(src/app)
 endif()
 
 # If building apps

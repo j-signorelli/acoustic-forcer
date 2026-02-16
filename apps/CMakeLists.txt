@@ -1,6 +1,3 @@
-# Add jabber_app library
-add_subdirectory(src)
-
 # Build participant app
 if (JABBER_BUILD_PARTICIPANT)
    # Find preCICE
