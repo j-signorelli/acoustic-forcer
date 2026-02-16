@@ -31,14 +31,6 @@ option(JABBER_INSTALL_APP_LIB
 option(JABBER_BUILD_TESTS 
    "Build unit tests" ON)
 
-# If building any apps
-set(JABBER_BUILD_APP OFF)
-if (JABBER_BUILD_PARTICIPANT OR JABBER_BUILD_VIZ OR JABBER_BUILD_PROFILER
-      OR JABBER_BUILD_OUT OR JABBER_BUILD_PLOT OR JABBER_INSTALL_APP_LIB)
-   set(JABBER_BUILD_APP ON)
-   add_compile_definitions(JABBER_WITH_APP)
-endif()
-
 # Property of all targets to install
 set_property(GLOBAL PROPERTY JABBER_TARGETS_PROPERTY)
 
@@ -46,15 +38,28 @@ set_property(GLOBAL PROPERTY JABBER_TARGETS_PROPERTY)
 add_subdirectory(src)
 
 
-if (JABBER_BUILD_APP)
+if (JABBER_BUILD_PARTICIPANT 
+      OR JABBER_BUILD_VIZ 
+      OR JABBER_BUILD_PROFILER
+      OR JABBER_BUILD_OUT 
+      OR JABBER_BUILD_PLOT 
+      OR JABBER_INSTALL_APP_LIB)
 
-   # Add external dependencies - required for apps
-   add_subdirectory(externals/cxxopts) # not needed if just library...
+   add_compile_definitions(JABBER_WITH_APP)
+
+   # Add TOML11 -- required for app library
    add_subdirectory(externals/toml11)
+
+   # Add app-specific dependencies
+   if (NOT JABBER_INSTALL_APP_LIB)
+      # All apps use cxxopts
+      add_subdirectory(externals/cxxopts)
+   endif()
 
    if (JABBER_BUILD_PLOT)
       add_subdirectory(externals/matplotplusplus)
    endif()
+
    # Add app subdirectory
    add_subdirectory(apps)
    
