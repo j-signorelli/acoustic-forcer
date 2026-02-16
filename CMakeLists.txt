@@ -26,33 +26,41 @@ option(JABBER_BUILD_PLOT
 option(JABBER_BUILD_DOCS 
    "Build Jabber documentation w/ Doxygen." OFF)
 
-option(JABBER_INSTALL_APP_LIB 
-   "Install the jabber_app library" ON)
+option(JABBER_BUILD_APP_LIB 
+   "Build the jabber_app library. Required to build apps." ON)
 
 option(JABBER_BUILD_TESTS 
    "Build unit tests" ON)
-
-# If building any apps
-set(JABBER_BUILD_APP OFF)
-if (JABBER_BUILD_PARTICIPANT OR JABBER_BUILD_VIZ OR JABBER_BUILD_PROFILER
-      OR JABBER_BUILD_OUT OR JABBER_BUILD_PLOT OR JABBER_INSTALL_APP_LIB)
-   set(JABBER_BUILD_APP ON)
-   add_compile_definitions(JABBER_WITH_APP)
-endif()
 
 # Property of all targets to install
 set_property(GLOBAL PROPERTY JABBER_TARGETS_PROPERTY)
 
 # Build Jabber library
-add_subdirectory(src)
+add_subdirectory(src/core)
 
+# If building any apps
+if (JABBER_BUILD_APP_LIB)
+   add_compile_definitions(JABBER_WITH_APP)
 
-if (JABBER_BUILD_APP)
-
-   # Add external dependencies - required for apps
-   add_subdirectory(externals/cxxopts)
+   # Add TOML11 -- required for app library
    add_subdirectory(externals/toml11)
-   add_subdirectory(externals/matplotplusplus)
+
+   add_subdirectory(src/app)
+endif()
+
+# If building apps
+if (JABBER_BUILD_PARTICIPANT 
+      OR JABBER_BUILD_VIZ 
+      OR JABBER_BUILD_PROFILER
+      OR JABBER_BUILD_OUT 
+      OR JABBER_BUILD_PLOT)
+
+   # All apps use cxxopts
+   add_subdirectory(externals/cxxopts)
+
+   if (JABBER_BUILD_PLOT)
+      add_subdirectory(externals/matplotplusplus)
+   endif()
 
    # Add app subdirectory
    add_subdirectory(apps)

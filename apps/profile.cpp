@@ -38,9 +38,9 @@ int main(int argc, char *argv[])
                         cxxopts::value<double>()->default_value("1.0"))
       ("p,passes", "Number of passes to Compute() to profile, using "
                    "randomized times.",
-                        cxxopts::value<int>()->default_value("100"))
+                        cxxopts::value<int>()->default_value("10000"))
       ("w,warmup", "Number of warmup passes to Compute(), using randomized "
-                   "times.", cxxopts::value<int>()->default_value("10"))
+                   "times.", cxxopts::value<int>()->default_value("1000"))
       ("h,help", "Print usage information.");
 
    cxxopts::ParseResult result = options.parse(argc, argv);

@@ -17,6 +17,8 @@ void ComputeKernel(const std::size_t num_pts, const double rho_bar,
                      double *__restrict__ rhoV,
                      double *__restrict__ rhoE)
 {
+   const double rhoE_init = p_bar/(gamma-1.0);
+   
    for (std::size_t i = 0; i < num_pts; i++)
    {
       rho[i] = rho_bar;
@@ -30,17 +32,20 @@ void ComputeKernel(const std::size_t num_pts, const double rho_bar,
       {
          rhoV[2*num_pts + i] = U_bar[2];
       }
-      rhoE[i] = p_bar/(gamma-1.0);
+      rhoE[i] = rhoE_init;
    }
 
    const double c_infty = std::sqrt(gamma*p_bar/rho_bar);
+   const double c_infty_sq = c_infty*c_infty;
+   const double rho_bar_t_c_infty = rho_bar*c_infty;
+   const double gamma_m_1 = gamma-1.0;
 
    // Add contribution of each wave
    for (int w = 0; w < num_waves; w++)
    {
-      const double rho_fac = wave_amps[w]/(c_infty*c_infty);
-      const double rhoV_fac = wave_amps[w]/(rho_bar*c_infty);
-      const double rhoE_fac = wave_amps[w]/(gamma-1.0);
+      const double rho_fac = wave_amps[w]/c_infty_sq;
+      const double rhoV_fac = wave_amps[w]/rho_bar_t_c_infty;
+      const double rhoE_fac = wave_amps[w]/gamma_m_1;
       const double omt = wave_omegas[w]*t;
 
       const std::size_t w_offset = w*num_pts;
