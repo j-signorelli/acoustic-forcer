@@ -84,3 +84,19 @@ if (JABBER_BUILD_PLOT)
                                        cxxopts::cxxopts
                                        matplot)
 endif()
+
+# Build Jabber PSD app
+if (JABBER_BUILD_PSD)
+   add_executable(jabber_psd psd.cpp)
+   set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY 
+                                                   jabber_psd)
+
+   target_link_libraries(jabber_test PRIVATE 
+                                       compiler_flag_requirements
+                                       libjabber
+                                       libjabber_app
+                                       cxxopts::cxxopts
+                                       matplotplusplus)
+   target_include_directories(jabber_test 
+                                 ${CMAKE_SOURCE_DIR}/externals/pocketfft)
+endif()

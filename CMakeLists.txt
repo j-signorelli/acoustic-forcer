@@ -22,6 +22,9 @@ option(JABBER_BUILD_OUT
 option(JABBER_BUILD_PLOT 
    "Build Jabber plot app." ON)
 
+option(JABBER_BUILD_PSD
+   "Build Jabber PSD app." ON)
+
 option(JABBER_BUILD_DOCS 
    "Build Jabber documentation w/ Doxygen." OFF)
 
@@ -43,6 +46,7 @@ if (JABBER_BUILD_PARTICIPANT
       OR JABBER_BUILD_PROFILER
       OR JABBER_BUILD_OUT 
       OR JABBER_BUILD_PLOT 
+      OR JABBER_BUILD_PSD
       OR JABBER_INSTALL_APP_LIB)
 
    add_compile_definitions(JABBER_WITH_APP)
@@ -56,7 +60,7 @@ if (JABBER_BUILD_PARTICIPANT
       add_subdirectory(externals/cxxopts)
    endif()
 
-   if (JABBER_BUILD_PLOT)
+   if (JABBER_BUILD_PLOT OR JABBER_BUILD_PSD)
       add_subdirectory(externals/matplotplusplus)
    endif()
 
