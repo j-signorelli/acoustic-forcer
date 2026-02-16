@@ -51,7 +51,11 @@ if (JABBER_BUILD_PARTICIPANT
    add_subdirectory(externals/toml11)
 
    # Add app-specific dependencies
-   if (NOT JABBER_INSTALL_APP_LIB)
+   if (JABBER_BUILD_PARTICIPANT 
+         OR JABBER_BUILD_VIZ 
+         OR JABBER_BUILD_PROFILER
+         OR JABBER_BUILD_OUT 
+         OR JABBER_BUILD_PLOT)
       # All apps use cxxopts
       add_subdirectory(externals/cxxopts)
    endif()
