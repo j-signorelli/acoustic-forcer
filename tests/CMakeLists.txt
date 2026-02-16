@@ -10,7 +10,7 @@ add_executable(unit-tests
                         test_wave.cpp)
 
 set(dependencies Catch2::Catch2WithMain libjabber)
-if(JABBER_BUILD_APP)
+if(JABBER_BUILD_APP_LIB)
     list(APPEND dependencies libjabber_app)
 endif()
 

@@ -21,7 +21,5 @@ target_link_libraries(libjabber_app PUBLIC compiler_flag_requirements
                                     PRIVATE
                                           toml11::toml11)
                                           
-if (JABBER_INSTALL_APP_LIB)
-   set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY 
-                                                   libjabber_app)
-endif()                                            
+set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY 
+                                                libjabber_app)                                          
