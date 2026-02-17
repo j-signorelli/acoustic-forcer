@@ -88,12 +88,12 @@ if (JABBER_BUILD_PSD)
    set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY 
                                                    jabber_psd)
 
-   target_link_libraries(jabber_test PRIVATE 
+   target_link_libraries(jabber_psd PRIVATE 
                                        compiler_flag_requirements
                                        libjabber
                                        libjabber_app
                                        cxxopts::cxxopts
-                                       matplotplusplus)
-   target_include_directories(jabber_test 
+                                       matplot)
+   target_include_directories(jabber_psd PRIVATE
                                  ${CMAKE_SOURCE_DIR}/externals/pocketfft)
 endif()
