@@ -10,9 +10,9 @@
 [submodule "externals/doxygen-awesome-css"]
 	path = externals/doxygen-awesome-css
 	url = https://github.com/jothepro/doxygen-awesome-css.git
-[submodule "externals/matplotplusplus"]
-	path = externals/matplotplusplus
-	url = git@github.com:alandefreitas/matplotplusplus.git
 [submodule "externals/pocketfft"]
 	path = externals/pocketfft
 	url = git@github.com:mreineck/pocketfft.git
+[submodule "externals/gnuplot-iostream"]
+	path = externals/gnuplot-iostream
+	url = git@github.com:dstahlke/gnuplot-iostream.git
