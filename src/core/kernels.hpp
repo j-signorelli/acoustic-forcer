@@ -7,8 +7,8 @@ namespace jabber
 {
 
 /**
-   * @brief Generalized kernel function for evaluating perturbed base flow.
-   * 
+   * @brief Kernel function for evaluating perturbed base flow, with series
+   * summation inner loop/vectorization over each gridpoint.
    * 
    * @details This function was designed following Intel guidelines for 
    * auto-vectorizable code.  Because only inner-most loops are candidates for

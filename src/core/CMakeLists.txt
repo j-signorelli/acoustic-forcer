@@ -23,3 +23,6 @@ target_sources(libjabber
             jabber.hpp)
 
 target_link_libraries(libjabber PUBLIC compiler_flag_requirements)
+if(JABBER_ENABLE_OPENMP)
+    target_link_libraries(libjabber PUBLIC OpenMP::OpenMP_CXX)
+endif()

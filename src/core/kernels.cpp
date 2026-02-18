@@ -41,6 +41,11 @@ void ComputeKernel(const std::size_t num_pts, const double rho_bar,
    const double gamma_m_1 = gamma-1.0;
 
    // Add contribution of each wave
+#ifdef JABBER_WITH_OPENMP
+   #pragma omp parallel for reduction(+:rho[0:num_pts],\
+                                        rhoV[0:num_pts*TDim],\
+                                        rhoE[0:num_pts])
+#endif // JABBER_WITH_OPENMP
    for (int w = 0; w < num_waves; w++)
    {
       const double rho_fac = wave_amps[w]/c_infty_sq;

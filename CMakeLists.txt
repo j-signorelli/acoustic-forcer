@@ -34,8 +34,16 @@ option(JABBER_BUILD_APP_LIB
 option(JABBER_BUILD_TESTS 
    "Build unit tests" ON)
 
+option(JABBER_ENABLE_OPENMP
+   "Build jabber with OpenMP support" OFF)
+
 # Property of all targets to install
 set_property(GLOBAL PROPERTY JABBER_TARGETS_PROPERTY)
+
+if (JABBER_ENABLE_OPENMP)
+   find_package(OpenMP REQUIRED COMPONENTS CXX)
+   add_compile_definitions(JABBER_WITH_OPENMP)
+endif()
 
 # Build Jabber library
 add_subdirectory(src/core)
