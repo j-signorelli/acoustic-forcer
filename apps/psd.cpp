@@ -1,3 +1,7 @@
+/**
+ * @brief Welch's method here has been verified to match SciPy's implementation
+ * of Welch's method.
+ */
 #include <jabber.hpp>
 #include <jabber_app.hpp>
 #include <cxxopts.hpp>
@@ -37,14 +41,17 @@ int main(int argc, char *argv[])
                      " Defaults to nperseg/2.", 
          cxxopts::value<std::size_t>())
       ("f,factor", "Factor to multiply pressure perturbation by for "
-                   "any nondimensionalization or scaling.",
+                   "any nondimensionalization or scaling of PSD.",
          cxxopts::value<double>()->default_value("1.0"))
-      ("w,write-file", "Filename to write PSD data to (if included) as a CSV.",
+      ("w,write-psd-file", "Filename to write PSD data to (if included) as a CSV.",
+         cxxopts::value<std::string>())
+      ("r,write-press-file", "Filename to write pressure perturbation data to "
+                             "(if included) with factor applied.",
          cxxopts::value<std::string>())
       ("p,plot", "Generate a plot of the computed PSD data.")
       ("l,log", "Plot on a log-log scale.",
          cxxopts::value<bool>()->default_value("false"))
-      ("i,input-psd", "Input PSD CSV file to plot computed against",
+      ("i,input-psd", "Input PSD CSV file to plot computed PSD against",
          cxxopts::value<std::string>())
       ("h,help", "Print usage information.");
 
@@ -149,7 +156,7 @@ int main(int argc, char *argv[])
    const std::size_t up_to = (nperseg % 2 == 1) ? nperseg/2+1 : nperseg/2;
    for (std::size_t i = 1; i < up_to; i++)
    {
-      //psd[i] *= 2;
+      psd[i] *= 2;
    }
 
    // Get the frequencies
@@ -160,13 +167,25 @@ int main(int argc, char *argv[])
    }
    
    // Write PSD to file:
-   if (result.count("write-file") > 0)
+   if (result.count("write-psd-file") > 0)
    {
-      const std::string file_name = result["write-file"].as<std::string>();
+      const std::string file_name = result["write-psd-file"].as<std::string>();
       std::ofstream psd_file(file_name);
       for (std::size_t i = 0; i < nperseg/2+1; i++)
       {
          psd_file << std::format("{},{}\n", freqs[i], psd[i]);
+      }
+   }
+
+   // Write pressure perturbations to file
+   if (result.count("write-press-file") > 0)
+   {
+      const std::string file_name = result["write-press-file"]
+                                                         .as<std::string>();
+      std::ofstream press_file(file_name);
+      for (std::size_t i = 0; i < p_prime.size(); i++)
+      {
+         press_file << std::format("{}\n", fac*p_prime[i]);
       }
    }
 
@@ -199,6 +218,7 @@ int main(int argc, char *argv[])
                                           freqs[i], psd[i]).c_str());
       }
       std::fprintf(gnuplot, "e\n");
+
       // Include source PSD if provided
       if (result.count("input-psd") > 0)
       {
