@@ -227,7 +227,7 @@ int main(int argc, char *argv[])
          std::vector<double> in_freqs, in_psd;
          PSDInputVisitor psd_in(in_freqs, in_psd);
          psd_in(input);
-         for (std::size_t i = 0; i < freqs.size(); i++)
+         for (std::size_t i = 0; i < in_freqs.size(); i++)
          {
             std::fprintf(gnuplot, "%s", std::format("{} {}\n", 
                                              in_freqs[i], in_psd[i]).c_str());
