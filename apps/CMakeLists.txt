@@ -78,8 +78,7 @@ if (JABBER_BUILD_PLOT)
                                        compiler_flag_requirements
                                        libjabber
                                        libjabber_app
-                                       cxxopts::cxxopts
-                                       matplot)
+                                       cxxopts::cxxopts)
 endif()
 
 # Build Jabber PSD app
