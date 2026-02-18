@@ -1,7 +1,6 @@
 #include <jabber.hpp>
 #include <jabber_app.hpp>
 #include <cxxopts.hpp>
-#include <matplot/matplot.h>
 
 #include <iostream>
 #include <algorithm>
@@ -65,29 +64,28 @@ int main(int argc, char *argv[])
       amps[i] = waves[i].amplitude;
    }
 
-   matplot::figure_handle f = matplot::figure(true);
-   f->size(1920, 1080);
-   f->font_size(16);
-   matplot::axes_handle ax = f->current_axes();
-   ax->title("Wave Amplitude v. Frequency");
-   ax->xlabel("Frequencies");
-   ax->ylabel("Amplitudes");
-   ax->font_size(16);
-   ax->x_axis().label_font_size(16);
-   ax->y_axis().label_font_size(16);
+   std::FILE* gnuplot = popen("gnuplot", "w");
+
    if (loglog)
    {
-      ax->x_axis().scale(matplot::axis_type::axis_scale::log);
-      ax->y_axis().scale(matplot::axis_type::axis_scale::log);
+      std::fprintf(gnuplot, "set logscale xy\n");
    }
 
-   matplot::line_handle line = ax->scatter(freqs, amps);
-   line->marker_style("o");
-   line->color("black");
-   line->marker_size(8);
-   line->marker_face(true);
-
-   f->show();
+   std::fprintf(gnuplot, "unset key\n");
+   
+   std:fprintf(gnuplot, "set xlabel 'Frequency'\n");
+   std::fprintf(gnuplot, "set ylabel 'Wave Amplitude'\n");
+   std::fprintf(gnuplot, "plot '-' with points pt 5\n");
+   for (std::size_t i = 0; i < freqs.size(); i++)
+   {
+      std::fprintf(gnuplot, "%s", std::format("{} {}\n", 
+                                       freqs[i], amps[i]).c_str());
+   }
+   std::fprintf(gnuplot, "e\n");
+   std::cout << "Enter to close plot...";
+   std::fflush(gnuplot);
+   std::cin.get();
+   pclose(gnuplot);
 
    return 0;
 }
