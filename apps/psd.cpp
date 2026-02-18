@@ -2,7 +2,6 @@
 #include <jabber_app.hpp>
 #include <cxxopts.hpp>
 #include <pocketfft_hdronly.h>
-#include <matplot/matplot.h>
 
 #include <iostream>
 #include <cmath>
@@ -23,20 +22,30 @@ int main(int argc, char *argv[])
    // Option parser:
    cxxopts::Options options("jabber_psd", 
       "Compute and plot a PSD from a probe of the exact "
-      "flowfield computed by Jabber using Welch's method.");
+      "flowfield computed by Jabber using Welch's method. Any "
+      " PSD source terms are additionally included in the plot.");
 
    options.add_options()
       ("c,config", "Config file.", cxxopts::value<std::string>())
       ("d,dt", "Timestep to use.", 
-         cxxopts::value<double>()->default_value("7.459237222374841e-7"))
+         cxxopts::value<double>()->default_value("3.72961861118742e-7"))
       ("n,num-timesteps", "Number of timesteps to run to.", 
          cxxopts::value<std::size_t>()->default_value("1000000"))
       ("s,nperseg", "Number of points in each segment.",
          cxxopts::value<std::size_t>()->default_value("256"))
-      ("o,overlap", "Percent overlap of segments.", 
-         cxxopts::value<double>()->default_value("0.5"))
+      ("o,noverlap", "Number of point overlap in segments. "
+                     " Defaults to nperseg/2.", 
+         cxxopts::value<std::size_t>())
+      ("f,factor", "Factor to multiply pressure perturbation by for "
+                   "any nondimensionalization or scaling.",
+         cxxopts::value<double>()->default_value("1.0"))
+      ("w,write-file", "Filename to write PSD data to (if included) as a CSV.",
+         cxxopts::value<std::string>())
+      ("p,plot", "Generate a plot of the computed PSD data.")
       ("l,log", "Plot on a log-log scale.",
          cxxopts::value<bool>()->default_value("false"))
+      ("i,input-psd", "Input PSD CSV file to plot computed against",
+         cxxopts::value<std::string>())
       ("h,help", "Print usage information.");
 
    cxxopts::ParseResult result = options.parse(argc, argv);
@@ -57,11 +66,13 @@ int main(int argc, char *argv[])
       return 1;
    }
 
+
    const double dt = result["dt"].as<double>();
+   const double fac = result["factor"].as<double>();
    const std::size_t nt = result["num-timesteps"].as<std::size_t>();
    const std::size_t nperseg = result["nperseg"].as<std::size_t>();
-   const std::size_t overlap = result["overlap"].as<double>();
-   const bool loglog = result["log"].as<bool>();
+   const std::size_t noverlap = (result.count("noverlap") == 0) ? nperseg/2
+                                    : result["noverlap"].as<std::size_t>();
 
    if (nperseg > nt)
    {
@@ -93,7 +104,7 @@ int main(int argc, char *argv[])
       p_prime[i] = c_sq*(field.Density()[0] - conf.BaseFlow().rho);
    }
 
-   const std::size_t shift = nperseg - std::round(overlap*nperseg);
+   const std::size_t shift = nperseg - noverlap;
    const std::size_t num_segs = 1+(nt-nperseg)/shift;
 
    // Compute W factor for modified periodogram + assemble window fxn
@@ -116,7 +127,7 @@ int main(int argc, char *argv[])
       // Compute pressure * window
       for (std::size_t w = 0; w < nperseg; w++)
       {
-         xw[w] = p_prime[k*shift+w]*window[w];
+         xw[w] = fac*p_prime[k*shift+w]*window[w];
       }
 
       // Compute DFT of each segment
@@ -138,7 +149,7 @@ int main(int argc, char *argv[])
    const std::size_t up_to = (nperseg % 2 == 1) ? nperseg/2+1 : nperseg/2;
    for (std::size_t i = 1; i < up_to; i++)
    {
-      psd[i] *= 2;
+      //psd[i] *= 2;
    }
 
    // Get the frequencies
@@ -148,33 +159,68 @@ int main(int argc, char *argv[])
       freqs[i] = i*fs/nperseg;
    }
    
-   // Plot
-   matplot::figure_handle f = matplot::figure(true);
-   f->size(1920, 1080);
-   f->font_size(16);
-   matplot::axes_handle ax = f->current_axes();
-   ax->title("Power Spectral Density");
-   ax->xlabel("Frequencies");
-   ax->font_size(16);
-   ax->x_axis().label_font_size(16);
-   ax->y_axis().label_font_size(16);
-   if (loglog)
+   // Write PSD to file:
+   if (result.count("write-file") > 0)
    {
-      ax->x_axis().scale(matplot::axis_type::axis_scale::log);
-      ax->y_axis().scale(matplot::axis_type::axis_scale::log);
-
-      // Remove the DC component altogether
-      freqs.erase(freqs.begin());
-      psd.erase(psd.begin());
+      const std::string file_name = result["write-file"].as<std::string>();
+      std::ofstream psd_file(file_name);
+      for (std::size_t i = 0; i < nperseg/2+1; i++)
+      {
+         psd_file << std::format("{},{}\n", freqs[i], psd[i]);
+      }
    }
 
-   matplot::line_handle line = ax->scatter(freqs, psd);
-   line->marker_style("o");
-   line->color("black");
-   line->marker_size(8);
-   line->marker_face(true);
+   // Plot
+   if (result.count("plot") > 0)
+   {
+      std::FILE* gnuplot = popen("gnuplot", "w");
 
-   f->show();
+      if (result.count("log") > 0)
+      {
+         std::fprintf(gnuplot, "set logscale xy\n");
+
+         // Remove the DC component altogether
+         freqs.erase(freqs.begin());
+         psd.erase(psd.begin());
+      }
+
+      
+      std:fprintf(gnuplot, "set xlabel 'Frequency'\n");
+      std::fprintf(gnuplot, "set ylabel 'PSD'\n");
+      std::fprintf(gnuplot, "plot '-' title 'Computed' with points pt 1");
+      if (result.count("input-psd") > 0)
+      {
+         std::fprintf(gnuplot, ", '-' title 'Input PSD' with points pt 4");              
+      }
+      std::fprintf(gnuplot, "\n");
+      for (std::size_t i = 0; i < freqs.size(); i++)
+      {
+         std::fprintf(gnuplot, "%s", std::format("{} {}\n", 
+                                          freqs[i], psd[i]).c_str());
+      }
+      std::fprintf(gnuplot, "e\n");
+      // Include source PSD if provided
+      if (result.count("input-psd") > 0)
+      {
+         PSDInputParams<PSDInputOption::FromCSV> input;
+         input.file = result["input-psd"].as<std::string>();
+         std::vector<double> in_freqs, in_psd;
+         PSDInputVisitor psd_in(in_freqs, in_psd);
+         psd_in(input);
+         for (std::size_t i = 0; i < freqs.size(); i++)
+         {
+            std::fprintf(gnuplot, "%s", std::format("{} {}\n", 
+                                             in_freqs[i], in_psd[i]).c_str());
+         }
+         std::fprintf(gnuplot, "e\n");
+         
+      }
+
+      std::cout << "Enter to close plot...";
+      std::fflush(gnuplot);
+      std::cin.get();
+      pclose(gnuplot);
+   }
 
    return 0;
 }
@@ -183,6 +229,6 @@ int main(int argc, char *argv[])
 
 double HammingWindow(std::size_t N, std::size_t n)
 {
-   constexpr double a0 = 25.0/46.0;
-   return a0 + (1-a0)*std::cos(2*M_PI*n/N);
+   constexpr double a0 = 0.54;
+   return a0 - (1-a0)*std::cos(2*M_PI*n/(N-1));
 }

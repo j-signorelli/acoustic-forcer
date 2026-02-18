@@ -61,10 +61,6 @@ if (JABBER_BUILD_PARTICIPANT
    # All apps use cxxopts
    add_subdirectory(externals/cxxopts)
 
-   if (JABBER_BUILD_PLOT OR JABBER_BUILD_PSD)
-      add_subdirectory(externals/matplotplusplus)
-   endif()
-
    # Add app subdirectory
    add_subdirectory(apps)
    

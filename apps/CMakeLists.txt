@@ -92,8 +92,7 @@ if (JABBER_BUILD_PSD)
                                        compiler_flag_requirements
                                        libjabber
                                        libjabber_app
-                                       cxxopts::cxxopts
-                                       matplot)
+                                       cxxopts::cxxopts)
    target_include_directories(jabber_psd PRIVATE
-                                 ${CMAKE_SOURCE_DIR}/externals/pocketfft)
+                     ${CMAKE_SOURCE_DIR}/externals/pocketfft)
 endif()
