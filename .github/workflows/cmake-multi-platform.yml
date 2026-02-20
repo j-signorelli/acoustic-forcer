@@ -25,6 +25,7 @@ jobs:
         os: [ubuntu-latest]
         build_type: [Release]
         cpp_compiler: [g++, clang++]
+        omp: [on, off]
 
     steps:
     - name: Checkout w/ submodules
@@ -51,8 +52,11 @@ jobs:
         -DJABBER_BUILD_VIZ=OFF
         -DJABBER_BUILD_PROFILER=OFF
         -DJABBER_BUILD_OUT=OFF
+        -DJABBER_BUILD_PLOT=OFF
+        -DJABBER_BUILD_PSD=OFF
         -DJABBER_INSTALL_APP_LIB=ON
         -DJABBER_BUILD_TESTS=ON
+        -DJABBER_ENABLE_OPENMP=${{matrix.omp}}
         -DJABBER_BUILD_DOCS=OFF
         -S ${{ github.workspace }}
 
