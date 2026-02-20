@@ -24,26 +24,31 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         build_type: [Release]
-        cpp_compiler: [g++, clang++]
+        cpp_compiler: [g++, clang++, icpx]
         omp: [on, off]
 
     steps:
-    - name: Checkout w/ submodules
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive   # or: true (non-recursive)
-        fetch-depth: 0          # optional, but often nicer for versioning
-
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
       id: strings
       shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-    
+
+    - name: Get Intel compiler
+      if: matrix.os == 'ubuntu-latest' && matrix.cpp_compiler == 'icpx'
+      run: sudo apt install intel-basekit
+
+
     - name: Get OpenMP
       if: matrix.os == 'ubuntu-latest' && matrix.cpp_compiler == 'clang++'
       run: sudo apt install libomp-dev
+
+    - name: Checkout w/ submodules
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive   # or: true (non-recursive)
+        fetch-depth: 0          # optional, but often nicer for versioning
       
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
