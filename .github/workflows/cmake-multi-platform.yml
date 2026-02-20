@@ -24,7 +24,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         build_type: [Release]
-        cpp_compiler: [g++, clang++, icpx]
+        cpp_compiler: [g++, clang++]
         omp: [on, off]
 
     steps:
@@ -34,11 +34,6 @@ jobs:
       shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-
-    - name: Get Intel compiler
-      if: matrix.os == 'ubuntu-latest' && matrix.cpp_compiler == 'icpx'
-      run: sudo apt install intel-oneapi-compiler-dpcpp-cpp
-
 
     - name: Get OpenMP
       if: matrix.os == 'ubuntu-latest' && matrix.cpp_compiler == 'clang++'
