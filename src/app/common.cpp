@@ -239,11 +239,12 @@ AcousticField InitializeAcousticField(const ConfigInput &conf,
 {
    // Get relevant input metadata
    const BaseFlowParams &base_conf = conf.BaseFlow();
+   const CompParams &comp_conf = conf.Comp();
    const std::vector<SourceParamsVariant> &sources_conf = conf.Sources();
 
    // Initialize acoustic field
    AcousticField field(dim, coords, base_conf.p, base_conf.rho,
-                        base_conf.U, base_conf.gamma);
+                        base_conf.U, base_conf.gamma, comp_conf.kernel);
 
    // Assemble vector of wave structs based on input source
    for (const SourceParamsVariant &source : sources_conf)
