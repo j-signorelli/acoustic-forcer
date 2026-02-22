@@ -30,7 +30,7 @@ InputData.PSDs=[1e-8, 1e-9, 1e-10, 1e-11]
 # InputData.Type="FromCSV"
 # InputData.File="csv_file.csv"
 
-DimFactor=1.0
+ScaleFactor=1.0
 Interpolation="PiecewiseLogLog"
 
 Discretization.Min=1e2

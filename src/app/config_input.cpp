@@ -286,7 +286,7 @@ void TOMLConfigInput::ParseSource(std::string source_serialized)
          meta.input_params = input_params;
       }
       
-      meta.dim_fac = in_source.at("DimFactor").as_floating();
+      meta.dim_fac = in_source.at("ScaleFactor").as_floating();
       GetEnumerator(in_source.at("Interpolation").as_string(), 
                      InterpolationNames,
                      meta.interp);

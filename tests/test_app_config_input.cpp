@@ -171,7 +171,7 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
          std::string source_str = 
          std::format(R"(
             Type="{}"
-            DimFactor={}
+            ScaleFactor={}
             Interpolation="{}"
             PhaseSeed={}
             Speed='{}'
