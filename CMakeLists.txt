@@ -23,6 +23,9 @@ option(JABBER_BUILD_OUT
 option(JABBER_BUILD_PLOT 
    "Build Jabber plot app." ON)
 
+option(JABBER_BUILD_PSD
+   "Build Jabber PSD app." ON)
+
 option(JABBER_BUILD_DOCS 
    "Build Jabber documentation w/ Doxygen." OFF)
 
@@ -32,8 +35,16 @@ option(JABBER_BUILD_APP_LIB
 option(JABBER_BUILD_TESTS 
    "Build unit tests" ON)
 
+option(JABBER_ENABLE_OPENMP
+   "Build jabber with OpenMP support" OFF)
+
 # Property of all targets to install
 set_property(GLOBAL PROPERTY JABBER_TARGETS_PROPERTY)
+
+if (JABBER_ENABLE_OPENMP)
+   find_package(OpenMP REQUIRED COMPONENTS CXX)
+   add_compile_definitions(JABBER_WITH_OPENMP)
+endif()
 
 # Build Jabber library
 add_subdirectory(src/core)
@@ -53,14 +64,11 @@ if (JABBER_BUILD_PARTICIPANT
       OR JABBER_BUILD_VIZ 
       OR JABBER_BUILD_PROFILER
       OR JABBER_BUILD_OUT 
-      OR JABBER_BUILD_PLOT)
+      OR JABBER_BUILD_PLOT
+      OR JABBER_BUILD_PSD)
 
    # All apps use cxxopts
    add_subdirectory(externals/cxxopts)
-
-   if (JABBER_BUILD_PLOT)
-      add_subdirectory(externals/matplotplusplus)
-   endif()
 
    # Add app subdirectory
    add_subdirectory(apps)

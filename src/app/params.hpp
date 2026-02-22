@@ -248,6 +248,46 @@ static_assert(std::variant_size_v<DirectionParamsVariant> ==
 
 // ----------------------------------------------------------------------------
 
+/// Transfer function options.
+enum class TransferOption : std::uint8_t
+{
+   /// Do not use a transfer function.
+   None,
+
+   /**
+    * @brief Analytical low-frequency limit transfer function, from Chaudhry
+    * & Candler, 2017.
+    * 
+    */
+   LowFrequencyLimit,
+
+   /// Digitized transfer function.
+   DigitalTF,
+
+   /**
+    * @brief Extrapolate from an approximate fit of the collapsed/normalized
+    * flow-normal transfer function in Chaudhry & Candler, 2017.
+    * 
+    */
+   FlowNormalExtrapolate,
+
+   // Number of TransferOptions.
+   Size
+};
+
+/// Strings associated with TransferOption enumerators.
+static constexpr std::array<std::string_view, 
+                           static_cast<std::size_t>(TransferOption::Size)>
+TransferNames = 
+{
+   "None",                      // TransferOption::None
+   "LowFrequencyLimit",         // TransferOption::LowFrequencyLimit
+   "DigitalTF",                 // TransferOption::DigitalTF
+   "FlowNormalExtrapolate"      // TransferOption::FlowNormalExtrapolate
+};
+
+// ----------------------------------------------------------------------------
+
 /// Acoustic source options.
 enum class SourceOption : std::uint8_t
 {
@@ -378,12 +418,23 @@ static_assert(std::variant_size_v<SourceParamsVariant> ==
              "Missing SourceParams in SourceParamsVariant.");
 
 // ----------------------------------------------------------------------------
+/// Strings associated with jabber::AcousticField::Kernel enumerators.
+static constexpr std::array<std::string_view, 
+                     static_cast<std::size_t>(jabber::AcousticField::Kernel::Size)>
+KernelNames = 
+{
+   "GridPoint",      // AcousticField::Kernel::GridPoint
+};
 
+// ----------------------------------------------------------------------------
 /// Struct for computation parameters.
 struct CompParams
 {  
    /// Initial time.
    double t0;
+
+   /// Kernel type.
+   jabber::AcousticField::Kernel kernel;
 };
 
 // ----------------------------------------------------------------------------

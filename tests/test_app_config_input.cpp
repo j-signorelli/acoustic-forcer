@@ -410,16 +410,24 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
 TEST_CASE("TOMLConfigInput::ParseComputation", "[App][TOMLConfigInput]")
 {
    int seed = 0;
+
    const double kT0 = GenerateRandomReal(seed++,0.0,100.0);
+
+   const AcousticField::Kernel kKernel = 
+                                 GENERATE(options<AcousticField::Kernel>());
+   const std::size_t kernel_i = static_cast<std::size_t>(kKernel);
+
    const std::string comp_str = 
       std::format(R"(
                      t0={}
-                  )", kT0);
+                     Kernel='{}'
+                  )", kT0, KernelNames[kernel_i]);
 
    TOMLConfigInput config;
    config.ParseComputation(comp_str);
 
    CHECK(config.Comp().t0 == kT0);
+   CHECK(config.Comp().kernel == kKernel);
 }
 
 TEST_CASE("TOMLConfigInput::ParsePrecice", "[App][TOMLConfigInput]")

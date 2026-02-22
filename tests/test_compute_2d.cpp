@@ -9,6 +9,10 @@
 #include <jabber_app.hpp>
 #endif // JABBER_WITH_APP
 
+#ifdef JABBER_WITH_OPENMP
+#include <omp.h>
+#endif // JABBER_WITH_OPENMP
+
 #include <cmath>
 #include <functional>
 
@@ -185,6 +189,11 @@ static void CheckSolution(std::span<const double> coords,
 
 TEST_CASE("2D flowfield computation via kernel", "[2D][Compute][Kernels]")
 {
+#ifdef JABBER_WITH_OPENMP
+   omp_set_dynamic(0);
+   omp_set_num_threads(GENERATE(1,2));
+#endif // JABBER_WITH_OPENMP
+
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
    DYNAMIC_SECTION("Number of waves: " << kNumWaves)
@@ -241,12 +250,16 @@ TEST_CASE("2D flowfield computation via kernel", "[2D][Compute][Kernels]")
 TEST_CASE("2D flowfield computation via AcousticField", 
             "[2D][Compute][AcousticField]")
 {
+   const AcousticField::Kernel kernel = 
+                        GENERATE(options<AcousticField::Kernel>());
+   CAPTURE(kernel);
+
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
    DYNAMIC_SECTION("Number of waves: " << kNumWaves)
    {
       // Build AcousticField
-      AcousticField field(2, kCoords, kPBar, kRhoBar, kUBar, kGamma);
+      AcousticField field(2, kCoords, kPBar, kRhoBar, kUBar, kGamma, kernel);
 
       // Add wave(s) + finalize
       for (int w = 0; w < kNumWaves; w++)
@@ -299,6 +312,9 @@ TEST_CASE("2D flowfield computation via app library", "[2D][Compute][App]")
          // Add wave to Config sources
          config.Sources().push_back(wave);
       }
+
+      // Set kernel
+      config.Comp().kernel = GENERATE(options<AcousticField::Kernel>());
 
       // Initialize AcousticField
       AcousticField field = InitializeAcousticField(config, kCoords, 2);

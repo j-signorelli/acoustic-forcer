@@ -9,6 +9,10 @@
 #include <jabber_app.hpp>
 #endif // JABBER_WITH_APP
 
+#ifdef JABBER_WITH_OPENMP
+#include <omp.h>
+#endif // JABBER_WITH_OPENMP
+
 #include <cmath>
 #include <functional>
 
@@ -163,6 +167,14 @@ static void CheckSolution(std::span<const double> coords,
 
 TEST_CASE("1D flowfield computation via kernel", "[1D][Compute][Kernels]")
 {
+
+#ifdef JABBER_WITH_OPENMP
+   omp_set_dynamic(0);
+   const int num_threads = GENERATE(1,2);
+   omp_set_num_threads(num_threads);
+   CAPTURE(num_threads);
+#endif // JABBER_WITH_OPENMP
+
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
    DYNAMIC_SECTION("Number of waves: " << kNumWaves)
@@ -210,13 +222,19 @@ TEST_CASE("1D flowfield computation via kernel", "[1D][Compute][Kernels]")
 TEST_CASE("1D flowfield computation via AcousticField", 
             "[1D][Compute][AcousticField]")
 {
+
+   const AcousticField::Kernel kernel = 
+                        GENERATE(options<AcousticField::Kernel>());
+   CAPTURE(kernel);
+
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
    DYNAMIC_SECTION("Number of waves: " << kNumWaves)
    {
       // Build AcousticField
       std::vector<double> kUBar_vec = {kUBar};
-      AcousticField field(1, kCoords, kPBar, kRhoBar, kUBar_vec, kGamma);
+      AcousticField field(1, kCoords, kPBar, kRhoBar, kUBar_vec, kGamma, 
+                           kernel);
 
       // Add wave(s) + finalize
       std::vector<double> dir_vec = {1.0};
@@ -271,6 +289,9 @@ TEST_CASE("1D flowfield computation via app library", "[1D][Compute][App]")
          config.Sources().push_back(wave);
       }
 
+      // Set kernel
+      config.Comp().kernel = GENERATE(options<AcousticField::Kernel>());
+      
       // Initialize AcousticField
       AcousticField field = InitializeAcousticField(config, kCoords, 1);
 
