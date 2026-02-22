@@ -7,30 +7,32 @@ namespace jabber
 {
 
 /**
-   * @brief Kernel function for evaluating perturbed base flow, with series
-   * summation inner loop/vectorization over each gridpoint.
+   * @brief Kernel function for evaluating perturbed base flow.
    * 
-   * @details This function was designed following Intel guidelines for 
-   * auto-vectorizable code.  Because only inner-most loops are candidates for
-   * vectorization, this function is templated with \p TDim for "loop
-   * unrolling" on the momentum terms. Vectorization is across \p num_pts as
-   * that is expected to be the largest value, so data dimensioned by it must
-   * be stored in an SoA-format for contiguous memory accesses across hardware
-   * threads.
+   * @warning The  layout of \p k_dot_x_p_phi depends on \p TGridInnerLoop to
+   * ensure contiguous memory accesses across hardware threads.
    * 
-   * All inner loops have been verified to be vectorized by Intel `icpx` 
-   * 2025.3.1 using the flags `-O3 -xhost`. Proper vectorization by Intel
-   * compilers can be checked via:
+   * @details Compute the flowfield with acoustic forcing. This function was
+   * designed for its inner loops to be auto-vectorized by the compiler. As 
+   * such, it is templated with \p TDim for "loop unrolling" on the momentum
+   * terms and, to support a variety of use cases, \p TGridInnerLoop to support
+   * vectorization over either the grid points or over the waves on the series
+   * summations.
    * 
-   * ```
-   * icpx -O3 -qopt-report=3 \
-   *          -qopt-report-file="report.yaml" \
-   *          -xhost \
-   *          -c kernels.cpp
-   * ```
+   * Without an OpenMP build, it is adviseable to use the \p TGridInnerLoop =
+   * true version when number of grid points per core is large relative to the 
+   * number of waves, and use the \p TGridInnerLoop = false version when the
+   * number of waves is large relative to the number of grid points per core.
    * 
+   * With an OpenMP build, thread-parallelization is along the wave axis for 
+   * \p TGridInnerLoop true, and along the grid point axis for
+   * \p TGridInnerLoop false. In this case, one should test out different 
+   * configurations for their specific case.
+   *
    * 
    * @tparam TDim            Physical dimension.
+   * @tparam TGridInnerLoop  If true, inner loop of series summation is over
+   *                         the grid points. If false, is over the waves.
    * 
    * @param num_pts          Number of physical points to evaluate at.
    * @param rho_bar          Base flow density.
@@ -49,21 +51,25 @@ namespace jabber
    *                         \f$-\hat{k}\f$. This is dimensioned as \p TDim x 
    *                         \p num_waves but flattened.
    * @param k_dot_x_p_phi    \f$\vec{k}\cdot x+\phi\f$ term computed for all
-   *                         waves at all points, dimensioned as \p num_waves 
-   *                         x \p num_pts but flattened.
+   *                         waves at all points. **If \p TGridInnerLoop is true,
+   *                         this must be dimensioned as a flattened
+   *                         [ \p num_waves ][ \p num_pts ]. If
+   *                          \p TGridInnerLoop is false, this must be 
+   *                         dimensioned as a flattened
+   *                         [ \p num_pts ][ \p num_waves ].
    * @param t                Time.
    * @param rho              Output flow density to compute, sized \p num_pts.
    * @param rhoV             Output flow momentum vector to compute,
    *                         dimensioned as \p TDim x \p num_pts but flattened.
    * @param rhoE             Output flow energy to compute, sized \p num_pts.
 */
-template<std::size_t TDim>
+template<std::size_t TDim, bool GridInnerLoop>
 void ComputeKernel(const std::size_t num_pts, const double rho_bar,
                         const double p_bar, const double *U_bar, 
                         const double gamma, const int num_waves, 
-                        const double *wave_amps, 
-                        const double *wave_omegas,
-                        const double *mod_wave_dirs,
+                        const double *__restrict__ wave_amps, 
+                        const double *__restrict__ wave_omegas,
+                        const double *__restrict__ mod_wave_dirs,
                         const double *__restrict__ k_dot_x_p_phi,
                         const double t,
                         double *__restrict__ rho,
