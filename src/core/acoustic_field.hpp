@@ -4,6 +4,7 @@
 #include <vector>
 #include <span>
 #include <iostream>
+#include <cstdint>
 
 namespace jabber
 {
@@ -51,6 +52,22 @@ void ReadWaves(std::istream &in, std::vector<Wave> &waves);
  */
 class AcousticField
 {
+public:
+
+   /**
+    * @brief Kernel type to use in \ref Compute "Compute()".
+    * 
+    * @details See file kernels.hpp for more information.
+    */
+   enum class Kernel : std::uint8_t
+   {
+      /// Use grid-point axis in series summation inner-loop.
+      GridPoint,
+
+      /// Number of Kernel enumerators.
+      Size,
+   };
+
 private:
 
    /// Spatial dimension.
@@ -74,6 +91,9 @@ private:
    /// Base flow speed of sound
    const double c_infty_;
 
+   /// Kernel type to use.
+   const Kernel kernel_;
+   
    /// SoA coordinates to compute waves on, [dim][node].
    std::vector<std::vector<double>> coords_;
 
@@ -107,7 +127,8 @@ private:
     * 
     * @details Pre-computing this before calls to \ref Compute() is required, 
     * as it reduces redundant inner-loop FLOPs. Size is \ref NumWaves() * 
-    * \ref NumPoints(). This is a flattened array is ordered as [wave][point].
+    * \ref NumPoints(). This is a flattened array is ordered as [wave][point]
+    * for \ref kernel_ Kernel::GridPoint.
     */
    std::vector<double> k_dot_x_p_phi_;
 
@@ -153,10 +174,12 @@ public:
     * @param rho_bar    Base flow density.
     * @param U_bar      Base flow velocity vector, of size \p dim.
     * @param gamma      Base flow specific heat ratio, γ.
+    * @param kernel     Kernel type to use.
     */
    AcousticField(int dim, std::span<const double> coords,
                   double p_bar, double rho_bar,
-                  const std::vector<double> U_bar, double gamma);
+                  const std::vector<double> U_bar, double gamma,
+                  Kernel kernel=Kernel::GridPoint);
 
    /// Get the spatial dimension.
    int Dim() const { return dim_; }
