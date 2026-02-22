@@ -3,6 +3,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <catch2/generators/catch_generators.hpp>
+#include <catch2/catch_template_test_macros.hpp>
 
 #include <jabber.hpp>
 #ifdef JABBER_WITH_APP
@@ -187,8 +188,13 @@ static void CheckSolution(std::span<const double> coords,
    }
 }
 
-TEST_CASE("2D flowfield computation via kernel", "[2D][Compute][Kernels]")
+TEMPLATE_TEST_CASE_SIG("2D flowfield computation via kernel",
+                       "[2D][Compute][Kernels]",
+                        ((bool TGridInnerLoop), TGridInnerLoop),
+                        true, false)
 {
+   CAPTURE(TGridInnerLoop);
+
 #ifdef JABBER_WITH_OPENMP
    omp_set_dynamic(0);
    omp_set_num_threads(GENERATE(1,2));
@@ -222,9 +228,12 @@ TEST_CASE("2D flowfield computation via kernel", "[2D][Compute][Kernels]")
          
          for (std::size_t i = 0; i < kNumPts; i++)
          {
-            k_dot_x_p_phi[w*kNumPts + i] = k*(k_hat[0]*kCoords[i*2] 
-                                              + k_hat[1]*kCoords[i*2+1])
-                                           + kPhases[w];
+            const std::size_t idx = TGridInnerLoop ? w*kNumPts + i 
+                                                   : i*kNumWaves + w;
+
+            k_dot_x_p_phi[idx] = k*(k_hat[0]*kCoords[i*2] 
+                                       + k_hat[1]*kCoords[i*2+1])
+                                    + kPhases[w];
          }
       }
 
@@ -236,9 +245,10 @@ TEST_CASE("2D flowfield computation via kernel", "[2D][Compute][Kernels]")
       for (const double &time : kTimes)
       {
          // Compute
-         ComputeKernel<2>(kNumPts, kRhoBar, kPBar, kUBar.data(), kGamma,
-                           kNumWaves, kPAmps.data(), omega.data(), 
-                           mod_wave_dir.data(), k_dot_x_p_phi.data(), time, 
+         ComputeKernel<2, TGridInnerLoop>(kNumPts, kRhoBar, kPBar, 
+                           kUBar.data(), kGamma, kNumWaves, kPAmps.data(),
+                           omega.data(), mod_wave_dir.data(), 
+                           k_dot_x_p_phi.data(), time, 
                            rho.data(), rhoU.data(), rhoE.data());
 
          // Check solutions
@@ -250,17 +260,16 @@ TEST_CASE("2D flowfield computation via kernel", "[2D][Compute][Kernels]")
 TEST_CASE("2D flowfield computation via AcousticField", 
             "[2D][Compute][AcousticField]")
 {
-#ifdef JABBER_WITH_OPENMP
-   omp_set_dynamic(0);
-   omp_set_num_threads(GENERATE(1,2));
-#endif // JABBER_WITH_OPENMP
+   const AcousticField::Kernel kernel = 
+                        GENERATE(options<AcousticField::Kernel>());
+   CAPTURE(kernel);
 
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
    DYNAMIC_SECTION("Number of waves: " << kNumWaves)
    {
       // Build AcousticField
-      AcousticField field(2, kCoords, kPBar, kRhoBar, kUBar, kGamma);
+      AcousticField field(2, kCoords, kPBar, kRhoBar, kUBar, kGamma, kernel);
 
       // Add wave(s) + finalize
       for (int w = 0; w < kNumWaves; w++)
@@ -287,11 +296,6 @@ TEST_CASE("2D flowfield computation via AcousticField",
 
 TEST_CASE("2D flowfield computation via app library", "[2D][Compute][App]")
 {
-#ifdef JABBER_WITH_OPENMP
-   omp_set_dynamic(0);
-   omp_set_num_threads(GENERATE(1,2));
-#endif // JABBER_WITH_OPENMP
-
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
    DYNAMIC_SECTION("Number of waves: " << kNumWaves)
@@ -318,6 +322,9 @@ TEST_CASE("2D flowfield computation via app library", "[2D][Compute][App]")
          // Add wave to Config sources
          config.Sources().push_back(wave);
       }
+
+      // Set kernel
+      config.Comp().kernel = GENERATE(options<AcousticField::Kernel>());
 
       // Initialize AcousticField
       AcousticField field = InitializeAcousticField(config, kCoords, 2);
