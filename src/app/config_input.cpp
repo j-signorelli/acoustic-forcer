@@ -118,7 +118,12 @@ void ConfigInput::PrintSourceParams(std::ostream &out) const
 void ConfigInput::PrintCompParams(std::ostream &out) const
 {
    out << "Computation" << std::endl;
-   out << WriteParam("t0", OutReal(comp_.t0), 3);
+
+   constexpr int label_width = 3;
+   out << WriteParam("t0", OutReal(comp_.t0), label_width);
+   out << WriteParam("Kernel", 
+                     KernelNames[static_cast<std::size_t>(comp_.kernel)],
+                     label_width);
    out << std::endl;
 }
 
@@ -354,6 +359,7 @@ void TOMLConfigInput::ParseComputation(std::string comp_serialized)
 {
    toml::value in_comp = toml::parse_str(comp_serialized);
    comp_.t0 = in_comp.at("t0").as_floating();
+   GetEnumerator(in_comp.at("Kernel").as_string(), KernelNames, comp_.kernel);
 }
 
 void TOMLConfigInput::ParsePrecice(std::string precice_serialized)

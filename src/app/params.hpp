@@ -418,12 +418,24 @@ static_assert(std::variant_size_v<SourceParamsVariant> ==
              "Missing SourceParams in SourceParamsVariant.");
 
 // ----------------------------------------------------------------------------
+/// Strings associated with jabber::AcousticField::Kernel enumerators.
+static constexpr std::array<std::string_view, 
+                     static_cast<std::size_t>(jabber::AcousticField::Kernel::Size)>
+KernelNames = 
+{
+   "GridPoint",      // AcousticField::Kernel::GridPoint
+   "Wave",               // AcousticField::Kernel::Wave
+};
 
+// ----------------------------------------------------------------------------
 /// Struct for computation parameters.
 struct CompParams
 {  
    /// Initial time.
    double t0;
+
+   /// Kernel type.
+   jabber::AcousticField::Kernel kernel;
 };
 
 // ----------------------------------------------------------------------------
