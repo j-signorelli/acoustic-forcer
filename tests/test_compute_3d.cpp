@@ -279,17 +279,16 @@ TEST_CASE("3D flowfield computation via kernel", "[3D][Compute][Kernels]")
 TEST_CASE("3D flowfield computation via AcousticField", 
             "[3D][Compute][AcousticField]")
 {
-#ifdef JABBER_WITH_OPENMP
-   omp_set_dynamic(0);
-   omp_set_num_threads(GENERATE(1,2));
-#endif // JABBER_WITH_OPENMP
+   const AcousticField::Kernel kernel = 
+                        GENERATE(options<AcousticField::Kernel>());
+   CAPTURE(kernel);
 
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
    DYNAMIC_SECTION("Number of waves: " << kNumWaves)
    {
       // Build AcousticField
-      AcousticField field(3, kCoords, kPBar, kRhoBar, kUBar, kGamma);
+      AcousticField field(3, kCoords, kPBar, kRhoBar, kUBar, kGamma, kernel);
 
       // Add wave(s) + finalize
       for (int w = 0; w < kNumWaves; w++)
@@ -316,11 +315,6 @@ TEST_CASE("3D flowfield computation via AcousticField",
 
 TEST_CASE("3D flowfield computation via app library", "[3D][Compute][App]")
 {
-#ifdef JABBER_WITH_OPENMP
-   omp_set_dynamic(0);
-   omp_set_num_threads(GENERATE(1,2));
-#endif // JABBER_WITH_OPENMP
-
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
    DYNAMIC_SECTION("Number of waves: " << kNumWaves)
@@ -347,6 +341,9 @@ TEST_CASE("3D flowfield computation via app library", "[3D][Compute][App]")
          // Add wave to Config sources
          config.Sources().push_back(wave);
       }
+
+      // Set kernel
+      config.Comp().kernel = GENERATE(options<AcousticField::Kernel>());
 
       // Initialize AcousticField
       AcousticField field = InitializeAcousticField(config, kCoords, 3);

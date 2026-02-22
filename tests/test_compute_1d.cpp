@@ -170,7 +170,9 @@ TEST_CASE("1D flowfield computation via kernel", "[1D][Compute][Kernels]")
 
 #ifdef JABBER_WITH_OPENMP
    omp_set_dynamic(0);
-   omp_set_num_threads(GENERATE(1,2));
+   const int num_threads = GENERATE(1,2);
+   omp_set_num_threads(num_threads);
+   CAPTURE(num_threads);
 #endif // JABBER_WITH_OPENMP
 
    const int kNumWaves = GENERATE(1,2);
@@ -220,10 +222,10 @@ TEST_CASE("1D flowfield computation via kernel", "[1D][Compute][Kernels]")
 TEST_CASE("1D flowfield computation via AcousticField", 
             "[1D][Compute][AcousticField]")
 {
-#ifdef JABBER_WITH_OPENMP
-   omp_set_dynamic(0);
-   omp_set_num_threads(GENERATE(1,2));
-#endif // JABBER_WITH_OPENMP
+
+   const AcousticField::Kernel kernel = 
+                        GENERATE(options<AcousticField::Kernel>());
+   CAPTURE(kernel);
 
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
@@ -231,7 +233,8 @@ TEST_CASE("1D flowfield computation via AcousticField",
    {
       // Build AcousticField
       std::vector<double> kUBar_vec = {kUBar};
-      AcousticField field(1, kCoords, kPBar, kRhoBar, kUBar_vec, kGamma);
+      AcousticField field(1, kCoords, kPBar, kRhoBar, kUBar_vec, kGamma, 
+                           kernel);
 
       // Add wave(s) + finalize
       std::vector<double> dir_vec = {1.0};
@@ -259,11 +262,6 @@ TEST_CASE("1D flowfield computation via AcousticField",
 
 TEST_CASE("1D flowfield computation via app library", "[1D][Compute][App]")
 {
-#ifdef JABBER_WITH_OPENMP
-   omp_set_dynamic(0);
-   omp_set_num_threads(GENERATE(1,2));
-#endif // JABBER_WITH_OPENMP
-
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
    DYNAMIC_SECTION("Number of waves: " << kNumWaves)
@@ -291,6 +289,9 @@ TEST_CASE("1D flowfield computation via app library", "[1D][Compute][App]")
          config.Sources().push_back(wave);
       }
 
+      // Set kernel
+      config.Comp().kernel = GENERATE(options<AcousticField::Kernel>());
+      
       // Initialize AcousticField
       AcousticField field = InitializeAcousticField(config, kCoords, 1);
 
