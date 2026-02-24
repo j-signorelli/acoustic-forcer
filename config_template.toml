@@ -21,17 +21,17 @@ Phases=     [      0.0,         56.0 ]
 Speeds=     [      'S',          'F' ]
 
 [[Sources]]
-Type="DigitalPSD"
-
-InputData.Type="Here"
-InputData.Frequencies=[1e3, 10e3, 100e3, 500e3]
-InputData.PSDs=[1e-8, 1e-9, 1e-10, 1e-11]
-# or
-# InputData.Type="FromCSV"
-# InputData.File="csv_file.csv"
-
+Type="PSD"
 ScaleFactor=1.0
-Interpolation="PiecewiseLogLog"
+PhaseSeed=1
+Speed='S'
+
+InputPSD.Type="PiecewiseLogLog" # or PiecewiseLinear
+InputPSD.Data.X=[1e3, 10e3, 100e3, 500e3]
+InputPSD.Data.Y=[1e3, 10e3, 100e3, 500e3]
+# or
+# InputPSD.Type="FromCSV"
+# InputPSD.Data.File="csv_file.csv"
 
 Discretization.Min=1e2
 Discretization.Max=200e3
@@ -51,9 +51,6 @@ Direction.Seed=17
 # or
 # Direction.Type="Constant"
 # Direction.Vector=[1.0,1.0,1.0]
-
-PhaseSeed=1
-Speed='S'
 
 [Computation]
 t0=0.0

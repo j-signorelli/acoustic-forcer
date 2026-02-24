@@ -30,79 +30,112 @@ struct BaseFlowParams
 };
 
 // ----------------------------------------------------------------------------
-/// Input digitized power spectral density data options.
-enum class PSDInputOption : std::uint8_t
+/// Input XY data options.
+enum class InputXYOption : std::uint8_t
 {
-   /// Read in frequencies and PSDs specified directly in the config file.
+   /// Provide x,y data directly in config file.
    Here,
 
-   /// Read in frequencies and PSDs from CSV file.
+   /// Read in x,y data from CSV file.
    FromCSV,
 
-   /// Number of PSDInputOptions.
+   /// Number of InputXYOptions.
    Size
 };
 
-/// Strings associated with PSDInputOption enumerators.
+/// Strings associated with InputXYOption enumerators.
 static constexpr std::array<std::string_view, 
-                     static_cast<std::size_t>(PSDInputOption::Size)>
-PSDInputNames = 
+                     static_cast<std::size_t>(InputXYOption::Size)>
+InputXYNames = 
 {
-   "Here",       // PSDInputOption::Here
-   "FromCSV",    // PSDInputOption::FromCSV
+   "Here",       // InputXYOption::Here
+   "FromCSV",    // InputXYOption::FromCSV
 };
 
-template<PSDInputOption d>
-struct PSDInputParams;
+template<InputXYOption i>
+struct InputXYParams;
 
-/// Parameters for PSDInputOption::Here.
 template<>
-struct PSDInputParams<PSDInputOption::Here>
+struct InputXYParams<InputXYOption::Here>
 {
-   /// Digital wave frequencies (not angular) to fit.
-   std::vector<double> freqs;
+   /// Input x's.
+   std::vector<double> x;
 
-   /// Digital wave power spectral densities to fit.
-   std::vector<double> psds;
+   /// Input y's.
+   std::vector<double> y;
 };
 
 template<>
-struct PSDInputParams<PSDInputOption::FromCSV>
+struct InputXYParams<InputXYOption::FromCSV>
 {
-   /// CSV file address. First column are frequencies, second are PSDs.
+   /// CSV file address. First column are x's, second are y's. No header.
    std::string file;
 };
 
-/// All discretization method parameter options.
-using PSDInputParamsVariant 
-   = std::variant<PSDInputParams<PSDInputOption::Here>,
-                  PSDInputParams<PSDInputOption::FromCSV>>;
-static_assert(std::variant_size_v<PSDInputParamsVariant> == 
-                    static_cast<std::size_t>(PSDInputOption::Size),
-             "Missing PSDInputParams in PSDInputParamsVariant.");
+/// All input xy parameter options.
+using InputXYParamsVariant 
+   = std::variant<InputXYParams<InputXYOption::Here>,
+                  InputXYParams<InputXYOption::FromCSV>>;
+static_assert(std::variant_size_v<InputXYParamsVariant> == 
+                    static_cast<std::size_t>(InputXYOption::Size),
+             "Missing InputXYParams in InputXYParamsVariant.");
 
 // ----------------------------------------------------------------------------
-/// Interpolation options.
-enum class InterpolationOption : std::uint8_t
+/// Input R->R function options.
+enum class FunctionOption : std::uint8_t
 {
-
    /// Piecewise linear fit.
    PiecewiseLinear,
 
    /// Piecewise lo10-log10 fit (linear on log10-log10 scale).
    PiecewiseLogLog,
 
-   /// Number of InterpolationOptions.
+   /// Number of FunctionOptions.
    Size
 };
 
-/// Strings associated with InterpolationOption enumerators.
+/// Strings associated with FunctionOption enumerators.
 static constexpr std::array<std::string_view, 
-                     static_cast<std::size_t>(InterpolationOption::Size)>
-InterpolationNames = 
+                     static_cast<std::size_t>(FunctionOption::Size)>
+FunctionNames = 
 {
-   "PiecewiseLinear",    // InterpolationOption::PiecewiseLinear
-   "PiecewiseLogLog",    // InterpolationOption::PiecewiseLogLog
+   "PiecewiseLinear",    // FunctionOption::PiecewiseLinear
+   "PiecewiseLogLog",    // FunctionOption::PiecewiseLogLog
+};
+
+template<FunctionOption d>
+struct FunctionParams;
+
+/// Parameters for FunctionOption::PiecewiseLinear.
+template<>
+struct FunctionParams<FunctionOption::PiecewiseLinear>
+{
+   /// Input x,y data params.
+   InputXYParamsVariant input_xy;
+};
+
+template<>
+struct FunctionParams<FunctionOption::PiecewiseLogLog>
+{
+   /// Input x,y data params.
+   InputXYParamsVariant input_xy;
+};
+
+/// All function parameter options.
+using FunctionParamsVariant 
+   = std::variant<FunctionParams<FunctionOption::PiecewiseLinear>,
+                  FunctionParams<FunctionOption::PiecewiseLogLog>>;
+static_assert(std::variant_size_v<FunctionParamsVariant> == 
+                    static_cast<std::size_t>(FunctionOption::Size),
+             "Missing FunctionParams in FunctionParamsVariant.");
+
+// Array indicating if FunctionOption has associated/implemented BasePSD type.
+static constexpr std::array<bool, 
+                     static_cast<std::size_t>(FunctionOption::Size)>
+FunctionHasPSDType = 
+{
+   true,    // FunctionOption::PiecewiseLinear
+   true,    // FunctionOption::PiecewiseLogLog
 };
 
 // ----------------------------------------------------------------------------
@@ -261,15 +294,15 @@ enum class TransferOption : std::uint8_t
     */
    LowFrequencyLimit,
 
-   /// Digitized transfer function.
-   DigitalTF,
+   /// Provide a transfer function.
+   Input,
 
    /**
     * @brief Extrapolate from an approximate fit of the collapsed/normalized
     * flow-normal transfer function in Chaudhry & Candler, 2017.
     * 
     */
-   FlowNormalExtrapolate,
+   FlowNormalFit,
 
    // Number of TransferOptions.
    Size
@@ -280,12 +313,40 @@ static constexpr std::array<std::string_view,
                            static_cast<std::size_t>(TransferOption::Size)>
 TransferNames = 
 {
-   "None",                      // TransferOption::None
-   "LowFrequencyLimit",         // TransferOption::LowFrequencyLimit
-   "DigitalTF",                 // TransferOption::DigitalTF
-   "FlowNormalExtrapolate"      // TransferOption::FlowNormalExtrapolate
+   "None",               // TransferOption::None
+   "LowFrequencyLimit",  // TransferOption::LowFrequencyLimit
+   "Input",              // TransferOption::Input
+   "FlowNormalFit"       // TransferOption::FlowNormalFit
 };
 
+template<TransferOption t>
+struct TransferParams
+{
+   // Default struct has zero params
+};
+
+template<>
+struct TransferParams<TransferOption::Input>
+{
+   /// Transfer function representation, (f, V^2).
+   FunctionParamsVariant input_tf;
+};
+
+template<>
+struct TransferParams<TransferOption::FlowNormalFit>
+{
+   // TODO
+};
+
+/// All transfer parameter options.
+using TransferParamsVariant 
+   = std::variant<TransferParams<TransferOption::None>,
+                  TransferParams<TransferOption::LowFrequencyLimit>,
+                  TransferParams<TransferOption::Input>,
+                  TransferParams<TransferOption::FlowNormalFit>>;
+static_assert(std::variant_size_v<TransferParamsVariant> == 
+                    static_cast<std::size_t>(TransferOption::Size),
+             "Missing TransferParams in TransferParamsVariant.");
 // ----------------------------------------------------------------------------
 
 /// Acoustic source options.
@@ -297,8 +358,8 @@ enum class SourceOption : std::uint8_t
    /// Spectrum of N acoustic waves.
    WaveSpectrum,
 
-   /// Digitized/discrete power spectral density (PSD).
-   DigitalPSD,
+   /// Power spectral density (PSD).
+   PSD,
 
    /// Read in CSV file of Wave data (output from \ref jabber::WriteWaves()).
    WaveCSV,
@@ -314,7 +375,7 @@ SourceNames =
 {
    "SingleWave",      // SourceOption::SingleWave
    "WaveSpectrum",    // SourceOption::WaveSpectrum
-   "DigitalPSD",      // SourceOption::DigitalPSD
+   "PSD",             // SourceOption::PSD
    "WaveCSV"          // SourceOption::WaveCSV
 };
 
@@ -361,19 +422,16 @@ struct SourceParams<SourceOption::WaveSpectrum>
    std::vector<char> speeds;
 };
 
-/// Struct for source parameters of digital PSD.
+/// Struct for source parameters of PSD.
 template<>
-struct SourceParams<SourceOption::DigitalPSD>
+struct SourceParams<SourceOption::PSD>
 {
 
-   /// Digitized data (frequencies and PSDs) input parameters.
-   PSDInputParamsVariant input_params;
+   /// PSD function representation (f, PSD).
+   FunctionParamsVariant input_psd;
 
-   /// (For PSD unit V^2/Hz) Factor to multiply V by for pressure amplitude.
+   /// (For PSD unit V^2/Hz) Scaling factor to multiply V by.
    double dim_fac;
-
-   /// Interpolation method for fitting continuous curve to discrete PSD data.
-   InterpolationOption interp;
 
    /// Minimum wave frequency in discrete frequency selection range.
    double min_disc_freq;
@@ -398,6 +456,9 @@ struct SourceParams<SourceOption::DigitalPSD>
 
    /// Wave speeds to use.
    char speed;
+
+   /// Transfer function parameters.
+   TransferParamsVariant tf_params;
 };
 
 template<>
@@ -411,7 +472,7 @@ struct SourceParams<SourceOption::WaveCSV>
 using SourceParamsVariant 
    = std::variant<SourceParams<SourceOption::SingleWave>,
                   SourceParams<SourceOption::WaveSpectrum>,
-                  SourceParams<SourceOption::DigitalPSD>,
+                  SourceParams<SourceOption::PSD>,
                   SourceParams<SourceOption::WaveCSV>>;
 static_assert(std::variant_size_v<SourceParamsVariant> == 
                     static_cast<std::size_t>(SourceOption::Size),

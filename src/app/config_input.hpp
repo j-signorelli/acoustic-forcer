@@ -14,13 +14,10 @@ namespace jabber_app
 class ConfigInput
 {
 private:
-   /// Get string of double \p f with precision \ref kPrecision.
+   /// Get string of double \p f.
    static std::string OutReal(double f)
    {
-      /// Precision used when printing double/float data in \ref OutReal().
-      static constexpr int kPrecision = 12;
-
-      return std::format("{:.{}f}", f, kPrecision);
+      return std::format("{}", f);
    }
 
    /// Get string of double vector \p vec with precision \ref kPrecision.

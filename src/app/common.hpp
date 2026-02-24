@@ -5,7 +5,8 @@
 
 #include <jabber.hpp>
 #include <iostream>
-
+#include <concepts>
+#include <memory>
 namespace jabber_app
 {
 
@@ -19,38 +20,41 @@ void PrintBanner(std::ostream &out);
 void Normalize(std::span<const double> vec, std::span<double> norm_vec);
 
 /**
- * @brief All visitor options for each SourceParams, for initializing 
- * \ref jabber::Wave's for each type and appending to \p waves.
+ * @brief All visitor options for each InputXYParams, for initializing 
+ * \ref x and \ref y vectors.
  * 
  * @todo: Unit test?
  * 
  */
-struct SourceVisitor
-{
-   /// Reference of wave vector to append jabber::Wave structs to.
-   std::vector<jabber::Wave> &waves;
-   void operator() (const SourceParams<SourceOption::SingleWave> &sp);
-   void operator() (const SourceParams<SourceOption::WaveSpectrum> &sp);
-   void operator() (const SourceParams<SourceOption::DigitalPSD> &sp);
-   void operator() (const SourceParams<SourceOption::WaveCSV> &sp);
+struct InputXYVisitor
+{  
+
+   /// Reference to x-data vector to set.
+   std::vector<double> &x;
+
+   /// Reference to y-data vector to set.
+   std::vector<double> &y;
+
+   void operator() (const InputXYParams<InputXYOption::Here> &ip);
+   void operator() (const InputXYParams<InputXYOption::FromCSV> &ip);
 };
 
 /**
- * @brief All visitor options for each PSDInputParams, for initializing a 
- * digitized power spectral density input.
+ * @brief All visitor options for each FunctionParams, for initializing a
+ * \ref jabber::Function or \ref jabber::BasePSD type.
+ * 
+ * @tparam T      Either \ref jabber::Function or \ref jabber::BasePSD.
  * 
  * @todo: Unit test?
  */
-struct PSDInputVisitor
+template<typename T>
+struct FunctionVisitor
 {
-   /// Frequency vector to initialize.
-   std::vector<double> &d_freqs;
-   
-   /// PSD vector to initialize.
-   std::vector<double> &d_psds;
+   /// Function to initialize
+   std::unique_ptr<T> &T_ptr;
 
-   void operator() (const PSDInputParams<PSDInputOption::Here> &ip);
-   void operator() (const PSDInputParams<PSDInputOption::FromCSV> &ip);
+   void operator() (const FunctionParams<FunctionOption::PiecewiseLinear> &fp);
+   void operator() (const FunctionParams<FunctionOption::PiecewiseLogLog> &fp);
 };
 
 /**
@@ -89,6 +93,24 @@ struct DirectionVisitor
 
    void operator() (const DirectionParams<DirectionOption::Constant> &dp);
    void operator() (const DirectionParams<DirectionOption::RandomXYAngle> &dp);
+};
+
+
+/**
+ * @brief All visitor options for each SourceParams, for initializing 
+ * \ref jabber::Wave's for each type and appending to \p waves.
+ * 
+ * @todo: Unit test?
+ * 
+ */
+struct SourceVisitor
+{
+   /// Reference of wave vector to append jabber::Wave structs to.
+   std::vector<jabber::Wave> &waves;
+   void operator() (const SourceParams<SourceOption::SingleWave> &sp);
+   void operator() (const SourceParams<SourceOption::WaveSpectrum> &sp);
+   void operator() (const SourceParams<SourceOption::PSD> &sp);
+   void operator() (const SourceParams<SourceOption::WaveCSV> &sp);
 };
 
 /**

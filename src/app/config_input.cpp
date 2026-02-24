@@ -97,7 +97,7 @@ void ConfigInput::PrintSourceParams(std::ostream &out) const
          out << WriteParam("Speeds", speeds_str, label_width);
          out << std::endl;
       },
-      [&out](const SourceParams<SourceOption::DigitalPSD> &waves)
+      [&out](const SourceParams<SourceOption::PSD> &waves)
       {
          constexpr int label_width = 13;
 
@@ -119,7 +119,7 @@ void ConfigInput::PrintCompParams(std::ostream &out) const
 {
    out << "Computation" << std::endl;
 
-   constexpr int label_width = 3;
+   constexpr int label_width = 7;
    out << WriteParam("t0", OutReal(comp_.t0), label_width);
    out << WriteParam("Kernel", 
                      KernelNames[static_cast<std::size_t>(comp_.kernel)],
@@ -221,6 +221,29 @@ void GetEnumerator(const std::string_view input_str,
    }
 }
 
+/// Internal helper function here for parsing InputXYParams
+void GetInputXYParams(toml::value in_xy_data, InputXYParamsVariant &ipv)
+{
+   InputXYOption in_xy_option;
+   GetEnumerator(in_xy_data.at("Type").as_string(), InputXYNames, 
+                     in_xy_option);
+   if (in_xy_option == InputXYOption::Here)
+   {
+      InputXYParams<InputXYOption::Here> xy_params;
+      xy_params.x = toml::get<std::vector<double>>(
+                                          in_xy_data.at("X"));
+      xy_params.y = toml::get<std::vector<double>>(
+                                          in_xy_data.at("Y"));
+      ipv = xy_params;
+   }
+   else if (in_xy_option == InputXYOption::FromCSV)
+   {
+      InputXYParams<InputXYOption::FromCSV> xy_params;
+      xy_params.file = in_xy_data.at("File").as_string();
+      ipv = xy_params;
+   }
+}
+
 void TOMLConfigInput::ParseSource(std::string source_serialized)
 {
    toml::value in_source = toml::parse_str(source_serialized);
@@ -262,34 +285,29 @@ void TOMLConfigInput::ParseSource(std::string source_serialized)
       
       sources_.emplace_back(meta);
    }
-   else if (source_op == SourceOption::DigitalPSD)
+   else if (source_op == SourceOption::PSD)
    {
-      SourceParams<SourceOption::DigitalPSD> meta;
+      SourceParams<SourceOption::PSD> meta;
 
-      toml::value in_input = in_source.at("InputData");
-      PSDInputOption input_option;
-      GetEnumerator(in_input.at("Type").as_string(), PSDInputNames, 
-                        input_option);
-      if (input_option == PSDInputOption::Here)
+      toml::value in_input = in_source.at("InputPSD");
+      FunctionOption func_option;
+      GetEnumerator(in_input.at("Type").as_string(), FunctionNames, 
+                        func_option);
+
+      if (func_option == FunctionOption::PiecewiseLinear)
       {
-         PSDInputParams<PSDInputOption::Here> input_params;
-         input_params.freqs = toml::get<std::vector<double>>(
-                                             in_input.at("Frequencies"));
-         input_params.psds = toml::get<std::vector<double>>(
-                                             in_input.at("PSDs"));
-         meta.input_params = input_params;
+         FunctionParams<FunctionOption::PiecewiseLinear> fp;
+         GetInputXYParams(in_input.at("Data"), fp.input_xy);
+         meta.input_psd = fp;
       }
-      else if (input_option == PSDInputOption::FromCSV)
+      else if (func_option == FunctionOption::PiecewiseLogLog)
       {
-         PSDInputParams<PSDInputOption::FromCSV> input_params;
-         input_params.file = in_input.at("File").as_string();
-         meta.input_params = input_params;
+         FunctionParams<FunctionOption::PiecewiseLogLog> fp;
+         GetInputXYParams(in_input.at("Data"), fp.input_xy);
+         meta.input_psd = fp;
       }
-      
+
       meta.dim_fac = in_source.at("ScaleFactor").as_floating();
-      GetEnumerator(in_source.at("Interpolation").as_string(), 
-                     InterpolationNames,
-                     meta.interp);
       
       toml::value in_disc = in_source.at("Discretization");
       meta.min_disc_freq = in_disc.at("Min").as_floating();

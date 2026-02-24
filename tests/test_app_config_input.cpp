@@ -77,12 +77,13 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
    const std::uint8_t s = static_cast<std::uint8_t>(option);
    DYNAMIC_SECTION(SourceNames[s])
    {   
-      if (option == SourceOption::SingleWave)
+      SourceParamsVariant sp_var = GenerateRandomSource(option, kSeed);
+      std::visit(
+      overloads
       {
-         SourceParams<SourceOption::SingleWave> wave; 
-         wave = GenerateRandomSource<SourceOption::SingleWave>(
-                                                      kSeed, 
-                                                      GENERATE('S', 'F'));
+      [&](SourceParams<SourceOption::SingleWave> &wave)
+      {
+         wave.speed = GENERATE('S', 'F');
 
          const std::string source_str = 
          std::format(R"(
@@ -105,12 +106,9 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
          CHECK_THAT(wave_parsed.direction, Equals(wave.direction));
          CHECK(wave_parsed.phase == wave.phase);
          CHECK(wave_parsed.speed == wave.speed);
-      }
-      else if (option == SourceOption::WaveSpectrum)
+      },
+      [&](SourceParams<SourceOption::WaveSpectrum> &waves)
       {
-         SourceParams<SourceOption::WaveSpectrum> waves;
-         waves = GenerateRandomSource<SourceOption::WaveSpectrum>(kSeed);
-
          const int kNumWaves = waves.amps.size();
          
          std::string source_str = std::format("Type=\"{}\"\n",
@@ -142,135 +140,145 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
          }
          CHECK_THAT(waves_parsed.phases, Equals(waves.phases));
          CHECK_THAT(waves_parsed.speeds, Equals(waves.speeds));
-      }
-      else if (option == SourceOption::DigitalPSD)
+      },
+      [&](SourceParams<SourceOption::PSD> &source_params)
       {
-         SourceParams<SourceOption::DigitalPSD> source_params;
+         // Test all combinations of variable settings
+         const FunctionOption func_option = 
+                                       GENERATE(options<FunctionOption>());
+         source_params.input_psd = GenerateRandomFunction(
+                                       func_option,
+                                       kSeed);
+         std::visit(
+         [&]<FunctionOption F>(FunctionParams<F> &fp)
+         {
+            if constexpr (F == FunctionOption::PiecewiseLinear ||
+                          F == FunctionOption::PiecewiseLogLog)
+            {
+               fp.input_xy = GenerateRandomInputXY(
+                                 GENERATE(options<InputXYOption>()), 
+                                 kSeed);
+            }
+         }, source_params.input_psd);
 
-         const PSDInputOption input_option = 
-                                 GENERATE(options<PSDInputOption>());
-         const InterpolationOption interp_option = 
-                                 GENERATE(options<InterpolationOption>());
-         const Interval::Method int_method_option = 
-                                 GENERATE(options<Interval::Method>());
-         const DiscMethodOption dm_option = 
-                                 GENERATE(options<DiscMethodOption>());
+         const DiscMethodOption disc_method_option = 
+                                       GENERATE(options<DiscMethodOption>());
+         source_params.disc_params = GenerateRandomDiscMethod(
+                                       disc_method_option,
+                                       kSeed);
+         source_params.int_method = GENERATE(options<Interval::Method>());
+
          const DirectionOption dir_option = 
-                                 GENERATE(options<DirectionOption>());
-
-         const char speed = GENERATE('S', 'F');         
+                                       GENERATE(options<DirectionOption>());
+         source_params.dir_params = GenerateRandomDirection(
+                                       dir_option,
+                                       kSeed);
+         source_params.speed = GENERATE('S', 'F');         
          
-         source_params = GenerateRandomSource<SourceOption::DigitalPSD>(
-                                    kSeed,
-                                    input_option,
-                                    interp_option,
-                                    int_method_option,
-                                    dm_option,
-                                    dir_option,
-                                    speed);
          std::string source_str = 
          std::format(R"(
             Type="{}"
             ScaleFactor={}
-            Interpolation="{}"
             PhaseSeed={}
             Speed='{}'
             Discretization.Min={}
             Discretization.Max={}
             Discretization.N={}
             Discretization.Interval="{}"
-            InputData.Type="{}"
+
+            InputPSD.Type="{}"
             Discretization.Method.Type="{}"
             Direction.Type="{}"
             )", SourceNames[s],
             source_params.dim_fac,
-            InterpolationNames[static_cast<std::uint8_t>(source_params.interp)],
             source_params.phase_seed,
             source_params.speed, source_params.min_disc_freq, 
             source_params.max_disc_freq, source_params.num_waves,
             IntervalNames[static_cast<std::uint8_t>(source_params.int_method)],
-            PSDInputNames[static_cast<std::uint8_t>(input_option)],
-            DiscMethodNames[static_cast<std::uint8_t>(dm_option)],
+            FunctionNames[static_cast<std::uint8_t>(func_option)],
+            DiscMethodNames[static_cast<std::uint8_t>(disc_method_option)],
             DirectionNames[static_cast<std::uint8_t>(dir_option)]);
          
          std::visit(
-         overloads
+         [&]<FunctionOption F>(const FunctionParams<F> &fp)
          {
-         [&](const PSDInputParams<PSDInputOption::Here> input_params)
-         {
-            source_str = std::format(R"(
-                           {}
-                           InputData.Frequencies={}
-                           InputData.PSDs={}
-                           )", source_str, WriteVector(input_params.freqs),
-                              WriteVector(input_params.psds));
-         },
-         [&](const PSDInputParams<PSDInputOption::FromCSV> input_params)
-         {
-            source_str = std::format(R"(
-                           {}
-                           InputData.File="{}"
-                           )", source_str, input_params.file);
-         }
-         }, source_params.input_params);
+            if constexpr (F == FunctionOption::PiecewiseLinear ||
+                          F == FunctionOption::PiecewiseLogLog)
+            {
+               std::visit(
+               overloads
+               {
+               [&](const InputXYParams<InputXYOption::Here> &ip)
+               {
+                  source_str = std::format(R"(
+                                    {}
+                                    InputPSD.Data.Type="{}"
+                                    InputPSD.Data.X={}
+                                    InputPSD.Data.Y={}
+                                    )", source_str,
+                                    InputXYNames[static_cast<std::size_t>(
+                                                   InputXYOption::Here)],
+                                    WriteVector(ip.x), WriteVector(ip.y));
+               },
+               [&](const InputXYParams<InputXYOption::FromCSV> &ip)
+               {
+                  source_str = std::format(R"(
+                                    {}
+                                    InputPSD.Data.Type="{}"
+                                    InputPSD.Data.File="{}"
+                                    )", 
+                                    source_str,
+                                    InputXYNames[static_cast<std::size_t>(
+                                                   InputXYOption::FromCSV)], ip.file);
+               }
+               }, fp.input_xy);
+            }
+         }, source_params.input_psd);
+
          
          std::visit(
-         overloads
+         [&source_str]<DiscMethodOption D>(const DiscMethodParams<D> &dp)
          {
-         [&](const DiscMethodParams<DiscMethodOption::Uniform> &disc_params)
-         {
-            // No params
-         },
-         [&](const DiscMethodParams<DiscMethodOption::UniformLog> &disc_params)
-         {
-            // No params
-         },
-         [&](const DiscMethodParams<DiscMethodOption::Random> dm_params)
-         {
-            source_str = std::format(R"(
-                           {}
-                           Discretization.Method.Seed={}
-                           )", source_str, dm_params.seed);
-         },
-         [&](const DiscMethodParams<DiscMethodOption::RandomLog> dm_params)
-         {
-            source_str = std::format(R"(
-                           {}
-                           Discretization.Method.Seed={}
-                           )", source_str, dm_params.seed);
-         }
+            if constexpr (D == DiscMethodOption::Random ||
+                           D == DiscMethodOption::RandomLog)
+            {
+               source_str = std::format(R"(
+                              {}
+                              Discretization.Method.Seed={}
+                              )", source_str, dp.seed);
+            }
          }, source_params.disc_params);
 
          std::visit(
          overloads
          {
-         [&](const DirectionParams<DirectionOption::Constant> dir_params)
+         [&source_str](const DirectionParams<DirectionOption::Constant> &dp)
          {
             source_str = std::format(R"(
                            {}
                            Direction.Vector={}
-                           )", source_str, WriteVector(dir_params.direction));
+                           )", source_str, WriteVector(dp.direction));
          },
-         [&](const DirectionParams<DirectionOption::RandomXYAngle> dir_params)
+         [&source_str](const DirectionParams<DirectionOption::RandomXYAngle>
+                                                                        &dp)
          {
             source_str = std::format(R"(
                            {}
                            Direction.MinAngle={}
                            Direction.MaxAngle={}
                            Direction.Seed={}
-                           )", source_str, dir_params.min_angle, 
-                              dir_params.max_angle, dir_params.seed);
+                           )", source_str, dp.min_angle, 
+                              dp.max_angle, dp.seed);
          }
          }, source_params.dir_params);
 
          TOMLConfigInput config;
          config.ParseSource(source_str);
-         SourceParams<SourceOption::DigitalPSD> parsed_source = 
-               std::get<SourceParams<SourceOption::DigitalPSD>>(
+         SourceParams<SourceOption::PSD> parsed_source = 
+               std::get<SourceParams<SourceOption::PSD>>(
                                                    config.Sources()[0]);
 
          CHECK(parsed_source.dim_fac == source_params.dim_fac);
-         CHECK(parsed_source.interp == source_params.interp);
          CHECK(parsed_source.phase_seed == source_params.phase_seed);
          CHECK(parsed_source.speed == source_params.speed);
          CHECK(parsed_source.min_disc_freq == source_params.min_disc_freq);
@@ -279,78 +287,55 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
          CHECK(parsed_source.int_method== source_params.int_method);
 
          std::visit(
-         overloads
+         [&]<FunctionOption F>(const FunctionParams<F> &parsed_fp)
          {
-         [&](const PSDInputParams<PSDInputOption::Here> parsed_input_params)
-         {
-            CHECK(input_option == PSDInputOption::Here);
-            if (input_option == PSDInputOption::Here)
+            CHECK(func_option == F);
+            const FunctionParams<F> &source_ip = 
+               std::get<FunctionParams<F>>(source_params.input_psd);
+            if constexpr (F == FunctionOption::PiecewiseLinear || 
+                           F == FunctionOption::PiecewiseLogLog)
             {
-               PSDInputParams<PSDInputOption::Here> input_params = 
-                  std::get<PSDInputParams<PSDInputOption::Here>>(
-                                                source_params.input_params);
-               CHECK_THAT(parsed_input_params.freqs, Equals(input_params.freqs));
-               CHECK_THAT(parsed_input_params.psds, Equals(input_params.psds));
+               
+               std::visit(
+               overloads
+               {
+               [&](const InputXYParams<InputXYOption::Here> &parsed_ip)
+               {
+                  InputXYParams<InputXYOption::Here> input_params = 
+                     std::get<InputXYParams<InputXYOption::Here>>(
+                                                         source_ip.input_xy);
+                  CHECK_THAT(parsed_ip.x, Equals(input_params.x));
+                  CHECK_THAT(parsed_ip.y, Equals(input_params.y));
+               },
+               [&](const InputXYParams<InputXYOption::FromCSV> &parsed_ip)
+               {
+                  InputXYParams<InputXYOption::FromCSV> input_params = 
+                     std::get<InputXYParams<InputXYOption::FromCSV>>(
+                                                         source_ip.input_xy);
+                  CHECK(parsed_ip.file == input_params.file);
+               }
+               }, parsed_fp.input_xy);
             }
-         },
-         [&](const PSDInputParams<PSDInputOption::FromCSV> parsed_input_params)
-         {
-            CHECK(input_option == PSDInputOption::FromCSV);
-            if (input_option == PSDInputOption::FromCSV)
-            {
-               PSDInputParams<PSDInputOption::FromCSV> input_params = 
-                  std::get<PSDInputParams<PSDInputOption::FromCSV>>(
-                                                source_params.input_params);
-               CHECK(parsed_input_params.file == input_params.file);
-            }
-         }
-         }, parsed_source.input_params);
+         }, parsed_source.input_psd);
 
          std::visit(
-         overloads
+         [&disc_method_option, &source_params]
+            <DiscMethodOption D>(const DiscMethodParams<D> &parsed_dp)
          {
-         [&](const DiscMethodParams<DiscMethodOption::Uniform> &disc_params)
-         {
-            // No params
-            CHECK(dm_option == DiscMethodOption::Uniform);
-         },
-         [&](const DiscMethodParams<DiscMethodOption::UniformLog> &disc_params)
-         {
-            // No params
-            CHECK(dm_option == DiscMethodOption::UniformLog);
-         },
-         [&](const DiscMethodParams<DiscMethodOption::Random> 
-                                                            parsed_disc_params)
-         {
-            CHECK(dm_option == DiscMethodOption::Random);
-            if (dm_option == DiscMethodOption::Random)
+            CHECK(disc_method_option == D);
+            if constexpr (D == DiscMethodOption::Random || 
+                           D == DiscMethodOption::RandomLog)
             {
-               DiscMethodParams<DiscMethodOption::Random> disc_params = 
-                  std::get<DiscMethodParams<DiscMethodOption::Random>>(
-                                                source_params.disc_params);
-               CHECK(parsed_disc_params.seed == disc_params.seed);
-            }
-         },
-         [&](const DiscMethodParams<DiscMethodOption::RandomLog>
-                                                            parsed_disc_params)
-         {
-            CHECK(dm_option == DiscMethodOption::RandomLog);
-            if (dm_option == DiscMethodOption::RandomLog)
-            {
-               DiscMethodParams<DiscMethodOption::RandomLog> 
-                  disc_params = 
-                  std::get<DiscMethodParams<DiscMethodOption::RandomLog>>(
-                                                source_params.disc_params);
-               CHECK(parsed_disc_params.seed == disc_params.seed);
-            }
-         }
+               DiscMethodParams<D> disc_params = 
+                     std::get<DiscMethodParams<D>>(source_params.disc_params);
+               CHECK(parsed_dp.seed == disc_params.seed);
+            } 
          }, parsed_source.disc_params);
 
          std::visit(
          overloads
          {
-         [&](const DirectionParams<DirectionOption::Constant> 
-                                                            parsed_dir_params)
+         [&](const DirectionParams<DirectionOption::Constant> &parsed_dp)
          {
             CHECK(dir_option == DirectionOption::Constant);
             if (dir_option == DirectionOption::Constant)
@@ -358,12 +343,11 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
                DirectionParams<DirectionOption::Constant> dir_params = 
                   std::get<DirectionParams<DirectionOption::Constant>>(
                                                 source_params.dir_params);
-               CHECK_THAT(parsed_dir_params.direction, 
+               CHECK_THAT(parsed_dp.direction, 
                            Equals(dir_params.direction));
             }
          },
-         [&](const DirectionParams<DirectionOption::RandomXYAngle> 
-                                                            parsed_disc_params)
+         [&](const DirectionParams<DirectionOption::RandomXYAngle> &parsed_dp)
          {
             CHECK(dir_option == DirectionOption::RandomXYAngle);
             if (dir_option == DirectionOption::RandomXYAngle)
@@ -371,19 +355,18 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
                DirectionParams<DirectionOption::RandomXYAngle> dir_params = 
                   std::get<DirectionParams<DirectionOption::RandomXYAngle>>(
                                                 source_params.dir_params);
-               CHECK(parsed_disc_params.min_angle == dir_params.min_angle);
-               CHECK(parsed_disc_params.max_angle == dir_params.max_angle);
-               CHECK(parsed_disc_params.seed == dir_params.seed);
+               CHECK(parsed_dp.min_angle == dir_params.min_angle);
+               CHECK(parsed_dp.max_angle == dir_params.max_angle);
+               CHECK(parsed_dp.seed == dir_params.seed);
             }
          }
          }, parsed_source.dir_params);
 
-      }
-      else if (option == SourceOption::WaveCSV)
+      },
+      [&](SourceParams<SourceOption::WaveCSV> &source_params)
       {
-         SourceParams<SourceOption::WaveCSV> source_params;
          source_params.file = "test_waves." + 
-                              std::to_string(GenerateRandomInt(0, 0, 100)) 
+                              std::to_string(GenerateRandomInt(kSeed, 0, 100)) 
                               + ".csv";
          std::string source_str = std::format(R"(
                                     Type="{}"
@@ -395,10 +378,7 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
             std::get<SourceParams<SourceOption::WaveCSV>>(config.Sources()[0]);
          CHECK(parsed_source.file == source_params.file);
       }
-      else
-      {
-         FAIL("No unit test for source type " << SourceNames[s] << "!");
-      }
+      }, sp_var);
    }
 }
 

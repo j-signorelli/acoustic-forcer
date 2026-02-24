@@ -97,32 +97,53 @@ Catch::Generators::GeneratorWrapper<T> options()
                Catch::Detail::make_unique<OptionGenerator<T>>());
 }
 
+
+/// Generate a random OptionEnum.
+template<OptionEnum T>
+T GenerateRandomOption(int seed)
+{
+   std::mt19937 gen(seed);
+   std::uniform_int_distribution<int> int_dist(0, static_cast<int>(T::Size)-1);
+   return static_cast<T>(int_dist(gen));
+}
+
 #ifdef JABBER_WITH_APP
 
 /**
- * @brief Generate (largely) randomized source params type.
+ * @brief Generate completely randomized input xy params type. Parameters that
+ * vary should be manually updated for comprehensive testing.
  */
-template<jabber_app::SourceOption s, typename... SubOptions>
-jabber_app::SourceParams<s> GenerateRandomSource(int seed, SubOptions... opts);
+jabber_app::InputXYParamsVariant GenerateRandomInputXY(
+                                    jabber_app::InputXYOption f, int seed);
 
-template<>
-jabber_app::SourceParams<jabber_app::SourceOption::SingleWave>
-GenerateRandomSource<jabber_app::SourceOption::SingleWave>(int seed,
-                                                            char speed);
+/**
+ * @brief Generate completely randomized function params type. Parameters that
+ * vary should be manually updated for comprehensive testing.
+ */
+jabber_app::FunctionParamsVariant GenerateRandomFunction(
+                                    jabber_app::FunctionOption f, int seed);
 
-template<>
-jabber_app::SourceParams<jabber_app::SourceOption::WaveSpectrum>
-GenerateRandomSource<jabber_app::SourceOption::WaveSpectrum>(int seed);
+/**
+ * @brief Generate completely randomized disc. method params type. Parameters that
+ * vary should be manually updated for comprehensive testing.
+ */
+jabber_app::DiscMethodParamsVariant GenerateRandomDiscMethod(
+                                    jabber_app::DiscMethodOption d, int seed);
 
-template<>
-jabber_app::SourceParams<jabber_app::SourceOption::DigitalPSD>
-GenerateRandomSource<jabber_app::SourceOption::DigitalPSD>(int seed,
-                       jabber_app::PSDInputOption input_method,
-                       jabber_app::InterpolationOption interp_method,
-                       jabber::Interval::Method int_method,
-                       jabber_app::DiscMethodOption disc_method,
-                       jabber_app::DirectionOption dir_method,
-                       char speed);
+/**
+ * @brief Generate completely randomized direction params type. Parameters that
+ * vary should be manually updated for comprehensive testing.
+ */
+jabber_app::DirectionParamsVariant GenerateRandomDirection(
+                                    jabber_app::DirectionOption d, int seed);
+
+/**
+ * @brief Generate completely randomized source params type. Parameters that
+ * vary should be manually updated for comprehensive testing.
+ */
+jabber_app::SourceParamsVariant GenerateRandomSource(
+                                    jabber_app::SourceOption s, int seed);
+
 
 #endif // JABBER_WITH_APP
 
