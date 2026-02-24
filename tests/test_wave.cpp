@@ -5,11 +5,13 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <catch2/matchers/catch_matchers_vector.hpp>
+#include <catch2/generators/catch_generators_all.hpp>
 
 #include <cmath>
 
 using namespace jabber;
 using namespace Catch::Matchers;
+using namespace Catch::Generators;
 
 namespace jabber_test
 {
@@ -19,20 +21,18 @@ TEST_CASE("Read + write Waves", "[Wave]")
    constexpr std::size_t kNumWaves = 100;
    constexpr int kDim = 3;
 
-   int seed = 0;
-
    // Create set of waves
    std::array<Wave, kNumWaves> waves;
    for (std::size_t i = 0; i < kNumWaves; i++)
    {
-      waves[i].amplitude = GenerateRandomReal(seed++, 0.0, 10.0);
-      waves[i].frequency = GenerateRandomReal(seed++, 1e3, 500e3);
-      waves[i].phase = GenerateRandomReal(seed++, 0.0, 2*M_PI);
-      waves[i].speed = GenerateRandomInt(seed++, 0, 1) ? 'S' : 'F';
+      waves[i].amplitude = GENERATE(take(1, random(0.0, 10.0)));
+      waves[i].frequency = GENERATE(take(1, random(1e3, 500e3)));
+      waves[i].phase = GENERATE(take(1, random(0.0, 2*M_PI)));
+      waves[i].speed = GENERATE(take(1, random(0, 1))) ? 'S' : 'F';
       waves[i].k_hat.resize(kDim);
       for (int d = 0; d < kDim; d++)
       {
-         waves[i].k_hat[d] = GenerateRandomReal(seed++, 0.0, 1.0);
+         waves[i].k_hat[d] = GENERATE(take(1, random(0.0, 1.0)));
       }
    }
 
