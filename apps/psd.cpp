@@ -222,10 +222,10 @@ int main(int argc, char *argv[])
       // Include source PSD if provided
       if (result.count("input-psd") > 0)
       {
-         PSDInputParams<PSDInputOption::FromCSV> input;
+         OptionParams<InputXY::FromCSV> input;
          input.file = result["input-psd"].as<std::string>();
          std::vector<double> in_freqs, in_psd;
-         PSDInputVisitor psd_in(in_freqs, in_psd);
+         OptionVisitor<InputXY> psd_in(in_freqs, in_psd);
          psd_in(input);
          for (std::size_t i = 0; i < in_freqs.size(); i++)
          {

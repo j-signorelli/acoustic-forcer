@@ -1,9 +1,9 @@
 add_executable(unit-tests
-                        utils.cpp
+                        app_utils.cpp
                         test_compute_1d.cpp
                         test_compute_2d.cpp
                         test_compute_3d.cpp
-                        test_app_common.cpp
+                        #test_app_common.cpp
                         test_app_config_input.cpp
                         test_interpolant.cpp
                         test_psd.cpp

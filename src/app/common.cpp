@@ -46,22 +46,21 @@ void Normalize(std::span<const double> vec, std::span<double> norm_vec)
    }
 }
 
-
-void InputXYVisitor::operator()
-   (const InputXYParams<InputXYOption::Here> &ip)
+void OptionVisitor<InputXY>::operator()
+   (const OptionParams<InputXY::Here> &op)
 {
-   x = ip.x;
-   y = ip.y;
+   x = op.x;
+   y = op.y;
 }
 
-void InputXYVisitor::operator()
-   (const InputXYParams<InputXYOption::FromCSV> &ip)
+void OptionVisitor<InputXY>::operator()
+   (const OptionParams<InputXY::FromCSV> &op)
 {
-   std::ifstream is(ip.file);
+   std::ifstream is(op.file);
    if (!is.is_open())
    {
       throw std::invalid_argument(std::format("Cannot find XY-data CSV file "
-                                              "'{}'.", ip.file));
+                                              "'{}'.", op.file));
    }
    for (std::string line; std::getline(is, line);)
    {
@@ -76,46 +75,50 @@ void InputXYVisitor::operator()
    }
 }
 
-template<typename T>
-void FunctionVisitor<T>::operator()
-   (const FunctionParams<FunctionOption::PiecewiseLinear> &fp)
+void OptionVisitor<FunctionType>::operator()
+   (const OptionParams<FunctionType::PiecewiseLinear> &op)
 {
    std::vector<double> x, y;
-   std::visit(InputXYVisitor{x,y}, fp.input_xy);
+   std::visit(OptionVisitor<InputXY>{x,y}, op.input_xy);
 
-   if constexpr (std::is_same_v<T, Function>)
+   std::visit(
+   [&]<typename T>(std::unique_ptr<T> *T_ptr_ptr)
    {
-      T_ptr = std::make_unique<PWLinear>(x,y);
+      if constexpr (std::same_as<T, Function>)
+      {
+         *T_ptr_ptr = std::make_unique<PWLinear>(x,y);
+      }
+      else
+      {
+         *T_ptr_ptr = std::make_unique<PWLinearPSD>(x,y);
+      }
    }
-   else
-   {
-      T_ptr = std::make_unique<PWLinearPSD>(x,y);
-   }
+   , T_ptr_ptr_var);
 }
 
-template<typename T>
-void FunctionVisitor<T>::operator()
-   (const FunctionParams<FunctionOption::PiecewiseLogLog> &fp)
+void OptionVisitor<FunctionType>::operator()
+   (const OptionParams<FunctionType::PiecewiseLogLog> &op)
 {
    std::vector<double> x, y;
-   std::visit(InputXYVisitor{x,y}, fp.input_xy);
+   std::visit(OptionVisitor<InputXY>{x,y}, op.input_xy);
 
-   if constexpr (std::is_same_v<T, Function>)
+   std::visit(
+   [&]<typename T>(std::unique_ptr<T> *T_ptr_ptr)
    {
-      T_ptr = std::make_unique<PWLogLog>(x,y);
+      if constexpr (std::same_as<T, Function>)
+      {
+         *T_ptr_ptr = std::make_unique<PWLogLog>(x,y);
+      }
+      else
+      {
+         *T_ptr_ptr = std::make_unique<PWLogLogPSD>(x,y);
+      }
    }
-   else
-   {
-      T_ptr = std::make_unique<PWLogLogPSD>(x,y);
-   }
+   , T_ptr_ptr_var);
 }
 
-// Explicitly initialize for Function and BasePSD.
-template class FunctionVisitor<Function>;
-template class FunctionVisitor<BasePSD>;
-
-void DiscMethodVisitor::operator()
-   (const DiscMethodParams<DiscMethodOption::Uniform> &dp)
+void OptionVisitor<DiscMethod>::operator()
+   (const OptionParams<DiscMethod::Uniform> &op)
 {
    const double df = (max_freq - min_freq)/(freqs.size()-1);
    for (std::size_t i = 0; i < freqs.size(); i++)
@@ -124,8 +127,8 @@ void DiscMethodVisitor::operator()
    }
 }
 
-void DiscMethodVisitor::operator()
-   (const DiscMethodParams<DiscMethodOption::UniformLog> &dp)
+void OptionVisitor<DiscMethod>::operator()
+   (const OptionParams<DiscMethod::UniformLog> &op)
 {
    const double log_df = std::log10(max_freq/min_freq)/(freqs.size()-1);
    const double log_min_freq = std::log10(min_freq);
@@ -135,10 +138,10 @@ void DiscMethodVisitor::operator()
    }
 }
 
-void DiscMethodVisitor::operator()
-   (const DiscMethodParams<DiscMethodOption::Random> &dp)
+void OptionVisitor<DiscMethod>::operator()
+   (const OptionParams<DiscMethod::Random> &op)
 {
-   std::mt19937 gen(dp.seed);
+   std::mt19937 gen(op.seed);
    std::uniform_real_distribution<double> real_dist(min_freq, max_freq);
    for (std::size_t i = 0; i < freqs.size(); i++)
    {
@@ -146,10 +149,10 @@ void DiscMethodVisitor::operator()
    }
 }
 
-void DiscMethodVisitor::operator()
-   (const DiscMethodParams<DiscMethodOption::RandomLog> &dp)
+void OptionVisitor<DiscMethod>::operator()
+   (const OptionParams<DiscMethod::RandomLog> &op)
 {
-   std::mt19937 gen(dp.seed);
+   std::mt19937 gen(op.seed);
    std::uniform_real_distribution<double> real_dist(std::log10(min_freq),
                                                       std::log10(max_freq));
    for (std::size_t i = 0; i < freqs.size(); i++)
@@ -158,22 +161,22 @@ void DiscMethodVisitor::operator()
    }
 }
 
-void DirectionVisitor::operator()
-   (const DirectionParams<DirectionOption::Constant> &dp)
+void OptionVisitor<Direction>::operator()
+   (const OptionParams<Direction::Constant> &op)
 {
    for (std::size_t i = 0; i < k_hats.size(); i++)
    {
-      k_hats[i] = dp.direction;
+      k_hats[i] = op.direction;
    }
 }
 
-void DirectionVisitor::operator()
-   (const DirectionParams<DirectionOption::RandomXYAngle> &dp)
+void OptionVisitor<Direction>::operator()
+   (const OptionParams<Direction::RandomXYAngle> &op)
 {
-   std::mt19937 dir_gen(dp.seed);
+   std::mt19937 dir_gen(op.seed);
    std::uniform_real_distribution<double> dir_dist(
-                                    dp.min_angle*M_PI/180.0,
-                                    dp.max_angle*M_PI/180.0);
+                                    op.min_angle*M_PI/180.0,
+                                    op.max_angle*M_PI/180.0);
    for (std::size_t i = 0; i < k_hats.size(); i++)
    {
       k_hats[i].resize(3, 0.0);
@@ -183,45 +186,46 @@ void DirectionVisitor::operator()
    }
 }
 
-void SourceVisitor::operator()
-   (const SourceParams<SourceOption::SingleWave> &sp)
+void OptionVisitor<Source>::operator()
+   (const OptionParams<Source::SingleWave> &op)
 {
-   std::vector<double> k_hat(sp.direction.size(), 0.0);
-   Normalize(sp.direction, k_hat);
-   waves.emplace_back(sp.amp, sp.freq, sp.phase*M_PI/180.0, sp.speed, k_hat);
+   std::vector<double> k_hat(op.direction.size(), 0.0);
+   Normalize(op.direction, k_hat);
+   waves.emplace_back(op.amp, op.freq, op.phase*M_PI/180.0, op.speed, k_hat);
 }
 
-void SourceVisitor::operator()
-   (const SourceParams<SourceOption::WaveSpectrum> &sp)
+void OptionVisitor<Source>::operator()
+   (const OptionParams<Source::WaveSpectrum> &op)
 {
-   for (int i = 0; i < sp.amps.size(); i++)
+   for (int i = 0; i < op.amps.size(); i++)
    {
-      std::vector<double> k_hat(sp.directions[i].size(), 0.0);
-      Normalize(sp.directions[i], k_hat);
-      waves.emplace_back(sp.amps[i], sp.freqs[i], sp.phases[i]*M_PI/180.0, 
-                           sp.speeds[i], k_hat);
+      std::vector<double> k_hat(op.directions[i].size(), 0.0);
+      Normalize(op.directions[i], k_hat);
+      waves.emplace_back(op.amps[i], op.freqs[i], op.phases[i]*M_PI/180.0, 
+                           op.speeds[i], k_hat);
    }
 }
 
-void SourceVisitor::operator()
-   (const SourceParams<SourceOption::PSD> &sp)
+void OptionVisitor<Source>::operator()
+   (const OptionParams<Source::PSD> &op)
 {
    // Process input PSD
    std::unique_ptr<BasePSD> psd;
-   std::visit(FunctionVisitor{psd}, sp.input_psd);
+   std::visit(OptionVisitor<FunctionType>{&psd}, op.input_psd);
 
    // Apply the discretization method for selecting center frequencies
-   std::vector<double> freqs(sp.num_waves);
-   const double min_freq = sp.min_disc_freq;
-   const double max_freq = sp.max_disc_freq;
-   std::visit(DiscMethodVisitor{min_freq,max_freq, freqs}, sp.disc_params);
+   std::vector<double> freqs(op.num_waves);
+   const double min_freq = op.min_disc_freq;
+   const double max_freq = op.max_disc_freq;
+   std::visit(OptionVisitor<DiscMethod>{min_freq,max_freq,freqs}, 
+               op.disc_params);
 
    // Sort the frequencies
    std::sort(freqs.begin(), freqs.end());
 
    // Compute the powers of each wave
    std::vector<double> powers(freqs.size());
-   psd->Discretize(freqs, sp.int_method, powers);
+   psd->Discretize(freqs, op.int_method, powers);
 
    // Apply transfer function to the powers
    // TODO.
@@ -230,12 +234,12 @@ void SourceVisitor::operator()
    std::vector<double> amps(freqs.size());
    for (std::size_t i = 0; i < amps.size(); i++)
    {
-      amps[i] = std::sqrt(2*powers[i])*sp.dim_fac;
+      amps[i] = std::sqrt(2*powers[i])*op.dim_fac;
    }
 
    // Compute the phases of each wave
    std::vector<double> phases(freqs.size());
-   std::mt19937 phase_gen(sp.phase_seed);
+   std::mt19937 phase_gen(op.phase_seed);
    std::uniform_real_distribution<double> phase_dist(0,2*M_PI);
    for (std::size_t i = 0; i < phases.size(); i++)
    {
@@ -244,20 +248,20 @@ void SourceVisitor::operator()
 
    // Compute the normalized directions of each wave
    std::vector<std::vector<double>> k_hats(freqs.size());
-   std::visit(DirectionVisitor{k_hats}, sp.dir_params);
+   std::visit(OptionVisitor<Direction>{k_hats}, op.dir_params);
 
    // Finally, assemble the individual Wave structs
-   for (std::size_t i = 0; i < sp.num_waves; i++)
+   for (std::size_t i = 0; i < op.num_waves; i++)
    {
-      const Wave w{amps[i], freqs[i], phases[i], sp.speed, k_hats[i]};
+      const Wave w{amps[i], freqs[i], phases[i], op.speed, k_hats[i]};
       waves.emplace_back(w);
    }
 }
 
-void SourceVisitor::operator()
-   (const SourceParams<SourceOption::WaveCSV> &sp)
+void OptionVisitor<Source>::operator()
+   (const OptionParams<Source::WaveCSV> &op)
 {
-   std::ifstream is(sp.file);
+   std::ifstream is(op.file);
    if (!is.is_open())
    {
       throw std::invalid_argument("Wave CSV file not found.");
@@ -272,16 +276,16 @@ AcousticField InitializeAcousticField(const ConfigInput &conf,
    // Get relevant input metadata
    const BaseFlowParams &base_conf = conf.BaseFlow();
    const CompParams &comp_conf = conf.Comp();
-   const std::vector<SourceParamsVariant> &sources_conf = conf.Sources();
+   const std::vector<OptionParamsVar<Source>> &sources_conf = conf.Sources();
 
    // Initialize acoustic field
    AcousticField field(dim, coords, base_conf.p, base_conf.rho,
                         base_conf.U, base_conf.gamma, comp_conf.kernel);
 
    // Assemble vector of wave structs based on input source
-   for (const SourceParamsVariant &source : sources_conf)
+   for (const OptionParamsVar<Source> &source : sources_conf)
    {
-      std::visit(SourceVisitor{field.Waves()}, source);
+      std::visit(OptionVisitor<Source>{field.Waves()}, source);
    }
 
    // Finalize the acoustic field initialization

@@ -52,9 +52,9 @@ int main(int argc, char *argv[])
    std::cout << LINE << std::endl;
 
    std::vector<Wave> waves;
-   for (const SourceParamsVariant &spv : conf.Sources())
+   for (const OptionParamsVar<Source> &spv : conf.Sources())
    {
-      std::visit(SourceVisitor{waves}, spv);
+      std::visit(OptionVisitor<Source>{waves}, spv);
    }
 
    std::vector<double> freqs(waves.size()), amps(waves.size());

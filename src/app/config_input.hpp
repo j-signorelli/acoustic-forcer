@@ -52,7 +52,7 @@ protected:
    BaseFlowParams base_flow_;
 
    /// Input source parameters.
-   std::vector<SourceParamsVariant> sources_;
+   std::vector<OptionParamsVar<Source>> sources_;
 
    /// Input computation parameters.
    CompParams comp_;
@@ -69,10 +69,10 @@ public:
    const BaseFlowParams& BaseFlow() const { return base_flow_; }
 
    /// Get reference to source parameters.
-   std::vector<SourceParamsVariant>& Sources() { return sources_; }
+   std::vector<OptionParamsVar<Source>>& Sources() { return sources_; }
 
    /// Get const reference to source parameters.
-   const std::vector<SourceParamsVariant>& Sources() const { return sources_; }
+   const std::vector<OptionParamsVar<Source>>& Sources() const { return sources_; }
 
    /// Get reference to computation parameters.
    CompParams& Comp() { return comp_; }
@@ -103,6 +103,38 @@ public:
 class TOMLConfigInput : public ConfigInput
 {
 public:
+
+   /**
+    * @brief Parse base flow parameters from a serialized TOML string of that
+    * section \p base_flow_serialized to \p bf_params.
+    */
+   static void ParseBaseFlow(std::string base_flow_serialized, 
+                              BaseFlowParams &bf_params);
+
+   /**
+    * @brief Parse computation parameters from a serialized TOML string of that
+    * section \p comp_serialized to \p c_params.
+    */
+   static void ParseComputation(std::string comp_serialized,
+                                 CompParams &c_params);
+
+   /**
+    * @brief Parse preCICE parameters from a serialized TOML string of that
+    * section \p precice_serialized to \p p_params.
+    */
+   static void ParsePrecice(std::string precice_serialized,
+                              PreciceParams &p_params);
+
+   /**
+    * @brief Parse option parameters from a serialized TOML string of the 
+    * option section \p option_serialized to \p params_var. 
+    * 
+    * @tparam E   \ref OptionEnum to parse for.
+    */
+   template<OptionEnum E>
+   static void ParseOption(std::string option_serialized, 
+                              OptionParamsVar<E> &params_var);
+
    /// Construct an uninitialized TOMLConfigInput object.
    TOMLConfigInput() {};
    /**
@@ -113,31 +145,6 @@ public:
     *                         to (verbose processing).
     */
    TOMLConfigInput(std::string config_file, std::ostream *out=nullptr);
-
-
-   /**
-    * @brief Parse base flow parameters from a serialized TOML string of that
-    * section.
-    */
-   void ParseBaseFlow(std::string base_flow_serialized);
-
-   /**
-    * @brief Parse source parameters from a serialized TOML string of that
-    * section, and append it to \ref sources_.
-    */
-   void ParseSource(std::string source_serialized);
-
-   /**
-    * @brief Parse computation parameters from a serialized TOML string of that
-    * section.
-    */
-   void ParseComputation(std::string comp_serialized);
-
-   /**
-    * @brief Parse preCICE parameters from a serialized TOML string of that
-    * section. This initializes \ref precice_.
-    */
-   void ParsePrecice(std::string precice_serialized);
 
 };
 

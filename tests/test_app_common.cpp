@@ -5,12 +5,14 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <catch2/matchers/catch_matchers_vector.hpp>
+#include <catch2/catch_template_test_macros.hpp>
 
 #include <jabber_app.hpp>
 
 #include <filesystem>
 #include <fstream>
 
+using namespace jabber;
 using namespace jabber_app;
 using namespace Catch::Matchers;
 
@@ -49,17 +51,18 @@ TEST_CASE("Normalize", "[App]")
 TEST_CASE("InputXYVisitor", "[App]")
 {
    constexpr int kSeed = 0;
-   const InputXYOption option = GENERATE(options<InputXYOption>());
-   const std::uint8_t idx = static_cast<std::uint8_t>(option);
+   const InputXYOption kOption = GENERATE(options<InputXYOption>());
+   const std::uint8_t kIdx = static_cast<std::uint8_t>(kOption);
 
    constexpr std::size_t kN = 20;
 
-   DYNAMIC_SECTION(InputXYNames[idx])
+   InputXYParamsVariant ipv = GenerateRandomInputXY(kOption, kSeed);
+
+   std::vector<double> x = GenerateRandomVec<kN>(kSeed, 10, 100e3);
+   std::vector<double> y = GenerateRandomVec<kN>(kSeed, 1e-9, 1e-12);
+
+   DYNAMIC_SECTION(InputXYNames[kIdx])
    {
-      InputXYParamsVariant ipv = GenerateRandomInputXY(option, kSeed);
-   
-      std::vector<double> x = GenerateRandomVec<kN>(kSeed, 10, 100e3);
-      std::vector<double> y = GenerateRandomVec<kN>(kSeed, 1e-9, 1e-12);
 
       // Pre-process
       std::visit(
@@ -105,6 +108,65 @@ TEST_CASE("InputXYVisitor", "[App]")
       }, ipv);
    }
 }
+
+// TEMPLATE_TEST_CASE("FunctionVisitor", "[App]", Function, BasePSD)
+// {
+//    constexpr int kSeed = 0;
+//    const FunctionOption option = GENERATE(options<FunctionOption>());
+//    const std::uint8_t idx = static_cast<std::uint8_t>(option);
+//    DYNAMIC_SECTION(FunctionNames[idx])
+//    {
+//       FunctionParamsVariant fpv = GenerateRandomFunction(option, kSeed);
+      
+//       // Initialize the ptr to test against.
+//       std::unique_ptr<TestType> T_ptr;
+//       std::visit(
+//       [&]<FunctionOption F>(const FunctionParams<F> &fp)
+//       {
+//          // Potential x,y vars to use depending on input
+//          std::vector<double> x, y;
+//          if constexpr (F == FunctionOption::PiecewiseLinear || 
+//                           F == FunctionOption::PiecewiseLogLog)
+//          {
+//             std::visit(InputXYVisitor{x,y}, fp.input_xy);
+//          }
+
+//          if constexpr (std::is_same_v<TestType, Function>)
+//          {
+//             if constexpr (F == FunctionOption::PiecewiseLinear)
+//             {
+//                T_ptr = std::make_unique<PWLinear>(x,y);
+//             }
+//             else if constexpr (F == FunctionOption::PiecewiseLogLog)
+//             {
+//                T_ptr = std::make_unique<PWLogLog>(x,y);
+//             }
+//          }
+//          else // Else must be BasePSD
+//          {
+//             if constexpr (F == FunctionOption::PiecewiseLinear)
+//             {
+//                T_ptr = std::make_unique<PWLinearPSD>(x,y);
+//             }
+//             else if constexpr (F == FunctionOption::PiecewiseLogLog)
+//             {
+//                T_ptr = std::make_unique<PWLogLogPSD>(x,y);
+//             }
+//          }
+
+//       }, fpv);
+
+
+//       // Apply the visit
+//       std::unique_ptr<TestType> T_ptr_test;
+//       std::visit(FunctionVisitor{T_ptr_test}, fpv);
+
+//       // Check if they are the same type
+
+
+
+//    }
+// }
 
 } // jabber_test
 

@@ -1,5 +1,3 @@
-#include "utils.hpp"
-
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <catch2/matchers/catch_matchers_vector.hpp>
@@ -75,8 +73,11 @@ TEST_CASE("ComputeInterval", "[PSD]")
    constexpr std::array<double, 3> kFreqSample={0.1e3, 10e3, 40e3};
 
    // Use generator to ensure that all source types are checked!;
-   const Interval::Method method = GENERATE(options<Interval::Method>());
-   const std::uint8_t m = static_cast<std::uint8_t>(method);
+   constexpr std::uint8_t kNumIntMethods = 
+                              static_cast<std::uint8_t>(Interval::Method::Size>);
+   const std::uint8_t method_idx = GENERATE(range(0,kNumIntMethods));
+   const Interval::Method method = static_cast<Interval::Method>(method_idx);
+
    DYNAMIC_SECTION("Interval Method " << m)
    {
       std::array<Interval, 3> exact;
