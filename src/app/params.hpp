@@ -25,16 +25,15 @@ template<typename T>
 concept OptionEnum = 
          std::is_enum_v<T> && 
          std::same_as<std::underlying_type_t<T>, std::uint8_t> &&
-         requires {T::Size; };
+         requires { T::Size; };
 
 /// Concept for OptionEnum enumerators.
 template<auto V>
 concept OptionEnumerator = OptionEnum<decltype(V)>;
 
-/// Define alias for an option name array type for readability.
-template<OptionEnum E>
-using OptionNameArray = std::array<std::string_view, 
-                                    static_cast<std::size_t>(E::Size)>;
+/// Define alias for an option array type for readability.
+template<typename T, OptionEnum E>
+using OptionArray = std::array<T,static_cast<std::size_t>(E::Size)>;
      
 /**
  * @brief Templated array variable for all option names.
@@ -45,7 +44,7 @@ using OptionNameArray = std::array<std::string_view,
  * @tparam E      A \ref OptionEnum.
  */
 template<OptionEnum E>
-constexpr OptionNameArray<E> OptionNames;
+constexpr OptionArray<std::string_view, E> OptionNames;
 
 /**
  * @brief Templated string variable for a single option name
@@ -61,26 +60,23 @@ constexpr std::string_view OptionName =
    return OptionNames<decltype(V)>[static_cast<std::uint8_t>(V)];
 }();
 
-
 /**
  * @brief Base templated type for a specific option parameters, 
- * associated with \ref OptionEnumerator \p V. This default-parameters
- * struct is empty.
+ * associated with \ref OptionEnumerator \p V.
  * 
  * @tparam V     A \ref OptionEnumerator.
  */
 template<auto V>
    requires OptionEnumerator<V>
-struct OptionParams {};
+struct OptionParams;
 
 /**
- * @brief Base templated type for variant of all option parameters. Note
+ * @brief A \c std::variant of all option parameters of \p E. Note
  * that there must be an explicitly-defined \ref OptionParams for each one,
- * otherwise this will fail.
+ * otherwise this may fail.
  * 
  * @details The type is defined using template-metaprogramming to return a
- * std::variant of correct types, and then a decltype is called on that. AI
- * was not used in the design of this.
+ * \c std::variant of correct types, and then a decltype is called on that.
  * 
  * @tparam E     An \ref OptionEnum.
  */
@@ -112,7 +108,7 @@ struct BaseFlowParams
 
 /// Strings associated with jabber::AcousticField::Kernel enumerators.
 template<>
-inline constexpr OptionNameArray<jabber::AcousticField::Kernel> 
+inline constexpr OptionArray<std::string_view, jabber::AcousticField::Kernel> 
    OptionNames<jabber::AcousticField::Kernel> 
 {
    "GridPoint",      // AcousticField::Kernel::GridPoint
@@ -167,7 +163,7 @@ enum class InputXY : std::uint8_t
 
 /// Strings associated with InputXY enumerators.
 template<>
-inline constexpr OptionNameArray<InputXY> OptionNames<InputXY>
+inline constexpr OptionArray<std::string_view, InputXY> OptionNames<InputXY>
 {
    "Here",       // InputXY::Here
    "FromCSV",    // InputXY::FromCSV
@@ -206,7 +202,8 @@ enum class FunctionType : std::uint8_t
 
 /// Strings associated with FunctionType enumerators.
 template<>
-inline constexpr OptionNameArray<FunctionType> OptionNames<FunctionType> 
+inline constexpr OptionArray<std::string_view, FunctionType> 
+   OptionNames<FunctionType> 
 {
    "PiecewiseLinear",    // FunctionType::PiecewiseLinear
    "PiecewiseLogLog",    // FunctionType::PiecewiseLogLog
@@ -227,10 +224,8 @@ struct OptionParams<FunctionType::PiecewiseLogLog>
    OptionParamsVar<InputXY> input_xy;
 };
 
-// Array indicating if FunctionType has associated/implemented BasePSD type.
-static constexpr std::array<bool, 
-                     static_cast<std::size_t>(FunctionType::Size)>
-FunctionTypeHasPSDType = 
+/// Array indicating if FunctionType has associated/implemented BasePSD type.
+static constexpr OptionArray<bool, FunctionType> FunctionTypeHasPSDType = 
 {
    true,    // FunctionType::PiecewiseLinear
    true,    // FunctionType::PiecewiseLogLog
@@ -240,11 +235,11 @@ FunctionTypeHasPSDType =
 
 /// Strings associated with jabber::Interval::Method enumerators.
 template<>
-inline constexpr OptionNameArray<jabber::Interval::Method> 
+inline constexpr OptionArray<std::string_view, jabber::Interval::Method> 
    OptionNames<jabber::Interval::Method>
 {
    "Midpoint",      // Interval::Method::Midpoint
-   "MidpointLog",    // Interval::Method::MidpointLog10
+   "MidpointLog",   // Interval::Method::MidpointLog10
 };
 
 // ----------------------------------------------------------------------------
@@ -279,12 +274,26 @@ enum class DiscMethod : std::uint8_t
 
 /// Strings associated with DiscMethod enumerators.
 template<>
-inline constexpr OptionNameArray<DiscMethod> OptionNames<DiscMethod>
+inline constexpr OptionArray<std::string_view, DiscMethod> OptionNames<DiscMethod>
 {
    "Uniform",      // DiscMethod::Uniform
    "UniformLog",   // DiscMethod::UniformLog
    "Random",       // DiscMethod::Random
    "RandomLog",    // DiscMethod::RandomLog
+};
+
+/// Parameters for discretization method DiscMethod::Uniform.
+template<>
+struct OptionParams<DiscMethod::Uniform>
+{
+   // No parameters.
+};
+
+/// Parameters for discretization method DiscMethod::UniformLog.
+template<>
+struct OptionParams<DiscMethod::UniformLog>
+{
+   // No parameters.
 };
 
 /// Parameters for discretization method DiscMethod::Random.
@@ -308,7 +317,6 @@ struct OptionParams<DiscMethod::RandomLog>
 /// Wave direction options.
 enum class Direction : std::uint8_t
 {
-
    /// Constant direction.
    Constant,
 
@@ -321,7 +329,7 @@ enum class Direction : std::uint8_t
 
 /// Strings associated with Direction enumerators.
 template<>
-inline constexpr OptionNameArray<Direction> OptionNames<Direction>
+inline constexpr OptionArray<std::string_view, Direction> OptionNames<Direction>
 {
    "Constant",         // Direction::Constant
    "RandomXYAngle",    // Direction::RandomXYAngle
@@ -380,13 +388,25 @@ enum class TransferFunction : std::uint8_t
 
 /// Strings associated with TransferFunction enumerators.
 template<>
-inline constexpr OptionNameArray<TransferFunction> 
+inline constexpr OptionArray<std::string_view, TransferFunction> 
    OptionNames<TransferFunction>
 {
    "None",               // TransferFunction::None
    "LowFrequencyLimit",  // TransferFunction::LowFrequencyLimit
    "Input",              // TransferFunction::Input
    "FlowNormalFit"       // TransferFunction::FlowNormalFit
+};
+
+template<>
+struct OptionParams<TransferFunction::None>
+{
+   // No parameters.
+};
+
+template<>
+struct OptionParams<TransferFunction::LowFrequencyLimit>
+{
+   // No parameters.
 };
 
 template<>
@@ -425,7 +445,7 @@ enum class Source : std::uint8_t
 
 /// Strings associated with Source enumerators.
 template<>
-inline constexpr OptionNameArray<Source> OptionNames<Source>
+inline constexpr OptionArray<std::string_view, Source> OptionNames<Source>
 {
    "SingleWave",      // Source::SingleWave
    "WaveSpectrum",    // Source::WaveSpectrum

@@ -151,16 +151,6 @@ void ConfigInput::PrintPreciceParams(std::ostream &out) const
    }
 }
 
-void TOMLConfigInput::ParseBaseFlow(std::string base_flow_serialized, 
-                                    BaseFlowParams &bf_params)
-{
-   toml::value in_base_flow = toml::parse_str(base_flow_serialized);
-
-   bf_params.rho = in_base_flow.at("rho").as_floating();
-   bf_params.p = in_base_flow.at("p").as_floating();
-   bf_params.U = toml::get<std::vector<double>>(in_base_flow.at("U"));
-   bf_params.gamma = in_base_flow.at("gamma").as_floating();
-}
 
 /// Internal helper function here for getting enumerator from string name.
 template<OptionEnum E>
@@ -178,6 +168,37 @@ void GetEnumerator(const std::string_view input_str, E &val)
    {
       val = static_cast<E>(std::distance(OptionNames<E>.begin(), it));
    }
+}
+
+void TOMLConfigInput::ParseBaseFlow(std::string base_flow_serialized, 
+                                    BaseFlowParams &bf_params)
+{
+   toml::value in_base_flow = toml::parse_str(base_flow_serialized);
+
+   bf_params.rho = in_base_flow.at("rho").as_floating();
+   bf_params.p = in_base_flow.at("p").as_floating();
+   bf_params.U = toml::get<std::vector<double>>(in_base_flow.at("U"));
+   bf_params.gamma = in_base_flow.at("gamma").as_floating();
+}
+
+void TOMLConfigInput::ParseComputation(std::string comp_serialized,
+                                       CompParams &c_params)
+{
+   toml::value in_comp = toml::parse_str(comp_serialized);
+   c_params.t0 = in_comp.at("t0").as_floating();
+   GetEnumerator(in_comp.at("Kernel").as_string(), c_params.kernel);
+}
+
+void TOMLConfigInput::ParsePrecice(std::string precice_serialized, 
+                                    PreciceParams &p_params)
+{
+   toml::value in_precice = toml::parse_str(precice_serialized);
+   p_params.participant_name = in_precice.at("ParticipantName")
+                                             .as_string();
+   p_params.config_file = in_precice.at("ConfigFile").as_string();
+   p_params.fluid_mesh_name = in_precice.at("FluidMeshName").as_string();
+   p_params.mesh_access_region = 
+         toml::get<std::vector<double>>(in_precice.at("MeshAccessRegion"));
 }
 
 template<>
@@ -354,26 +375,6 @@ void TOMLConfigInput::ParseOption<Source>
       meta.file = in_source.at("File").as_string();
       params_var = meta;
    }
-}
-
-void TOMLConfigInput::ParseComputation(std::string comp_serialized,
-                                       CompParams &c_params)
-{
-   toml::value in_comp = toml::parse_str(comp_serialized);
-   c_params.t0 = in_comp.at("t0").as_floating();
-   GetEnumerator(in_comp.at("Kernel").as_string(), c_params.kernel);
-}
-
-void TOMLConfigInput::ParsePrecice(std::string precice_serialized, 
-                                    PreciceParams &p_params)
-{
-   toml::value in_precice = toml::parse_str(precice_serialized);
-   p_params.participant_name = in_precice.at("ParticipantName")
-                                             .as_string();
-   p_params.config_file = in_precice.at("ConfigFile").as_string();
-   p_params.fluid_mesh_name = in_precice.at("FluidMeshName").as_string();
-   p_params.mesh_access_region = 
-         toml::get<std::vector<double>>(in_precice.at("MeshAccessRegion"));
 }
 
 TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)

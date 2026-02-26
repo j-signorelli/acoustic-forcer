@@ -5,7 +5,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_vector.hpp>
 #include <catch2/generators/catch_generators.hpp>
-#include <catch2/generators/catch_generators_range.hpp>
+#include <catch2/catch_template_test_macros.hpp>
 
 #include <jabber_app.hpp>
 
@@ -21,6 +21,28 @@ struct overloads : Ts... { using Ts::operator()...; };
 
 namespace jabber_test
 {
+
+/// Helper for getting a vector as a string for TOML config files.
+template<typename T>
+std::string TOMLWriteVector(const std::vector<T> &vec)
+{
+   std::string vec_str;
+   vec_str += "[";
+   for (int w = 0; w < vec.size(); w++)
+   {
+      if constexpr (std::same_as<T, char>)
+      {
+         vec_str += std::format("'{}'", vec[w]);
+      }
+      else
+      {
+         vec_str += std::format("{}", vec[w]);
+      }
+      vec_str += (w+1==vec.size() ? "]" : ",");
+   }
+   return vec_str;
+}
+
 
 TEST_CASE("TOMLConfigInput::ParseBaseFlow", "[App][TOMLConfigInput]")
 {
@@ -45,45 +67,197 @@ TEST_CASE("TOMLConfigInput::ParseBaseFlow", "[App][TOMLConfigInput]")
    CHECK(bf_params.gamma == kGamma);
 }
 
-TEST_CASE("TOMLConfigInput::ParseInputXY", "[App][TOMLConfigInput]")
+TEST_CASE("TOMLConfigInput::ParseComputation", "[App][TOMLConfigInput]")
 {
-   const InputXYOption kOption = GENERATE(options<InputXYOption>());
-   const std::uint8_t kIdx = static_cast<std::uint8_t>(kOption);
-   const std::string_view kName = InputXYNames[kIdx];
+   int seed = 0;
 
-   DYNAMIC_SECTION(kName)
-   {
-      InputXYParamsVariant ipv = 
-                  GENERATE_REF(take(1,random_params<InputXYOption>(kOption)));
+   const double kT0 = GENERATE(take(1,random(0.0,100.0)));
 
-      std::string in_str = std::visit(TOMLInputXYWriterVisitor{}, ipv);
+   const AcousticField::Kernel kKernel = 
+                                 GENERATE(options<AcousticField::Kernel>());
+   const std::string_view kKernelName = 
+      OptionNames<AcousticField::Kernel>[static_cast<std::size_t>(kKernel)];
 
-      InputXYParamsVariant ipv_parsed;
-      TOMLConfigInput::ParseInputXY(in_str, ipv_parsed);
+   const std::string comp_str = 
+      std::format(R"(
+                     t0={}
+                     Kernel='{}'
+                  )", kT0, 
+                  kKernelName);
 
-      std::visit(TestInputXYVisitor{ipv}, ipv_parsed);
-      
-   }
+   TOMLConfigInput config;
+   config.ParseComputation(comp_str);
+
+   CHECK(config.Comp().t0 == kT0);
+   CHECK(config.Comp().kernel == kKernel);
 }
 
-TEST_CASE("TOMLConfigInput::ParseFunction", "[App][TOMLConfigInput]")
+TEST_CASE("TOMLConfigInput::ParsePrecice", "[App][TOMLConfigInput]")
 {
-   const FunctionOption kOption = GENERATE(options<FunctionOption>());
-   const std::uint8_t kIdx = static_cast<std::uint8_t>(kOption);
-   const std::string_view kName = FunctionNames[kIdx];
+   constexpr std::string_view kPartName = "TestParticipant";
+   constexpr std::string_view kConfigFile = "TestConfig.xml";
+   constexpr std::string_view kFluidMesh = "TestFluidMesh";
+   const std::vector<double> kMeshRegion = {-0.01, 1.01, -1.01, 1.01};
 
-   DYNAMIC_SECTION(kName)
+   const std::string precice_str = 
+      std::format(R"(
+                     ParticipantName="{}"
+                     ConfigFile="{}"
+                     MeshAccessRegion=[{},{},{},{}]
+                     FluidMeshName="{}"
+                  )", kPartName, kConfigFile, kMeshRegion[0], kMeshRegion[1],
+                     kMeshRegion[2], kMeshRegion[3], kFluidMesh);
+   
+   TOMLConfigInput config;
+   config.ParsePrecice(precice_str);
+   CHECK(config.Precice()->participant_name == kPartName);
+   CHECK(config.Precice()->config_file == kConfigFile);
+   CHECK(config.Precice()->fluid_mesh_name == kFluidMesh);
+   CHECK_THAT(config.Precice()->mesh_access_region, Equals(kMeshRegion));
+}
+
+// ----------------------------------------------------------------------------
+// Now all options parsing:
+
+/// Base TOML writer visitor for options.
+template<OptionEnum E>
+struct TOMLWriterVisitor;
+
+/// InputXY TOML writer visitor.
+template<>
+struct TOMLWriterVisitor<InputXY>
+{
+   template<InputXY V>
+   std::string operator() (const OptionParams<V> &op)
    {
-      FunctionParamsVariant fpv = 
-                  GENERATE_REF(take(1,random_params<FunctionOption>(kOption)));
+      std::string out_str = std::format("Type=\"{}\",\n", 
+                                          OptionName<V>);
 
-      std::string in_str = "{" + std::visit(TOMLFunctionWriterVisitor{}, fpv) + "}";
+      if constexpr (V == InputXY::Here)
+      {
+         out_str += std::format( "X={}\n"
+                                 "Y={}\n",
+                                 TOMLWriteVector(op.x), 
+                                 TOMLWriteVector(op.y));
+      }
+      else if constexpr (V == InputXY::FromCSV)
+      {
+         out_str += std::format("File=\"{}\"\n",op.file);
+      }
+      else
+      {
+         static_assert(false, "Missing params implementation.");
+      }
+      return out_str;
+   }
+};
 
-      FunctionParamsVariant fpv_parsed;
-      TOMLConfigInput::ParseFunction(in_str, fpv_parsed);
+/// FunctionType TOML writer visitor.
+template<>
+struct TOMLWriterVisitor<FunctionType>
+{
+   template<FunctionType V>
+   std::string operator() (const OptionParams<V> &fp)
+   {
+      std::string out_str = std::format("Type=\"{}\"\n", 
+                                          OptionName<V>);
 
-      std::visit(TestFunctionVisitor{fpv}, fpv_parsed);
-   }     
+      if constexpr (V == FunctionOption::PiecewiseLinear ||
+                     V == FunctionOption::PiecewiseLogLog)
+      {
+         out_str += std::format( "Data={{{}}}\n",
+                                 std::visit(TOMLInputXYWriterVisitor{}, 
+                                             fp.input_xy));
+      }
+      else
+      {
+         static_assert(false, "Missing params implementation.");
+      }
+
+      return out_str;
+   }
+   
+};
+
+/// Get the option, given the variant.
+template<OptionEnum E>
+constexpr E GetOption(const OptionParams<E> &var)
+{
+   // Get the type
+   return std::visit(
+            [&]<E V>(const Params<V> &val)
+            {
+               return V;
+            }, var);
+}
+
+/// Base option test visitor.
+template<OptionEnum E>
+struct TestVisitor;
+
+/// InputXY test visitor.
+template<>
+struct TestVisitor<InputXY>
+{
+   const OptionParamsVar<InputXY> &opv;
+
+   template<InputXY V>
+   void operator() (const OptionParams<V> &op_test) const
+   {
+      REQUIRE(GetOption(opv) == V);
+      const OptionParams<V> &op = 
+         std::get<OptionParams<V>>(opv);
+
+      if constexpr (V == InputXY::Here)
+      {
+         CHECK_THAT(op.x, Catch::Matchers::Equals(op_test.x));
+         CHECK_THAT(op.y, Catch::Matchers::Equals(op_test.y));
+      }
+      else if constexpr (V == InputXY::FromCSV)
+      {
+         CHECK(op.file == op_test.file);
+      }
+      else
+      {
+         static_assert(false, "Missing params implementation.");
+      }
+   }
+};
+
+/// FunctionType test visitor.
+template<>
+struct TestVisitor<FunctionType>
+{
+   const OptionParamsVar<FunctionType> &opv;
+
+   template<FunctionType V>
+   void operator() (const OptionParams<V> &op_test) const
+   {
+      REQUIRE(GetOption(opv) == V);
+      const OptionParams<V> &op = 
+         std::get<OptionParams<V>>(opv);
+
+      if constexpr (V == FunctionType::PiecewiseLinear || 
+                     V == FunctionType::PiecewiseLogLog)
+      {
+         std::visit(TestVisitor<InputXY>{op.input_xy}, op_test.input_xy);
+      }
+   }
+};
+
+TEMPLATE_TEST_CASE("TOMLConfigInput::ParseOption", "[App][TOMLConfigInput]",
+   InputXY, FunctionType)
+{  
+   const TestType kOption = GENERATE(options<TestType>());
+   OptionParamsVar<TestType> opv = 
+      GENERATE_REF(take(1, random_params(kOption)));
+
+   std::string in_str = std::visit(TOMLWriterVisitor<TestType>{}, opv);
+
+   OptionParamsVar<TestType> opv_parsed;
+   TOMLConfigInput::ParseOption(in_str, opv_parsed);
+
+   std::visit(TestVisitor<TestType>{opv}, opv_parsed);
 }
 
 // TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
@@ -398,53 +572,6 @@ TEST_CASE("TOMLConfigInput::ParseFunction", "[App][TOMLConfigInput]")
 //       }
 //       }, sp_var);
 //    }
-// }
-
-// TEST_CASE("TOMLConfigInput::ParseComputation", "[App][TOMLConfigInput]")
-// {
-//    int seed = 0;
-
-//    const double kT0 = GenerateRandomReal(seed++,0.0,100.0);
-
-//    const AcousticField::Kernel kKernel = 
-//                                  GENERATE(options<AcousticField::Kernel>());
-//    const std::size_t kernel_i = static_cast<std::size_t>(kKernel);
-
-//    const std::string comp_str = 
-//       std::format(R"(
-//                      t0={}
-//                      Kernel='{}'
-//                   )", kT0, KernelNames[kernel_i]);
-
-//    TOMLConfigInput config;
-//    config.ParseComputation(comp_str);
-
-//    CHECK(config.Comp().t0 == kT0);
-//    CHECK(config.Comp().kernel == kKernel);
-// }
-
-// TEST_CASE("TOMLConfigInput::ParsePrecice", "[App][TOMLConfigInput]")
-// {
-//    constexpr std::string_view kPartName = "TestParticipant";
-//    constexpr std::string_view kConfigFile = "TestConfig.xml";
-//    constexpr std::string_view kFluidMesh = "TestFluidMesh";
-//    const std::vector<double> kMeshRegion = {-0.01, 1.01, -1.01, 1.01};
-
-//    const std::string precice_str = 
-//       std::format(R"(
-//                      ParticipantName="{}"
-//                      ConfigFile="{}"
-//                      MeshAccessRegion=[{},{},{},{}]
-//                      FluidMeshName="{}"
-//                   )", kPartName, kConfigFile, kMeshRegion[0], kMeshRegion[1],
-//                      kMeshRegion[2], kMeshRegion[3], kFluidMesh);
-   
-//    TOMLConfigInput config;
-//    config.ParsePrecice(precice_str);
-//    CHECK(config.Precice()->participant_name == kPartName);
-//    CHECK(config.Precice()->config_file == kConfigFile);
-//    CHECK(config.Precice()->fluid_mesh_name == kFluidMesh);
-//    CHECK_THAT(config.Precice()->mesh_access_region, Equals(kMeshRegion));
 // }
 
 } // jabber_test
