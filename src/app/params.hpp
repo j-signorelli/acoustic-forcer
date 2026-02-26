@@ -31,7 +31,7 @@ struct BaseFlowParams
 
 // ----------------------------------------------------------------------------
 /// Input XY data options.
-enum class InputXY : std::uint8_t
+enum class InputXYOption : std::uint8_t
 {
    /// Provide x,y data directly in config file.
    Here,
@@ -45,18 +45,18 @@ enum class InputXY : std::uint8_t
 
 /// Strings associated with InputXY enumerators.
 static constexpr std::array<std::string_view, 
-                     static_cast<std::size_t>(InputXY::Size)>
-InputXYNames = 
+                     static_cast<std::size_t>(InputXYOption::Size)>
+kInputXYNames = 
 {
    "Here",       // InputXY::Here
    "FromCSV",    // InputXY::FromCSV
 };
 
-template<InputXY i>
+template<InputXYOption i>
 struct InputXYParams;
 
 template<>
-struct InputXYParams<InputXY::Here>
+struct InputXYParams<InputXYOption::Here>
 {
    /// Input x's.
    std::vector<double> x;
@@ -66,7 +66,7 @@ struct InputXYParams<InputXY::Here>
 };
 
 template<>
-struct InputXYParams<InputXY::FromCSV>
+struct InputXYParams<InputXYOption::FromCSV>
 {
    /// CSV file address. First column are x's, second are y's. No header.
    std::string file;
@@ -74,15 +74,15 @@ struct InputXYParams<InputXY::FromCSV>
 
 /// All input xy parameter options.
 using InputXYParamsVariant 
-   = std::variant<InputXYParams<InputXY::Here>,
-                  InputXYParams<InputXY::FromCSV>>;
+   = std::variant<InputXYParams<InputXYOption::Here>,
+                  InputXYParams<InputXYOption::FromCSV>>;
 static_assert(std::variant_size_v<InputXYParamsVariant> == 
-                    static_cast<std::size_t>(InputXY::Size),
+                    static_cast<std::size_t>(InputXYOption::Size),
              "Missing InputXYParams in InputXYParamsVariant.");
 
 // ----------------------------------------------------------------------------
 /// Input R->R function options.
-enum class FunctionType : std::uint8_t
+enum class FunctionOption : std::uint8_t
 {
    /// Piecewise linear fit.
    PiecewiseLinear,
@@ -94,28 +94,28 @@ enum class FunctionType : std::uint8_t
    Size
 };
 
-/// Strings associated with FunctionType enumerators.
+/// Strings associated with FunctionOption enumerators.
 static constexpr std::array<std::string_view, 
-                     static_cast<std::size_t>(FunctionType::Size)>
-FunctionNames = 
+                     static_cast<std::size_t>(FunctionOption::Size)>
+kFunctionNames = 
 {
-   "PiecewiseLinear",    // FunctionType::PiecewiseLinear
-   "PiecewiseLogLog",    // FunctionType::PiecewiseLogLog
+   "PiecewiseLinear",    // FunctionOption::PiecewiseLinear
+   "PiecewiseLogLog",    // FunctionOption::PiecewiseLogLog
 };
 
-template<FunctionType d>
-struct FunctionTypeParams;
+template<FunctionOption d>
+struct FunctionParams;
 
-/// Parameters for FunctionType::PiecewiseLinear.
+/// Parameters for FunctionOption::PiecewiseLinear.
 template<>
-struct FunctionTypeParams<FunctionType::PiecewiseLinear>
+struct FunctionParams<FunctionOption::PiecewiseLinear>
 {
    /// Input x,y data params.
    InputXYParamsVariant input_xy;
 };
 
 template<>
-struct FunctionTypeParams<FunctionType::PiecewiseLogLog>
+struct FunctionParams<FunctionOption::PiecewiseLogLog>
 {
    /// Input x,y data params.
    InputXYParamsVariant input_xy;
@@ -123,26 +123,26 @@ struct FunctionTypeParams<FunctionType::PiecewiseLogLog>
 
 /// All function parameter options.
 using FunctionParamsVariant 
-   = std::variant<FunctionTypeParams<FunctionType::PiecewiseLinear>,
-                  FunctionTypeParams<FunctionType::PiecewiseLogLog>>;
+   = std::variant<FunctionParams<FunctionOption::PiecewiseLinear>,
+                  FunctionParams<FunctionOption::PiecewiseLogLog>>;
 static_assert(std::variant_size_v<FunctionParamsVariant> == 
-                    static_cast<std::size_t>(FunctionType::Size),
-             "Missing FunctionTypeParams in FunctionParamsVariant.");
+                    static_cast<std::size_t>(FunctionOption::Size),
+             "Missing FunctionParams in FunctionParamsVariant.");
 
-// Array indicating if FunctionType has associated/implemented BasePSD type.
+// Array indicating if FunctionOption has associated/implemented BasePSD type.
 static constexpr std::array<bool, 
-                     static_cast<std::size_t>(FunctionType::Size)>
-FunctionHasPSDType = 
+                     static_cast<std::size_t>(FunctionOption::Size)>
+kFunctionHasPSDType = 
 {
-   true,    // FunctionType::PiecewiseLinear
-   true,    // FunctionType::PiecewiseLogLog
+   true,    // FunctionOption::PiecewiseLinear
+   true,    // FunctionOption::PiecewiseLogLog
 };
 
 // ----------------------------------------------------------------------------
 /// Strings associated with jabber::Interval::Method enumerators.
 static constexpr std::array<std::string_view, 
                      static_cast<std::size_t>(jabber::Interval::Method::Size)>
-IntervalNames = 
+kIntervalNames = 
 {
    "Midpoint",      // Interval::Method::Midpoint
    "MidpointLog",   // Interval::Method::MidpointLog10
@@ -154,7 +154,7 @@ IntervalNames =
  * function (frequency selection of continuous PSD).
  * 
  */
-enum class DiscMethod : std::uint8_t
+enum class DiscMethodOption : std::uint8_t
 {
    /**
     * @brief Uniformly sample across interval. **Harmonic interaction
@@ -180,32 +180,32 @@ enum class DiscMethod : std::uint8_t
 
 /// Strings associated with DiscMethod enumerators.
 static constexpr std::array<std::string_view, 
-                     static_cast<std::size_t>(DiscMethod::Size)>
-DiscMethodNames = 
+                     static_cast<std::size_t>(DiscMethodOption::Size)>
+kDiscMethodNames = 
 {
-   "Uniform",      // DiscMethod::Uniform
-   "UniformLog",   // DiscMethod::UniformLog
-   "Random",       // DiscMethod::Random
-   "RandomLog",    // DiscMethod::RandomLog
+   "Uniform",      // DiscMethodOption::Uniform
+   "UniformLog",   // DiscMethodOption::UniformLog
+   "Random",       // DiscMethodOption::Random
+   "RandomLog",    // DiscMethodOption::RandomLog
 };
 
-template<DiscMethod d>
+template<DiscMethodOption d>
 struct DiscMethodParams
 {
    // Default struct has zero params.
 };
 
-/// Parameters for discretization method DiscMethod::Random.
+/// Parameters for discretization method DiscMethodOption::Random.
 template<>
-struct DiscMethodParams<DiscMethod::Random>
+struct DiscMethodParams<DiscMethodOption::Random>
 {
    /// Seed to use in randomization.
    int seed;
 };
 
-/// Parameters for discretization method DiscMethod::RandomLog.
+/// Parameters for discretization method DiscMethodOption::RandomLog.
 template<>
-struct DiscMethodParams<DiscMethod::RandomLog>
+struct DiscMethodParams<DiscMethodOption::RandomLog>
 {
    /// Seed to use in randomization.
    int seed;
@@ -213,18 +213,18 @@ struct DiscMethodParams<DiscMethod::RandomLog>
 
 /// All discretization method parameter options.
 using DiscMethodParamsVariant 
-   = std::variant<DiscMethodParams<DiscMethod::Uniform>,
-                  DiscMethodParams<DiscMethod::UniformLog>,
-                  DiscMethodParams<DiscMethod::Random>,
-                  DiscMethodParams<DiscMethod::RandomLog>>;
+   = std::variant<DiscMethodParams<DiscMethodOption::Uniform>,
+                  DiscMethodParams<DiscMethodOption::UniformLog>,
+                  DiscMethodParams<DiscMethodOption::Random>,
+                  DiscMethodParams<DiscMethodOption::RandomLog>>;
 static_assert(std::variant_size_v<DiscMethodParamsVariant> == 
-                    static_cast<std::size_t>(DiscMethod::Size),
+                    static_cast<std::size_t>(DiscMethodOption::Size),
              "Missing DiscMethodParams in DiscMethodParamsVariant.");
 
 // ----------------------------------------------------------------------------
 
 /// Wave direction options.
-enum class Direction : std::uint8_t
+enum class DirectionOption : std::uint8_t
 {
    /// Constant direction.
    Constant,
@@ -232,33 +232,33 @@ enum class Direction : std::uint8_t
    /// Random angle in XY-plane from x-axis for each wave/frequency.
    RandomXYAngle,
 
-   /// Number of DiscMethodOptions.
+   /// Number of DirectionOptions.
    Size
 };
 
 /// Strings associated with DiscMethod enumerators.
 static constexpr std::array<std::string_view, 
-                     static_cast<std::size_t>(Direction::Size)>
-DirectionNames = 
+                     static_cast<std::size_t>(DirectionOption::Size)>
+kDirectionNames = 
 {
-   "Constant",         // Direction::Constant
-   "RandomXYAngle",    // Direction::RandomXYAngle
+   "Constant",         // DirectionOption::Constant
+   "RandomXYAngle",    // DirectionOption::RandomXYAngle
 };
 
-template<Direction d>
+template<DirectionOption d>
 struct DirectionParams;
 
-/// Parameters for direction option Direction::Constant.
+/// Parameters for direction option DirectionOption::Constant.
 template<>
-struct DirectionParams<Direction::Constant>
+struct DirectionParams<DirectionOption::Constant>
 {
    /// Planar wave directional vector, can be non-normalized.
    std::vector<double> direction;
 };
 
-/// Parameters for direction option Direction::RandomXYAngle.
+/// Parameters for direction option DirectionOption::RandomXYAngle.
 template<>
-struct DirectionParams<Direction::RandomXYAngle>
+struct DirectionParams<DirectionOption::RandomXYAngle>
 {
    /// Min angle of wave from x-axis, in XY-plane (CCW+, CW-) (in degrees).
    double min_angle;
@@ -272,16 +272,16 @@ struct DirectionParams<Direction::RandomXYAngle>
 
 /// All direction parameter options.
 using DirectionParamsVariant 
-   = std::variant<DirectionParams<Direction::Constant>,
-                  DirectionParams<Direction::RandomXYAngle>>;
+   = std::variant<DirectionParams<DirectionOption::Constant>,
+                  DirectionParams<DirectionOption::RandomXYAngle>>;
 static_assert(std::variant_size_v<DirectionParamsVariant> == 
-                    static_cast<std::size_t>(Direction::Size),
+                    static_cast<std::size_t>(DirectionOption::Size),
              "Missing DirectionParams in DirectionParamsVariant.");
 
 // ----------------------------------------------------------------------------
 
 /// Transfer function options.
-enum class TransferFunction : std::uint8_t
+enum class TransferOption : std::uint8_t
 {
    /// Do not use a transfer function.
    None,
@@ -309,47 +309,47 @@ enum class TransferFunction : std::uint8_t
 
 /// Strings associated with TransferFunction enumerators.
 static constexpr std::array<std::string_view, 
-                           static_cast<std::size_t>(TransferFunction::Size)>
-TransferNames = 
+                           static_cast<std::size_t>(TransferOption::Size)>
+kTransferNames = 
 {
-   "None",               // TransferFunction::None
-   "LowFrequencyLimit",  // TransferFunction::LowFrequencyLimit
-   "Input",              // TransferFunction::Input
-   "FlowNormalFit"       // TransferFunction::FlowNormalFit
+   "None",               // TransferOption::None
+   "LowFrequencyLimit",  // TransferOption::LowFrequencyLimit
+   "Input",              // TransferOption::Input
+   "FlowNormalFit"       // TransferOption::FlowNormalFit
 };
 
-template<TransferFunction t>
+template<TransferOption t>
 struct TransferParams
 {
    // Default struct has zero params
 };
 
 template<>
-struct TransferParams<TransferFunction::Input>
+struct TransferParams<TransferOption::Input>
 {
    /// Transfer function representation, (f, V^2).
    FunctionParamsVariant input_tf;
 };
 
 template<>
-struct TransferParams<TransferFunction::FlowNormalFit>
+struct TransferParams<TransferOption::FlowNormalFit>
 {
    // TODO
 };
 
 /// All transfer parameter options.
 using TransferParamsVariant 
-   = std::variant<TransferParams<TransferFunction::None>,
-                  TransferParams<TransferFunction::LowFrequencyLimit>,
-                  TransferParams<TransferFunction::Input>,
-                  TransferParams<TransferFunction::FlowNormalFit>>;
+   = std::variant<TransferParams<TransferOption::None>,
+                  TransferParams<TransferOption::LowFrequencyLimit>,
+                  TransferParams<TransferOption::Input>,
+                  TransferParams<TransferOption::FlowNormalFit>>;
 static_assert(std::variant_size_v<TransferParamsVariant> == 
-                    static_cast<std::size_t>(TransferFunction::Size),
+                    static_cast<std::size_t>(TransferOption::Size),
              "Missing TransferParams in TransferParamsVariant.");
 // ----------------------------------------------------------------------------
 
 /// Acoustic source options.
-enum class Source : std::uint8_t
+enum class SourceOption : std::uint8_t
 {
    /// Single acoustic wave.
    SingleWave,
@@ -369,21 +369,21 @@ enum class Source : std::uint8_t
 
 /// Strings associated with Source enumerators.
 static constexpr std::array<std::string_view, 
-                           static_cast<std::size_t>(Source::Size)>
-SourceNames = 
+                           static_cast<std::size_t>(SourceOption::Size)>
+kSourceNames = 
 {
-   "SingleWave",      // Source::SingleWave
-   "WaveSpectrum",    // Source::WaveSpectrum
-   "PSD",             // Source::PSD
-   "WaveCSV"          // Source::WaveCSV
+   "SingleWave",      // SourceOption::SingleWave
+   "WaveSpectrum",    // SourceOption::WaveSpectrum
+   "PSD",             // SourceOption::PSD
+   "WaveCSV"          // SourceOption::WaveCSV
 };
 
-template<Source s>
+template<SourceOption s>
 struct SourceParams;
 
 /// Struct for source parameters of single acoustic wave.
 template<>
-struct SourceParams<Source::SingleWave>
+struct SourceParams<SourceOption::SingleWave>
 {
    /// Wave amplitude.
    double amp;
@@ -403,7 +403,7 @@ struct SourceParams<Source::SingleWave>
 
 /// Struct for source parameters of spectrum of acoustic waves.
 template<>
-struct SourceParams<Source::WaveSpectrum>
+struct SourceParams<SourceOption::WaveSpectrum>
 {
    /// Wave amplitudes.
    std::vector<double> amps;
@@ -423,7 +423,7 @@ struct SourceParams<Source::WaveSpectrum>
 
 /// Struct for source parameters of PSD.
 template<>
-struct SourceParams<Source::PSD>
+struct SourceParams<SourceOption::PSD>
 {
 
    /// PSD function representation (f, PSD).
@@ -461,7 +461,7 @@ struct SourceParams<Source::PSD>
 };
 
 template<>
-struct SourceParams<Source::WaveCSV>
+struct SourceParams<SourceOption::WaveCSV>
 {
    /// Wave CSV file (output from \ref jabber::WriteWaves()).
    std::string file;
@@ -469,19 +469,19 @@ struct SourceParams<Source::WaveCSV>
 
 /// All source parameter options.
 using SourceParamsVariant 
-   = std::variant<SourceParams<Source::SingleWave>,
-                  SourceParams<Source::WaveSpectrum>,
-                  SourceParams<Source::PSD>,
-                  SourceParams<Source::WaveCSV>>;
+   = std::variant<SourceParams<SourceOption::SingleWave>,
+                  SourceParams<SourceOption::WaveSpectrum>,
+                  SourceParams<SourceOption::PSD>,
+                  SourceParams<SourceOption::WaveCSV>>;
 static_assert(std::variant_size_v<SourceParamsVariant> == 
-                    static_cast<std::size_t>(Source::Size),
+                    static_cast<std::size_t>(SourceOption::Size),
              "Missing SourceParams in SourceParamsVariant.");
 
 // ----------------------------------------------------------------------------
 /// Strings associated with jabber::AcousticField::Kernel enumerators.
 static constexpr std::array<std::string_view, 
-                     static_cast<std::size_t>(jabber::AcousticField::Kernel::Size)>
-KernelNames = 
+               static_cast<std::size_t>(jabber::AcousticField::Kernel::Size)>
+kKernelNames = 
 {
    "GridPoint",      // AcousticField::Kernel::GridPoint
 };

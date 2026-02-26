@@ -1,13 +1,7 @@
 #ifndef JABBER_TEST_UTILS
 #define JABBER_TEST_UTILS
 
-#include <catch2/generators/catch_generators.hpp>
-
-#ifdef JABBER_WITH_APP
-#include <jabber_app.hpp>
-#endif // JABBER_WITH_APP
-#include <random>
-
+#include <catch2/generators/catch_generators_all.hpp>
 namespace jabber_test
 {
 
@@ -16,7 +10,7 @@ template<typename T>
 concept OptionEnum = 
          std::is_enum_v<T> && 
          std::same_as<std::underlying_type_t<T>, std::uint8_t> &&
-         requires {T::Size; };
+         requires { T::Size; };
 
 /// Custom generator for \ref OptionEnum.
 template<OptionEnum T>
@@ -45,6 +39,11 @@ public:
    }
 };
 
+/**
+ * @brief Generator-wrapper creator for list over all options by 
+ *  \ref OptionEnum. Use by \c GENERATE(options<T>()).
+ *
+ */
 template <OptionEnum T>
 Catch::Generators::GeneratorWrapper<T> options()
 {
@@ -52,55 +51,44 @@ Catch::Generators::GeneratorWrapper<T> options()
                Catch::Detail::make_unique<OptionGenerator<T>>());
 }
 
-
-/// Generate a random OptionEnum.
+/// Random generator for a \ref OptionEnum enumerator.
 template<OptionEnum T>
-T GenerateRandomOption(int seed)
+class RandomOptionGenerator : public Catch::Generators::IGenerator<T>
 {
-   std::mt19937 gen(seed);
-   std::uniform_int_distribution<int> int_dist(0, static_cast<int>(T::Size)-1);
-   return static_cast<T>(int_dist(gen));
+private:
+   Catch::Generators::GeneratorWrapper<std::uint8_t> ri_gen_;
+   T option_;
+public:
+   RandomOptionGenerator()
+   : ri_gen_(Catch::Generators::random<std::uint8_t>(0, 
+               static_cast<std::uint8_t>(T::Size)-1))
+   { 
+      static_cast<void>(next());
+   }
+
+   T const& get() const override
+   {
+      return option_;
+   }
+
+   bool next() override
+   {
+      ri_gen_.next();
+      option_ = static_cast<T>(ri_gen_.get());
+      return true;
+   }
+};
+
+/**
+ * @brief Generator-wrapper creator for random option of 
+ * \ref OptionEnum. Use by \c random_option<E>().
+ */
+template<OptionEnum T>
+Catch::Generators::GeneratorWrapper<T> random_option() 
+{
+   return Catch::Generators::GeneratorWrapper<T>(
+            Catch::Detail::make_unique<RandomOptionGenerator<T>>());
 }
-
-#ifdef JABBER_WITH_APP
-
-/**
- * @brief Generate completely randomized input xy params type. Parameters that
- * vary should be manually updated for comprehensive testing.
- */
-jabber_app::InputXYParamsVariant GenerateRandomInputXY(
-                                    jabber_app::InputXY f, int seed);
-
-/**
- * @brief Generate completely randomized function params type. Parameters that
- * vary should be manually updated for comprehensive testing.
- */
-jabber_app::FunctionParamsVariant GenerateRandomFunction(
-                                    jabber_app::FunctionType f, int seed);
-
-/**
- * @brief Generate completely randomized disc. method params type. Parameters that
- * vary should be manually updated for comprehensive testing.
- */
-jabber_app::DiscMethodParamsVariant GenerateRandomDiscMethod(
-                                    jabber_app::DiscMethod d, int seed);
-
-/**
- * @brief Generate completely randomized direction params type. Parameters that
- * vary should be manually updated for comprehensive testing.
- */
-jabber_app::DirectionParamsVariant GenerateRandomDirection(
-                                    jabber_app::Direction d, int seed);
-
-/**
- * @brief Generate completely randomized source params type. Parameters that
- * vary should be manually updated for comprehensive testing.
- */
-jabber_app::SourceParamsVariant GenerateRandomSource(
-                                    jabber_app::Source s, int seed);
-
-
-#endif // JABBER_WITH_APP
 
 } // namespace jabber_test
 

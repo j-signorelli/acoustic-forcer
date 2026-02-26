@@ -23,8 +23,6 @@ void Normalize(std::span<const double> vec, std::span<double> norm_vec);
  * @brief All visitor options for each InputXYParams, for initializing 
  * \ref x and \ref y vectors.
  * 
- * @todo: Unit test?
- * 
  */
 struct InputXYVisitor
 {  
@@ -35,33 +33,29 @@ struct InputXYVisitor
    /// Reference to y-data vector to set.
    std::vector<double> &y;
 
-   void operator() (const InputXYParams<InputXY::Here> &ip);
-   void operator() (const InputXYParams<InputXY::FromCSV> &ip);
+   void operator() (const InputXYParams<InputXYOption::Here> &op);
+   void operator() (const InputXYParams<InputXYOption::FromCSV> &op);
 };
 
 /**
  * @brief All visitor options for each FunctionTypeParams, for initializing a
  * \ref jabber::Function or \ref jabber::BasePSD type.
  * 
- * @tparam T      Either \ref jabber::Function or \ref jabber::BasePSD.
- * 
- * @todo: Unit test?
  */
-template<typename T>
 struct FunctionVisitor
 {
    /// Function to initialize
-   std::unique_ptr<T> &T_ptr;
+   std::variant<std::unique_ptr<jabber::Function>*,
+                std::unique_ptr<jabber::BasePSD>*> T_ptr_ptr_var;
 
-   void operator() (const FunctionTypeParams<FunctionType::PiecewiseLinear> &fp);
-   void operator() (const FunctionTypeParams<FunctionType::PiecewiseLogLog> &fp);
+   void operator() (const FunctionParams<FunctionOption::PiecewiseLinear> &op);
+   void operator() (const FunctionParams<FunctionOption::PiecewiseLogLog> &op);
 };
 
 /**
  * @brief All visitor options for each DiscMethodParams, for initializing
  * a discretized frequency range, \p freqs.
  * 
- * @todo: Unit test?
  */
 struct DiscMethodVisitor
 {  
@@ -74,25 +68,24 @@ struct DiscMethodVisitor
    /// **Sized** frequency vector to initialize.
    std::vector<double> &freqs;
 
-   void operator() (const DiscMethodParams<DiscMethod::Uniform> &dp);
-   void operator() (const DiscMethodParams<DiscMethod::UniformLog> &dp);
-   void operator() (const DiscMethodParams<DiscMethod::Random> &dp);
-   void operator() (const DiscMethodParams<DiscMethod::RandomLog> &dp);
+   void operator() (const DiscMethodParams<DiscMethodOption::Uniform> &op);
+   void operator() (const DiscMethodParams<DiscMethodOption::UniformLog> &op);
+   void operator() (const DiscMethodParams<DiscMethodOption::Random> &op);
+   void operator() (const DiscMethodParams<DiscMethodOption::RandomLog> &op);
 };
 
 /**
  * @brief All visitor options for each DirectionParams, for initializing
  * wave directional vectors in \p k_hats.
  * 
- * @todo: Unit test?
  */
 struct DirectionVisitor
 {
    /// **Sized** vector of direction vectors for each wave.
    std::vector<std::vector<double>> &k_hats;
 
-   void operator() (const DirectionParams<Direction::Constant> &dp);
-   void operator() (const DirectionParams<Direction::RandomXYAngle> &dp);
+   void operator() (const DirectionParams<DirectionOption::Constant> &op);
+   void operator() (const DirectionParams<DirectionOption::RandomXYAngle> &op);
 };
 
 
@@ -100,17 +93,15 @@ struct DirectionVisitor
  * @brief All visitor options for each SourceParams, for initializing 
  * \ref jabber::Wave's for each type and appending to \p waves.
  * 
- * @todo: Unit test?
- * 
  */
 struct SourceVisitor
 {
    /// Reference of wave vector to append jabber::Wave structs to.
    std::vector<jabber::Wave> &waves;
-   void operator() (const SourceParams<Source::SingleWave> &sp);
-   void operator() (const SourceParams<Source::WaveSpectrum> &sp);
-   void operator() (const SourceParams<Source::PSD> &sp);
-   void operator() (const SourceParams<Source::WaveCSV> &sp);
+   void operator() (const SourceParams<SourceOption::SingleWave> &op);
+   void operator() (const SourceParams<SourceOption::WaveSpectrum> &op);
+   void operator() (const SourceParams<SourceOption::PSD> &op);
+   void operator() (const SourceParams<SourceOption::WaveCSV> &op);
 };
 
 /**
