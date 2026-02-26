@@ -2,7 +2,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
-#include <catch2/generators/catch_generators.hpp>
+#include <catch2/generators/catch_generators_all.hpp>
 
 #include <jabber.hpp>
 #ifdef JABBER_WITH_APP
@@ -18,6 +18,8 @@
 
 using namespace jabber;
 using namespace Catch::Matchers;
+using namespace Catch::Generators;
+
 #ifdef JABBER_WITH_APP
 using namespace jabber_app;
 #endif // JABBER_WITH_APP
@@ -63,8 +65,7 @@ static constexpr std::array<char, 2> kSpeeds = {'S', 'F'};
  * 
  * 
  */
-static const std::array<double, kNumPts> kCoords 
-                        = GenerateRandomArr<kNumPts>(kSeed,0.0,2.0);
+static constexpr std::pair<double,double> kSpaceExtents{0.0, 2.0};
 
 /**
  * @brief Time data.
@@ -73,8 +74,7 @@ static const std::array<double, kNumPts> kCoords
  * period = 1/f_2=0.0008. Choose 0.002 to cover ~2 periods.
  * 
  */
-static const std::array<double, kNumTimes> kTimes 
-                        = GenerateRandomArr<kNumTimes>(kSeed,0.0,0.002);
+static constexpr std::pair<double,double> kTimeExtents{0.0, 0.002};
 
 /// Hardcoded analytical solution. See README.md.
 template<int NumWaves>
@@ -167,6 +167,14 @@ static void CheckSolution(std::span<const double> coords,
 
 TEST_CASE("1D flowfield computation via kernel", "[1D][Compute][Kernels]")
 {
+   const std::vector<double> kCoords = 
+            GENERATE_REF(take(1, chunk(kNumPts, 
+                                          random(kSpaceExtents.first, 
+                                                   kSpaceExtents.second))));
+   const std::vector<double> kTimes =
+            GENERATE_REF(take(1, chunk(kNumTimes, 
+                                          random(kTimeExtents.first,
+                                                   kTimeExtents.second))));
 
 #ifdef JABBER_WITH_OPENMP
    omp_set_dynamic(0);
@@ -222,6 +230,14 @@ TEST_CASE("1D flowfield computation via kernel", "[1D][Compute][Kernels]")
 TEST_CASE("1D flowfield computation via AcousticField", 
             "[1D][Compute][AcousticField]")
 {
+   const std::vector<double> kCoords = 
+            GENERATE_REF(take(1, chunk(kNumPts, 
+                                          random(kSpaceExtents.first, 
+                                                   kSpaceExtents.second))));
+   const std::vector<double> kTimes =
+            GENERATE_REF(take(1, chunk(kNumTimes, 
+                                          random(kTimeExtents.first,
+                                                   kTimeExtents.second))));
 
    const AcousticField::Kernel kernel = 
                         GENERATE(options<AcousticField::Kernel>());
@@ -262,6 +278,17 @@ TEST_CASE("1D flowfield computation via AcousticField",
 
 TEST_CASE("1D flowfield computation via app library", "[1D][Compute][App]")
 {
+   const std::vector<double> kCoords = 
+            GENERATE_REF(take(1, chunk(kNumPts, 
+                                          random(kSpaceExtents.first, 
+                                                   kSpaceExtents.second))));
+   const std::vector<double> kTimes =
+            GENERATE_REF(take(1, chunk(kNumTimes, 
+                                          random(kTimeExtents.first,
+                                                   kTimeExtents.second))));
+                                                   
+   const AcousticField::Kernel kernel = GENERATE(options<AcousticField::Kernel>());
+
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
    DYNAMIC_SECTION("Number of waves: " << kNumWaves)
