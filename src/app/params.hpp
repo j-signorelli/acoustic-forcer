@@ -145,7 +145,7 @@ static constexpr std::array<std::string_view,
 IntervalNames = 
 {
    "Midpoint",      // Interval::Method::Midpoint
-   "MidpointLog",    // Interval::Method::MidpointLog10
+   "MidpointLog",   // Interval::Method::MidpointLog10
 };
 
 // ----------------------------------------------------------------------------
@@ -226,7 +226,6 @@ static_assert(std::variant_size_v<DiscMethodParamsVariant> ==
 /// Wave direction options.
 enum class DirectionOption : std::uint8_t
 {
-
    /// Constant direction.
    Constant,
 
