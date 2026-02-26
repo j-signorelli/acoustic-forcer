@@ -73,7 +73,7 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
 
    constexpr int kSeed = 0;
    // Use generator to ensure that all source types are checked!
-   const SourceOption option = GENERATE(options<SourceOption>());
+   const Source option = GENERATE(options<Source>());
    const std::uint8_t s = static_cast<std::uint8_t>(option);
    DYNAMIC_SECTION(SourceNames[s])
    {   
@@ -81,7 +81,7 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
       std::visit(
       overloads
       {
-      [&](SourceParams<SourceOption::SingleWave> &wave)
+      [&](SourceParams<Source::SingleWave> &wave)
       {
          wave.speed = GENERATE('S', 'F');
 
@@ -98,8 +98,8 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
                               wave.speed);
          TOMLConfigInput config;
          config.ParseSource(source_str);
-         SourceParams<SourceOption::SingleWave> wave_parsed = 
-               std::get<SourceParams<SourceOption::SingleWave>>(
+         SourceParams<Source::SingleWave> wave_parsed = 
+               std::get<SourceParams<Source::SingleWave>>(
                                                    config.Sources()[0]);
          CHECK(wave_parsed.amp == wave.amp);
          CHECK(wave_parsed.freq == wave.freq);
@@ -107,7 +107,7 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
          CHECK(wave_parsed.phase == wave.phase);
          CHECK(wave_parsed.speed == wave.speed);
       },
-      [&](SourceParams<SourceOption::WaveSpectrum> &waves)
+      [&](SourceParams<Source::WaveSpectrum> &waves)
       {
          const int kNumWaves = waves.amps.size();
          
@@ -127,8 +127,8 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
 
          TOMLConfigInput config;
          config.ParseSource(source_str);
-         SourceParams<SourceOption::WaveSpectrum> waves_parsed = 
-               std::get<SourceParams<SourceOption::WaveSpectrum>>(
+         SourceParams<Source::WaveSpectrum> waves_parsed = 
+               std::get<SourceParams<Source::WaveSpectrum>>(
                                                    config.Sources()[0]);
          
          CHECK_THAT(waves_parsed.amps, Equals(waves.amps));
@@ -141,35 +141,35 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
          CHECK_THAT(waves_parsed.phases, Equals(waves.phases));
          CHECK_THAT(waves_parsed.speeds, Equals(waves.speeds));
       },
-      [&](SourceParams<SourceOption::PSD> &source_params)
+      [&](SourceParams<Source::PSD> &source_params)
       {
          // Test all combinations of variable settings
-         const FunctionOption func_option = 
-                                       GENERATE(options<FunctionOption>());
+         const FunctionType func_option = 
+                                       GENERATE(options<FunctionType>());
          source_params.input_psd = GenerateRandomFunction(
                                        func_option,
                                        kSeed);
          std::visit(
-         [&]<FunctionOption F>(FunctionParams<F> &fp)
+         [&]<FunctionType F>(FunctionTypeParams<F> &fp)
          {
-            if constexpr (F == FunctionOption::PiecewiseLinear ||
-                          F == FunctionOption::PiecewiseLogLog)
+            if constexpr (F == FunctionType::PiecewiseLinear ||
+                          F == FunctionType::PiecewiseLogLog)
             {
                fp.input_xy = GenerateRandomInputXY(
-                                 GENERATE(options<InputXYOption>()), 
+                                 GENERATE(options<InputXY>()), 
                                  kSeed);
             }
          }, source_params.input_psd);
 
-         const DiscMethodOption disc_method_option = 
-                                       GENERATE(options<DiscMethodOption>());
+         const DiscMethod disc_method_option = 
+                                       GENERATE(options<DiscMethod>());
          source_params.disc_params = GenerateRandomDiscMethod(
                                        disc_method_option,
                                        kSeed);
          source_params.int_method = GENERATE(options<Interval::Method>());
 
-         const DirectionOption dir_option = 
-                                       GENERATE(options<DirectionOption>());
+         const Direction dir_option = 
+                                       GENERATE(options<Direction>());
          source_params.dir_params = GenerateRandomDirection(
                                        dir_option,
                                        kSeed);
@@ -200,15 +200,15 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
             DirectionNames[static_cast<std::uint8_t>(dir_option)]);
          
          std::visit(
-         [&]<FunctionOption F>(const FunctionParams<F> &fp)
+         [&]<FunctionType F>(const FunctionTypeParams<F> &fp)
          {
-            if constexpr (F == FunctionOption::PiecewiseLinear ||
-                          F == FunctionOption::PiecewiseLogLog)
+            if constexpr (F == FunctionType::PiecewiseLinear ||
+                          F == FunctionType::PiecewiseLogLog)
             {
                std::visit(
                overloads
                {
-               [&](const InputXYParams<InputXYOption::Here> &ip)
+               [&](const InputXYParams<InputXY::Here> &ip)
                {
                   source_str = std::format(R"(
                                     {}
@@ -217,10 +217,10 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
                                     InputPSD.Data.Y={}
                                     )", source_str,
                                     InputXYNames[static_cast<std::size_t>(
-                                                   InputXYOption::Here)],
+                                                   InputXY::Here)],
                                     WriteVector(ip.x), WriteVector(ip.y));
                },
-               [&](const InputXYParams<InputXYOption::FromCSV> &ip)
+               [&](const InputXYParams<InputXY::FromCSV> &ip)
                {
                   source_str = std::format(R"(
                                     {}
@@ -229,7 +229,7 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
                                     )", 
                                     source_str,
                                     InputXYNames[static_cast<std::size_t>(
-                                                   InputXYOption::FromCSV)], ip.file);
+                                                   InputXY::FromCSV)], ip.file);
                }
                }, fp.input_xy);
             }
@@ -237,10 +237,10 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
 
          
          std::visit(
-         [&source_str]<DiscMethodOption D>(const DiscMethodParams<D> &dp)
+         [&source_str]<DiscMethod D>(const DiscMethodParams<D> &dp)
          {
-            if constexpr (D == DiscMethodOption::Random ||
-                           D == DiscMethodOption::RandomLog)
+            if constexpr (D == DiscMethod::Random ||
+                           D == DiscMethod::RandomLog)
             {
                source_str = std::format(R"(
                               {}
@@ -252,14 +252,14 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
          std::visit(
          overloads
          {
-         [&source_str](const DirectionParams<DirectionOption::Constant> &dp)
+         [&source_str](const DirectionParams<Direction::Constant> &dp)
          {
             source_str = std::format(R"(
                            {}
                            Direction.Vector={}
                            )", source_str, WriteVector(dp.direction));
          },
-         [&source_str](const DirectionParams<DirectionOption::RandomXYAngle>
+         [&source_str](const DirectionParams<Direction::RandomXYAngle>
                                                                         &dp)
          {
             source_str = std::format(R"(
@@ -274,8 +274,8 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
 
          TOMLConfigInput config;
          config.ParseSource(source_str);
-         SourceParams<SourceOption::PSD> parsed_source = 
-               std::get<SourceParams<SourceOption::PSD>>(
+         SourceParams<Source::PSD> parsed_source = 
+               std::get<SourceParams<Source::PSD>>(
                                                    config.Sources()[0]);
 
          CHECK(parsed_source.dim_fac == source_params.dim_fac);
@@ -287,30 +287,30 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
          CHECK(parsed_source.int_method== source_params.int_method);
 
          std::visit(
-         [&]<FunctionOption F>(const FunctionParams<F> &parsed_fp)
+         [&]<FunctionType F>(const FunctionTypeParams<F> &parsed_fp)
          {
             CHECK(func_option == F);
-            const FunctionParams<F> &source_ip = 
-               std::get<FunctionParams<F>>(source_params.input_psd);
-            if constexpr (F == FunctionOption::PiecewiseLinear || 
-                           F == FunctionOption::PiecewiseLogLog)
+            const FunctionTypeParams<F> &source_ip = 
+               std::get<FunctionTypeParams<F>>(source_params.input_psd);
+            if constexpr (F == FunctionType::PiecewiseLinear || 
+                           F == FunctionType::PiecewiseLogLog)
             {
                
                std::visit(
                overloads
                {
-               [&](const InputXYParams<InputXYOption::Here> &parsed_ip)
+               [&](const InputXYParams<InputXY::Here> &parsed_ip)
                {
-                  InputXYParams<InputXYOption::Here> input_params = 
-                     std::get<InputXYParams<InputXYOption::Here>>(
+                  InputXYParams<InputXY::Here> input_params = 
+                     std::get<InputXYParams<InputXY::Here>>(
                                                          source_ip.input_xy);
                   CHECK_THAT(parsed_ip.x, Equals(input_params.x));
                   CHECK_THAT(parsed_ip.y, Equals(input_params.y));
                },
-               [&](const InputXYParams<InputXYOption::FromCSV> &parsed_ip)
+               [&](const InputXYParams<InputXY::FromCSV> &parsed_ip)
                {
-                  InputXYParams<InputXYOption::FromCSV> input_params = 
-                     std::get<InputXYParams<InputXYOption::FromCSV>>(
+                  InputXYParams<InputXY::FromCSV> input_params = 
+                     std::get<InputXYParams<InputXY::FromCSV>>(
                                                          source_ip.input_xy);
                   CHECK(parsed_ip.file == input_params.file);
                }
@@ -320,11 +320,11 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
 
          std::visit(
          [&disc_method_option, &source_params]
-            <DiscMethodOption D>(const DiscMethodParams<D> &parsed_dp)
+            <DiscMethod D>(const DiscMethodParams<D> &parsed_dp)
          {
             CHECK(disc_method_option == D);
-            if constexpr (D == DiscMethodOption::Random || 
-                           D == DiscMethodOption::RandomLog)
+            if constexpr (D == DiscMethod::Random || 
+                           D == DiscMethod::RandomLog)
             {
                DiscMethodParams<D> disc_params = 
                      std::get<DiscMethodParams<D>>(source_params.disc_params);
@@ -335,25 +335,25 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
          std::visit(
          overloads
          {
-         [&](const DirectionParams<DirectionOption::Constant> &parsed_dp)
+         [&](const DirectionParams<Direction::Constant> &parsed_dp)
          {
-            CHECK(dir_option == DirectionOption::Constant);
-            if (dir_option == DirectionOption::Constant)
+            CHECK(dir_option == Direction::Constant);
+            if (dir_option == Direction::Constant)
             {
-               DirectionParams<DirectionOption::Constant> dir_params = 
-                  std::get<DirectionParams<DirectionOption::Constant>>(
+               DirectionParams<Direction::Constant> dir_params = 
+                  std::get<DirectionParams<Direction::Constant>>(
                                                 source_params.dir_params);
                CHECK_THAT(parsed_dp.direction, 
                            Equals(dir_params.direction));
             }
          },
-         [&](const DirectionParams<DirectionOption::RandomXYAngle> &parsed_dp)
+         [&](const DirectionParams<Direction::RandomXYAngle> &parsed_dp)
          {
-            CHECK(dir_option == DirectionOption::RandomXYAngle);
-            if (dir_option == DirectionOption::RandomXYAngle)
+            CHECK(dir_option == Direction::RandomXYAngle);
+            if (dir_option == Direction::RandomXYAngle)
             {
-               DirectionParams<DirectionOption::RandomXYAngle> dir_params = 
-                  std::get<DirectionParams<DirectionOption::RandomXYAngle>>(
+               DirectionParams<Direction::RandomXYAngle> dir_params = 
+                  std::get<DirectionParams<Direction::RandomXYAngle>>(
                                                 source_params.dir_params);
                CHECK(parsed_dp.min_angle == dir_params.min_angle);
                CHECK(parsed_dp.max_angle == dir_params.max_angle);
@@ -363,7 +363,7 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
          }, parsed_source.dir_params);
 
       },
-      [&](SourceParams<SourceOption::WaveCSV> &source_params)
+      [&](SourceParams<Source::WaveCSV> &source_params)
       {
          source_params.file = "test_waves." + 
                               std::to_string(GenerateRandomInt(kSeed, 0, 100)) 
@@ -374,8 +374,8 @@ TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")
                                     source_params.file);
          TOMLConfigInput config;
          config.ParseSource(source_str);
-         SourceParams<SourceOption::WaveCSV> parsed_source = 
-            std::get<SourceParams<SourceOption::WaveCSV>>(config.Sources()[0]);
+         SourceParams<Source::WaveCSV> parsed_source = 
+            std::get<SourceParams<Source::WaveCSV>>(config.Sources()[0]);
          CHECK(parsed_source.file == source_params.file);
       }
       }, sp_var);

@@ -15,20 +15,20 @@ namespace jabber_test
 
 #ifdef JABBER_WITH_APP
 
-InputXYParamsVariant GenerateRandomInputXY(InputXYOption f, int seed)
+InputXYParamsVariant GenerateRandomInputXY(InputXY f, int seed)
 {
    InputXYParamsVariant ipv;
-   if (f == InputXYOption::Here)
+   if (f == InputXY::Here)
    {
       constexpr std::size_t N = 20;
-      InputXYParams<InputXYOption::Here> ip;
+      InputXYParams<InputXY::Here> ip;
       ip.x = GenerateRandomVec<N>(seed++, 0, 100e3);
       ip.y = GenerateRandomVec<N>(seed++, 1e-9, 1e-12);
       ipv = ip;
    }
-   else if (f == InputXYOption::FromCSV)
+   else if (f == InputXY::FromCSV)
    {
-      InputXYParams<InputXYOption::FromCSV> ip;
+      InputXYParams<InputXY::FromCSV> ip;
       ip.file = "test_xy." + 
                            std::to_string(GenerateRandomInt(seed++, 0, 100)) 
                            + ".csv";
@@ -36,81 +36,81 @@ InputXYParamsVariant GenerateRandomInputXY(InputXYOption f, int seed)
    }
    else
    {
-      throw std::logic_error("Invalid or unimplemented InputXYOption.");
+      throw std::logic_error("Invalid or unimplemented InputXY.");
    }
    return ipv;
 }
 
-FunctionParamsVariant GenerateRandomFunction(FunctionOption f, int seed)
+FunctionParamsVariant GenerateRandomFunction(FunctionType f, int seed)
 {
    FunctionParamsVariant fpv;
-   if (f == FunctionOption::PiecewiseLinear)
+   if (f == FunctionType::PiecewiseLinear)
    {
-      FunctionParams<FunctionOption::PiecewiseLinear> fp;
-      InputXYOption ixy_option = GenerateRandomOption<InputXYOption>(seed++);
+      FunctionTypeParams<FunctionType::PiecewiseLinear> fp;
+      InputXY ixy_option = GenerateRandomOption<InputXY>(seed++);
       fp.input_xy = GenerateRandomInputXY(ixy_option, seed++);
       fpv = fp;
    }
-   else if (f == FunctionOption::PiecewiseLogLog)
+   else if (f == FunctionType::PiecewiseLogLog)
    {
-      FunctionParams<FunctionOption::PiecewiseLogLog> fp;
-      InputXYOption ixy_option = GenerateRandomOption<InputXYOption>(seed++);
+      FunctionTypeParams<FunctionType::PiecewiseLogLog> fp;
+      InputXY ixy_option = GenerateRandomOption<InputXY>(seed++);
       fp.input_xy = GenerateRandomInputXY(ixy_option, seed++);
       fpv = fp;
    }
    else
    {
-      throw std::logic_error("Invalid or unimplemented FunctionOption.");
+      throw std::logic_error("Invalid or unimplemented FunctionType.");
    }
    return fpv;
 }
 
-DiscMethodParamsVariant GenerateRandomDiscMethod(DiscMethodOption d, int seed)
+DiscMethodParamsVariant GenerateRandomDiscMethod(DiscMethod d, int seed)
 {
    DiscMethodParamsVariant dmpv;
 
-   if (d == DiscMethodOption::Uniform)
+   if (d == DiscMethod::Uniform)
    {
-      DiscMethodParams<DiscMethodOption::Uniform> dp;
+      DiscMethodParams<DiscMethod::Uniform> dp;
       dmpv = dp;
    }
-   else if (d == DiscMethodOption::UniformLog)
+   else if (d == DiscMethod::UniformLog)
    {
-      DiscMethodParams<DiscMethodOption::UniformLog> dp;
+      DiscMethodParams<DiscMethod::UniformLog> dp;
       dmpv = dp;
    }
-   else if (d == DiscMethodOption::Random)
+   else if (d == DiscMethod::Random)
    {
-      DiscMethodParams<DiscMethodOption::Random> dp;
+      DiscMethodParams<DiscMethod::Random> dp;
       dp.seed = GenerateRandomInt(seed++, 0, 100);
       dmpv = dp;
    }
-   else if (d == DiscMethodOption::RandomLog)
+   else if (d == DiscMethod::RandomLog)
    {
-      DiscMethodParams<DiscMethodOption::RandomLog> dp;
+      DiscMethodParams<DiscMethod::RandomLog> dp;
       dp.seed = GenerateRandomInt(seed++, 0, 100);
       dmpv = dp;
    }
    else
    {
-      throw std::logic_error("Invalid or unimplemented DiscMethodOption.");
+      throw std::logic_error("Invalid or unimplemented DiscMethod.");
    }
    return dmpv;
 }
 
-DirectionParamsVariant GenerateRandomDirection(DirectionOption d, int seed)
+DirectionParamsVariant GenerateRandomDirection(Direction d, int seed)
 {
    DirectionParamsVariant dpv;
-   if (d == DirectionOption::Constant)
+   if (d == Direction::Constant)
    {
       constexpr std::size_t kDim = 3;
-      DirectionParams<DirectionOption::Constant> dp;
+      DirectionParams<Direction::Constant> dp;
       dp.direction = GenerateRandomVec<kDim>(seed++, 0, 1);
       dpv = dp;
    }
-   else if (d == DirectionOption::RandomXYAngle)
+   else if (d == Direction::RandomXYAngle)
    {
-      DirectionParams<DirectionOption::RandomXYAngle> dp;
+      DirectionParams<Direction::RandomXYAngle> dp;
       dp.min_angle = GenerateRandomReal(seed++, -20, 20);
       dp.max_angle = GenerateRandomReal(seed++, 20, 60);
       dp.seed = GenerateRandomInt(seed++, 0, 100);
@@ -118,17 +118,17 @@ DirectionParamsVariant GenerateRandomDirection(DirectionOption d, int seed)
    }
    else
    {
-      throw std::logic_error("Invalid or unimplemented DirectionOption.");
+      throw std::logic_error("Invalid or unimplemented Direction.");
    }
    return dpv;
 }
 
-SourceParamsVariant GenerateRandomSource(SourceOption s, int seed)
+SourceParamsVariant GenerateRandomSource(Source s, int seed)
 {
    SourceParamsVariant spv;
-   if (s == SourceOption::SingleWave)
+   if (s == Source::SingleWave)
    {
-      SourceParams<SourceOption::SingleWave> wave;
+      SourceParams<Source::SingleWave> wave;
       wave.amp = GenerateRandomReal(seed++,0.1,10.0);
       wave.freq = GenerateRandomReal(seed++, 500.0, 1500.0);
       wave.direction = GenerateRandomVec<3>(seed++, 0.0, 1.0);
@@ -136,10 +136,10 @@ SourceParamsVariant GenerateRandomSource(SourceOption s, int seed)
       wave.speed = GenerateRandomInt(seed++, 0, 1) ? 'S' : 'F';
       spv = wave;
    }
-   else if (s == SourceOption::WaveSpectrum)
+   else if (s == Source::WaveSpectrum)
    {
       constexpr int kNumWaves = 5;
-      SourceParams<SourceOption::WaveSpectrum> waves;
+      SourceParams<Source::WaveSpectrum> waves;
       waves.amps = GenerateRandomVec<kNumWaves>(seed++, 1.0, 10.0);
       waves.freqs = GenerateRandomVec<kNumWaves>(seed++, 500.0, 
                                                             1500.0);
@@ -156,9 +156,9 @@ SourceParamsVariant GenerateRandomSource(SourceOption s, int seed)
       }
       spv = waves;
    }
-   else if (s == SourceOption::PSD)
+   else if (s == Source::PSD)
    {
-      SourceParams<SourceOption::PSD> source_params;
+      SourceParams<Source::PSD> source_params;
    
       // Set fixed settings
       source_params.dim_fac = GenerateRandomReal(seed++, 1.0, 10.0);
@@ -168,22 +168,22 @@ SourceParamsVariant GenerateRandomSource(SourceOption s, int seed)
       source_params.phase_seed = GenerateRandomInt(seed++, 1, 100);
 
       // Set varying settings
-      FunctionOption func_option = GenerateRandomOption<FunctionOption>(seed++);
+      FunctionType func_option = GenerateRandomOption<FunctionType>(seed++);
       source_params.input_psd = GenerateRandomFunction(func_option, seed++);
 
-      DiscMethodOption disc_option = GenerateRandomOption<DiscMethodOption>(seed++);
+      DiscMethod disc_option = GenerateRandomOption<DiscMethod>(seed++);
       source_params.disc_params = GenerateRandomDiscMethod(disc_option, seed++);
 
       source_params.int_method = GenerateRandomOption<Interval::Method>(seed++);
 
-      DirectionOption dir_option = GenerateRandomOption<DirectionOption>(seed++);
+      Direction dir_option = GenerateRandomOption<Direction>(seed++);
       source_params.dir_params = GenerateRandomDirection(dir_option, seed++);
 
       spv = source_params;
    }
-   else if (s == SourceOption::WaveCSV)
+   else if (s == Source::WaveCSV)
    {
-      SourceParams<SourceOption::WaveCSV> source_params;
+      SourceParams<Source::WaveCSV> source_params;
       source_params.file = "test_waves." + 
                            std::to_string(GenerateRandomInt(seed++, 0, 100)) 
                            + ".csv";
@@ -191,7 +191,7 @@ SourceParamsVariant GenerateRandomSource(SourceOption s, int seed)
    }
    else
    {
-      throw std::logic_error("Invalid or unimplemented SourceOption");
+      throw std::logic_error("Invalid or unimplemented Source");
    }
    return spv;
 }

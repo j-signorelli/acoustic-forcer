@@ -69,35 +69,35 @@ T GenerateRandomOption(int seed)
  * vary should be manually updated for comprehensive testing.
  */
 jabber_app::InputXYParamsVariant GenerateRandomInputXY(
-                                    jabber_app::InputXYOption f, int seed);
+                                    jabber_app::InputXY f, int seed);
 
 /**
  * @brief Generate completely randomized function params type. Parameters that
  * vary should be manually updated for comprehensive testing.
  */
 jabber_app::FunctionParamsVariant GenerateRandomFunction(
-                                    jabber_app::FunctionOption f, int seed);
+                                    jabber_app::FunctionType f, int seed);
 
 /**
  * @brief Generate completely randomized disc. method params type. Parameters that
  * vary should be manually updated for comprehensive testing.
  */
 jabber_app::DiscMethodParamsVariant GenerateRandomDiscMethod(
-                                    jabber_app::DiscMethodOption d, int seed);
+                                    jabber_app::DiscMethod d, int seed);
 
 /**
  * @brief Generate completely randomized direction params type. Parameters that
  * vary should be manually updated for comprehensive testing.
  */
 jabber_app::DirectionParamsVariant GenerateRandomDirection(
-                                    jabber_app::DirectionOption d, int seed);
+                                    jabber_app::Direction d, int seed);
 
 /**
  * @brief Generate completely randomized source params type. Parameters that
  * vary should be manually updated for comprehensive testing.
  */
 jabber_app::SourceParamsVariant GenerateRandomSource(
-                                    jabber_app::SourceOption s, int seed);
+                                    jabber_app::Source s, int seed);
 
 
 #endif // JABBER_WITH_APP

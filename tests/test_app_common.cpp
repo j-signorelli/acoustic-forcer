@@ -49,7 +49,7 @@ TEST_CASE("Normalize", "[App]")
 TEST_CASE("InputXYVisitor", "[App]")
 {
    constexpr int kSeed = 0;
-   const InputXYOption option = GENERATE(options<InputXYOption>());
+   const InputXY option = GENERATE(options<InputXY>());
    const std::uint8_t idx = static_cast<std::uint8_t>(option);
 
    constexpr std::size_t kN = 20;
@@ -65,12 +65,12 @@ TEST_CASE("InputXYVisitor", "[App]")
       std::visit(
       overloads
       {
-      [&](InputXYParams<InputXYOption::Here> &ip)
+      [&](InputXYParams<InputXY::Here> &ip)
       {
          ip.x = x;
          ip.y = y;
       },
-      [&](InputXYParams<InputXYOption::FromCSV> &ip)
+      [&](InputXYParams<InputXY::FromCSV> &ip)
       {
          // Write sample CSV file.
          std::string file_name = std::filesystem::temp_directory_path() 
@@ -96,9 +96,9 @@ TEST_CASE("InputXYVisitor", "[App]")
 
       // Delete any written files...
       std::visit(
-      [&]<InputXYOption I>(const InputXYParams<I> &ip)
+      [&]<InputXY I>(const InputXYParams<I> &ip)
       {
-         if constexpr (I == InputXYOption::FromCSV)
+         if constexpr (I == InputXY::FromCSV)
          {
             std::filesystem::remove(ip.file);
          }

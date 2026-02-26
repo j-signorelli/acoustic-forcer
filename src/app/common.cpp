@@ -48,14 +48,14 @@ void Normalize(std::span<const double> vec, std::span<double> norm_vec)
 
 
 void InputXYVisitor::operator()
-   (const InputXYParams<InputXYOption::Here> &ip)
+   (const InputXYParams<InputXY::Here> &ip)
 {
    x = ip.x;
    y = ip.y;
 }
 
 void InputXYVisitor::operator()
-   (const InputXYParams<InputXYOption::FromCSV> &ip)
+   (const InputXYParams<InputXY::FromCSV> &ip)
 {
    std::ifstream is(ip.file);
    if (!is.is_open())
@@ -78,7 +78,7 @@ void InputXYVisitor::operator()
 
 template<typename T>
 void FunctionVisitor<T>::operator()
-   (const FunctionParams<FunctionOption::PiecewiseLinear> &fp)
+   (const FunctionTypeParams<FunctionType::PiecewiseLinear> &fp)
 {
    std::vector<double> x, y;
    std::visit(InputXYVisitor{x,y}, fp.input_xy);
@@ -95,7 +95,7 @@ void FunctionVisitor<T>::operator()
 
 template<typename T>
 void FunctionVisitor<T>::operator()
-   (const FunctionParams<FunctionOption::PiecewiseLogLog> &fp)
+   (const FunctionTypeParams<FunctionType::PiecewiseLogLog> &fp)
 {
    std::vector<double> x, y;
    std::visit(InputXYVisitor{x,y}, fp.input_xy);
@@ -115,7 +115,7 @@ template class FunctionVisitor<Function>;
 template class FunctionVisitor<BasePSD>;
 
 void DiscMethodVisitor::operator()
-   (const DiscMethodParams<DiscMethodOption::Uniform> &dp)
+   (const DiscMethodParams<DiscMethod::Uniform> &dp)
 {
    const double df = (max_freq - min_freq)/(freqs.size()-1);
    for (std::size_t i = 0; i < freqs.size(); i++)
@@ -125,7 +125,7 @@ void DiscMethodVisitor::operator()
 }
 
 void DiscMethodVisitor::operator()
-   (const DiscMethodParams<DiscMethodOption::UniformLog> &dp)
+   (const DiscMethodParams<DiscMethod::UniformLog> &dp)
 {
    const double log_df = std::log10(max_freq/min_freq)/(freqs.size()-1);
    const double log_min_freq = std::log10(min_freq);
@@ -136,7 +136,7 @@ void DiscMethodVisitor::operator()
 }
 
 void DiscMethodVisitor::operator()
-   (const DiscMethodParams<DiscMethodOption::Random> &dp)
+   (const DiscMethodParams<DiscMethod::Random> &dp)
 {
    std::mt19937 gen(dp.seed);
    std::uniform_real_distribution<double> real_dist(min_freq, max_freq);
@@ -147,7 +147,7 @@ void DiscMethodVisitor::operator()
 }
 
 void DiscMethodVisitor::operator()
-   (const DiscMethodParams<DiscMethodOption::RandomLog> &dp)
+   (const DiscMethodParams<DiscMethod::RandomLog> &dp)
 {
    std::mt19937 gen(dp.seed);
    std::uniform_real_distribution<double> real_dist(std::log10(min_freq),
@@ -159,7 +159,7 @@ void DiscMethodVisitor::operator()
 }
 
 void DirectionVisitor::operator()
-   (const DirectionParams<DirectionOption::Constant> &dp)
+   (const DirectionParams<Direction::Constant> &dp)
 {
    for (std::size_t i = 0; i < k_hats.size(); i++)
    {
@@ -168,7 +168,7 @@ void DirectionVisitor::operator()
 }
 
 void DirectionVisitor::operator()
-   (const DirectionParams<DirectionOption::RandomXYAngle> &dp)
+   (const DirectionParams<Direction::RandomXYAngle> &dp)
 {
    std::mt19937 dir_gen(dp.seed);
    std::uniform_real_distribution<double> dir_dist(
@@ -184,7 +184,7 @@ void DirectionVisitor::operator()
 }
 
 void SourceVisitor::operator()
-   (const SourceParams<SourceOption::SingleWave> &sp)
+   (const SourceParams<Source::SingleWave> &sp)
 {
    std::vector<double> k_hat(sp.direction.size(), 0.0);
    Normalize(sp.direction, k_hat);
@@ -192,7 +192,7 @@ void SourceVisitor::operator()
 }
 
 void SourceVisitor::operator()
-   (const SourceParams<SourceOption::WaveSpectrum> &sp)
+   (const SourceParams<Source::WaveSpectrum> &sp)
 {
    for (int i = 0; i < sp.amps.size(); i++)
    {
@@ -204,7 +204,7 @@ void SourceVisitor::operator()
 }
 
 void SourceVisitor::operator()
-   (const SourceParams<SourceOption::PSD> &sp)
+   (const SourceParams<Source::PSD> &sp)
 {
    // Process input PSD
    std::unique_ptr<BasePSD> psd;
@@ -255,7 +255,7 @@ void SourceVisitor::operator()
 }
 
 void SourceVisitor::operator()
-   (const SourceParams<SourceOption::WaveCSV> &sp)
+   (const SourceParams<Source::WaveCSV> &sp)
 {
    std::ifstream is(sp.file);
    if (!is.is_open())

@@ -35,12 +35,12 @@ struct InputXYVisitor
    /// Reference to y-data vector to set.
    std::vector<double> &y;
 
-   void operator() (const InputXYParams<InputXYOption::Here> &ip);
-   void operator() (const InputXYParams<InputXYOption::FromCSV> &ip);
+   void operator() (const InputXYParams<InputXY::Here> &ip);
+   void operator() (const InputXYParams<InputXY::FromCSV> &ip);
 };
 
 /**
- * @brief All visitor options for each FunctionParams, for initializing a
+ * @brief All visitor options for each FunctionTypeParams, for initializing a
  * \ref jabber::Function or \ref jabber::BasePSD type.
  * 
  * @tparam T      Either \ref jabber::Function or \ref jabber::BasePSD.
@@ -53,8 +53,8 @@ struct FunctionVisitor
    /// Function to initialize
    std::unique_ptr<T> &T_ptr;
 
-   void operator() (const FunctionParams<FunctionOption::PiecewiseLinear> &fp);
-   void operator() (const FunctionParams<FunctionOption::PiecewiseLogLog> &fp);
+   void operator() (const FunctionTypeParams<FunctionType::PiecewiseLinear> &fp);
+   void operator() (const FunctionTypeParams<FunctionType::PiecewiseLogLog> &fp);
 };
 
 /**
@@ -74,10 +74,10 @@ struct DiscMethodVisitor
    /// **Sized** frequency vector to initialize.
    std::vector<double> &freqs;
 
-   void operator() (const DiscMethodParams<DiscMethodOption::Uniform> &dp);
-   void operator() (const DiscMethodParams<DiscMethodOption::UniformLog> &dp);
-   void operator() (const DiscMethodParams<DiscMethodOption::Random> &dp);
-   void operator() (const DiscMethodParams<DiscMethodOption::RandomLog> &dp);
+   void operator() (const DiscMethodParams<DiscMethod::Uniform> &dp);
+   void operator() (const DiscMethodParams<DiscMethod::UniformLog> &dp);
+   void operator() (const DiscMethodParams<DiscMethod::Random> &dp);
+   void operator() (const DiscMethodParams<DiscMethod::RandomLog> &dp);
 };
 
 /**
@@ -91,8 +91,8 @@ struct DirectionVisitor
    /// **Sized** vector of direction vectors for each wave.
    std::vector<std::vector<double>> &k_hats;
 
-   void operator() (const DirectionParams<DirectionOption::Constant> &dp);
-   void operator() (const DirectionParams<DirectionOption::RandomXYAngle> &dp);
+   void operator() (const DirectionParams<Direction::Constant> &dp);
+   void operator() (const DirectionParams<Direction::RandomXYAngle> &dp);
 };
 
 
@@ -107,10 +107,10 @@ struct SourceVisitor
 {
    /// Reference of wave vector to append jabber::Wave structs to.
    std::vector<jabber::Wave> &waves;
-   void operator() (const SourceParams<SourceOption::SingleWave> &sp);
-   void operator() (const SourceParams<SourceOption::WaveSpectrum> &sp);
-   void operator() (const SourceParams<SourceOption::PSD> &sp);
-   void operator() (const SourceParams<SourceOption::WaveCSV> &sp);
+   void operator() (const SourceParams<Source::SingleWave> &sp);
+   void operator() (const SourceParams<Source::WaveSpectrum> &sp);
+   void operator() (const SourceParams<Source::PSD> &sp);
+   void operator() (const SourceParams<Source::WaveCSV> &sp);
 };
 
 /**
