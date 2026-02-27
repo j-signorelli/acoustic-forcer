@@ -47,6 +47,40 @@ public:
    bool next() override;
 };
 
+/**
+ * @brief Generator for a random \ref jabber_app::FunctionParamsVariant.
+ * 
+ * @details If option is provided at construction, params type will stay 
+ * same throughout object life. Otherwise, params type is randomized 
+ * with every call to \ref next().
+ */
+class RandomFunctionGenerator 
+   : public Catch::Generators::IGenerator<jabber_app::FunctionParamsVariant>
+{
+private:
+   const std::optional<jabber_app::FunctionOption> option_;
+   RandomOptionGenerator<jabber_app::FunctionOption> ro_gen_;
+
+   jabber_app::FunctionParamsVariant opv_;
+
+   // For FunctionOption::PiecewiseLinear and FunctionOption::PiecewiseLogLog
+   RandomOptionGenerator<jabber_app::InputXYOption> rixy_opt_gen_;
+   RandomInputXYGenerator rixy_gen_;
+
+public:
+   RandomFunctionGenerator
+      (const std::optional<jabber_app::FunctionOption> option=std::nullopt)
+   : option_(option)
+   {
+      static_cast<void>(next());
+   }
+   jabber_app::FunctionParamsVariant const& get() const override
+   {
+      return opv_;
+   }
+
+   bool next() override;
+};
 
 
 /**
@@ -57,16 +91,6 @@ public:
 template<OptionEnum E>
 constexpr auto random_params(std::optional<E> V=std::nullopt)
 {
-   using ReturnType = 
-   decltype([]()
-   {
-      if constexpr (std::same_as<E, jabber_app::InputXYOption>)
-      {
-         return jabber_app::InputXYParamsVariant{};
-      }
-
-   }());
-
    using RandomGeneratorType = 
    decltype([]()
    {
@@ -74,7 +98,18 @@ constexpr auto random_params(std::optional<E> V=std::nullopt)
       {
          return RandomInputXYGenerator();
       }
+      else if constexpr(std::same_as<E, jabber_app::FunctionOption>)
+      {
+         return RandomFunctionGenerator();
+      }
 
+   }());
+
+   using ReturnType = 
+   decltype([]()
+   {
+      RandomGeneratorType t;
+      return t.get();
    }());
 
    return Catch::Generators::GeneratorWrapper<ReturnType>(

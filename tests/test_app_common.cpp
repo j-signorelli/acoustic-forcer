@@ -10,6 +10,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <numeric>
 
 using namespace jabber_app;
 using namespace Catch::Matchers;

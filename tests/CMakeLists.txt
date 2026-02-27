@@ -1,5 +1,5 @@
 add_executable(unit-tests
-                        utils.cpp
+                        app_utils.cpp
                         test_compute_1d.cpp
                         test_compute_2d.cpp
                         test_compute_3d.cpp

@@ -1,12 +1,15 @@
 #ifdef JABBER_WITH_APP
 
-#include "utils.hpp"
+#include "app_utils.hpp"
 
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_template_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_vector.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <catch2/generators/catch_generators_range.hpp>
 #include <jabber_app.hpp>
+
+#include <functional>
 
 using namespace jabber;
 using namespace jabber_app;
@@ -69,18 +72,29 @@ TEST_CASE("TOMLConfigInput::ParseBaseFlow", "[App][TOMLConfigInput]")
    CHECK(config.BaseFlow().gamma == kGamma);
 }
 
-TEST_CASE("TOMLConfigInput::ParseInputXY", "[App][TOMLConfigInput]")
+TEMPLATE_TEST_CASE_SIG("TOMLConfigInput::ParseInputXY", 
+   "[App][TOMLConfigInput]",
+   ((OptionEnum OptionE, typename ParamsVariant, typename TOMLWriterVisitor,
+      std::function<void(std::string, ParamsVariant&)> Parser, 
+      typename TestVisitor), OptionE, ParamsVariant, TOMLWriterVisitor, Parser,
+      TestVisitor),
+
+   // InputXY:
+   (InputXYOption, InputXYParamsVariant, TOMLInputXYVisitor, 
+      TOMLConfigInput::ParseInputXY, TestInputXYVisitor)
+   
+   )
 {
-   const InputXYOption kOption = GENERATE(options<InputXYOption>());
-   InputXYParamsVariant opv = 
-      GENERATE_REF(take(1, random_params<InputXYOption>(kOption)));
+   const OptionE kOption = GENERATE(options<OptionE>());
+   ParamsVariant opv = 
+      GENERATE_REF(take(1, random_params<OptionE>(kOption)));
 
-   std::string in_str = std::visit(TOMLInputXYVisitor{}, opv);
+   std::string in_str = std::visit(TOMLWriterVisitor{}, opv);
 
-   InputXYParamsVariant opv_parsed;
-   TOMLConfigInput::ParseInputXY(in_str, opv_parsed);
+   ParamsVariant opv_parsed;
+   Parser(in_str, opv_parsed);
 
-   std::visit(TestInputXYVisitor{opv}, opv_parsed);
+   std::visit(TestVisitor{opv}, opv_parsed);
 }
 
 // TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")

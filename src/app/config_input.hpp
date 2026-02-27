@@ -103,6 +103,36 @@ public:
 class TOMLConfigInput : public ConfigInput
 {
 public:
+
+   /**
+    * @brief Parse base flow parameters from a serialized TOML string of that
+    * section.
+    */
+   static void ParseBaseFlow(std::string base_flow_serialized, 
+                              BaseFlowParams &params);
+
+   /**
+    * @brief Parse source parameters from a serialized TOML string of that
+    * section, and append it to \ref sources_.
+    */
+   static void ParseSource(std::string source_serialized,
+                           SourceParamsVariant &params_var);
+
+   /**
+    * @brief Parse computation parameters from a serialized TOML string of that
+    * section.
+    */
+   static void ParseComputation(std::string comp_serialized,
+                                 CompParams &params);
+
+   /**
+    * @brief Parse preCICE parameters from a serialized TOML string of that
+    * section.
+    */
+   static void ParsePrecice(std::string precice_serialized,
+                              PreciceParams &params);
+
+
    /// Construct an uninitialized TOMLConfigInput object.
    TOMLConfigInput() {};
    /**
@@ -113,31 +143,6 @@ public:
     *                         to (verbose processing).
     */
    TOMLConfigInput(std::string config_file, std::ostream *out=nullptr);
-
-
-   /**
-    * @brief Parse base flow parameters from a serialized TOML string of that
-    * section.
-    */
-   void ParseBaseFlow(std::string base_flow_serialized);
-
-   /**
-    * @brief Parse source parameters from a serialized TOML string of that
-    * section, and append it to \ref sources_.
-    */
-   void ParseSource(std::string source_serialized);
-
-   /**
-    * @brief Parse computation parameters from a serialized TOML string of that
-    * section.
-    */
-   void ParseComputation(std::string comp_serialized);
-
-   /**
-    * @brief Parse preCICE parameters from a serialized TOML string of that
-    * section. This initializes \ref precice_.
-    */
-   void ParsePrecice(std::string precice_serialized);
 
 };
 

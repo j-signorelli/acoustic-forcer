@@ -16,7 +16,7 @@ RandomInputXYGenerator::RandomInputXYGenerator
   y_gen_(xy_size_, random(1e-9, 1e-12)),
   ri_file_suffix_gen_(random(0, 100))
 {
-
+   static_cast<void>(next());
 }
 
 bool RandomInputXYGenerator::next()
@@ -24,8 +24,8 @@ bool RandomInputXYGenerator::next()
    InputXYOption use_option;
    if (!option_)
    {
-      use_option = ro_gen_.get();
       ro_gen_.next();
+      use_option = ro_gen_.get();
    }
    else
    {
@@ -56,6 +56,40 @@ bool RandomInputXYGenerator::next()
    return true;
 }
 
+bool RandomFunctionGenerator::next()
+{
+   FunctionOption use_option;
+   if (!option_)
+   {  
+      ro_gen_.next();
+      use_option = ro_gen_.get();
+   }
+   else
+   {
+      use_option = *option_;
+   }
+
+   if (use_option == FunctionOption::PiecewiseLinear)
+   {
+      rixy_gen_.next();
+      FunctionParams<FunctionOption::PiecewiseLinear> op;
+      op.input_xy = rixy_gen_.get();
+      opv_ = op;
+   }
+   else if (use_option == FunctionOption::PiecewiseLogLog)
+   {
+      rixy_gen_.next();
+      FunctionParams<FunctionOption::PiecewiseLogLog> op;
+      op.input_xy = rixy_gen_.get();
+      opv_ = op;
+   }
+   else
+   {
+      throw std::logic_error("Invalid or unimplemented InputXYOption.");
+   }
+
+   return true;
+}
 // FunctionParamsVariant GenerateRandomFunction(FunctionType f, int seed)
 // {
 //    FunctionParamsVariant fpv;

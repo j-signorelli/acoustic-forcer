@@ -149,6 +149,58 @@ void ConfigInput::PrintPreciceParams(std::ostream &out) const
    }
 }
 
+void TOMLConfigInput::ParseBaseFlow
+   (std::string base_flow_serialized, BaseFlowParams &params)
+{
+   toml::value in_base_flow = toml::parse_str(base_flow_serialized);
+
+   params.rho = in_base_flow.at("rho").as_floating();
+   params.p = in_base_flow.at("p").as_floating();
+   params.U = toml::get<std::vector<double>>(in_base_flow.at("U"));
+   params.gamma = in_base_flow.at("gamma").as_floating();
+}
+
+/// Internal helper function here for getting enumerator from string.
+template<typename T>
+static void GetEnumerator(const std::string_view input_str, 
+                           std::span<const std::string_view> option_names,
+                           T &val)
+{
+   const auto it = std::find(option_names.begin(), 
+                              option_names.end(), 
+                              input_str);
+   if (it == option_names.end())
+   {
+      throw std::invalid_argument(std::format("Invalid input argument: {}",
+                                              input_str));
+   }
+   else
+   {
+      val = static_cast<T>(std::distance(option_names.begin(), it));
+   }
+}
+
+void TOMLConfigInput::ParseComputation
+   (std::string comp_serialized, CompParams &params)
+{
+   toml::value in_comp = toml::parse_str(comp_serialized);
+   params.t0 = in_comp.at("t0").as_floating();
+   GetEnumerator(in_comp.at("Kernel").as_string(), kKernelNames, 
+                  params.kernel);
+}
+
+void TOMLConfigInput::ParsePrecice
+   (std::string precice_serialized, PreciceParams &params)
+{
+   toml::value in_precice = toml::parse_str(precice_serialized);
+   params.participant_name = in_precice.at("ParticipantName")
+                                             .as_string();
+   params.config_file = in_precice.at("ConfigFile").as_string();
+   params.fluid_mesh_name = in_precice.at("FluidMeshName").as_string();
+   params.mesh_access_region = 
+         toml::get<std::vector<double>>(in_precice.at("MeshAccessRegion"));
+}
+
 TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
 {
    toml::value file = toml::parse(config_file);
@@ -189,36 +241,6 @@ TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
       {
          PrintPreciceParams(*out);
       }
-   }
-}
-
-void TOMLConfigInput::ParseBaseFlow(std::string base_flow_serialized)
-{
-   toml::value in_base_flow = toml::parse_str(base_flow_serialized);
-
-   base_flow_.rho = in_base_flow.at("rho").as_floating();
-   base_flow_.p = in_base_flow.at("p").as_floating();
-   base_flow_.U = toml::get<std::vector<double>>(in_base_flow.at("U"));
-   base_flow_.gamma = in_base_flow.at("gamma").as_floating();
-}
-
-/// Internal helper function here for getting enumerator from string.
-template<typename T>
-static void GetEnumerator(const std::string_view input_str, 
-                           std::span<const std::string_view> option_names,
-                           T &val)
-{
-   const auto it = std::find(option_names.begin(), 
-                              option_names.end(), 
-                              input_str);
-   if (it == option_names.end())
-   {
-      throw std::invalid_argument(std::format("Invalid input argument: {}",
-                                              input_str));
-   }
-   else
-   {
-      val = static_cast<T>(std::distance(option_names.begin(), it));
    }
 }
 
@@ -372,25 +394,6 @@ void TOMLConfigInput::ParseSource(std::string source_serialized)
       meta.file = in_source.at("File").as_string();
       sources_.emplace_back(meta);
    }
-}
-
-void TOMLConfigInput::ParseComputation(std::string comp_serialized)
-{
-   toml::value in_comp = toml::parse_str(comp_serialized);
-   comp_.t0 = in_comp.at("t0").as_floating();
-   GetEnumerator(in_comp.at("Kernel").as_string(), kKernelNames, comp_.kernel);
-}
-
-void TOMLConfigInput::ParsePrecice(std::string precice_serialized)
-{
-   precice_ = PreciceParams();
-   toml::value in_precice = toml::parse_str(precice_serialized);
-   precice_->participant_name = in_precice.at("ParticipantName")
-                                             .as_string();
-   precice_->config_file = in_precice.at("ConfigFile").as_string();
-   precice_->fluid_mesh_name = in_precice.at("FluidMeshName").as_string();
-   precice_->mesh_access_region = 
-         toml::get<std::vector<double>>(in_precice.at("MeshAccessRegion"));
 }
 
 } // namespace jabber
