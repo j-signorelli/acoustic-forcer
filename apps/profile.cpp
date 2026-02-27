@@ -150,7 +150,7 @@ void CreateGrid(const int dim, const int num_pts_d, const double extent,
 {
    const double h = extent/(num_pts_d-1);
    int num_pts_total = 1;
-   for (int d = 1; d < dim; d++)
+   for (int d = 0; d < dim; d++)
    {
       num_pts_total *= num_pts_d;
    }
