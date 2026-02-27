@@ -150,14 +150,14 @@ void ConfigInput::PrintPreciceParams(std::ostream &out) const
 }
 
 void TOMLConfigInput::ParseBaseFlow
-   (std::string base_flow_serialized, BaseFlowParams &params)
+   (std::string toml_string, BaseFlowParams &op)
 {
-   toml::value in_base_flow = toml::parse_str(base_flow_serialized);
+   toml::value in_val = toml::parse_str(toml_string);
 
-   params.rho = in_base_flow.at("rho").as_floating();
-   params.p = in_base_flow.at("p").as_floating();
-   params.U = toml::get<std::vector<double>>(in_base_flow.at("U"));
-   params.gamma = in_base_flow.at("gamma").as_floating();
+   op.rho = in_val.at("rho").as_floating();
+   op.p = in_val.at("p").as_floating();
+   op.U = toml::get<std::vector<double>>(in_val.at("U"));
+   op.gamma = in_val.at("gamma").as_floating();
 }
 
 /// Internal helper function here for getting enumerator from string.
@@ -180,25 +180,195 @@ static void GetEnumerator(const std::string_view input_str,
    }
 }
 
-void TOMLConfigInput::ParseComputation
-   (std::string comp_serialized, CompParams &params)
+void TOMLConfigInput::ParseInputXY
+   (std::string toml_string, InputXYParamsVariant &opv)
 {
-   toml::value in_comp = toml::parse_str(comp_serialized);
-   params.t0 = in_comp.at("t0").as_floating();
-   GetEnumerator(in_comp.at("Kernel").as_string(), kKernelNames, 
-                  params.kernel);
+   toml::value in_val = toml::parse_str(toml_string);
+   InputXYOption option;
+   GetEnumerator(in_val.at("Type").as_string(), kInputXYNames, 
+                     option);
+   if (option == InputXYOption::Here)
+   {
+      InputXYParams<InputXYOption::Here> op;
+      op.x = toml::get<std::vector<double>>(in_val.at("X"));
+      op.y = toml::get<std::vector<double>>(in_val.at("Y"));
+      opv = op;
+   }
+   else if (option == InputXYOption::FromCSV)
+   {
+      InputXYParams<InputXYOption::FromCSV> op;
+      op.file = in_val.at("File").as_string();
+      opv = op;
+   }
+}
+
+void TOMLConfigInput::ParseFunction
+   (std::string toml_string, FunctionParamsVariant &opv)
+{
+   toml::value in_val = toml::parse_str(toml_string);
+   FunctionOption option;
+   GetEnumerator(in_val.at("Type").as_string(), kFunctionNames, 
+                        option);
+
+   if (option == FunctionOption::PiecewiseLinear)
+   {
+      FunctionParams<FunctionOption::PiecewiseLinear> op;
+      ParseInputXY(toml::format(in_val.at("Data")), op.input_xy);
+      opv = op;
+   }
+   else if (option == FunctionOption::PiecewiseLogLog)
+   {
+      FunctionParams<FunctionOption::PiecewiseLogLog> op;
+      ParseInputXY(toml::format(in_val.at("Data")), op.input_xy);
+      opv = op;
+   }
+}
+
+void TOMLConfigInput::ParseDiscMethod
+   (std::string toml_string, DiscMethodParamsVariant &opv)
+{
+   toml::value in_val = toml::parse_str(toml_string);
+   DiscMethodOption option;
+   GetEnumerator(in_val.at("Type").as_string(), kDiscMethodNames,
+                  option);
+
+   if (option == DiscMethodOption::Uniform)
+   {
+      opv = DiscMethodParams<DiscMethodOption::Uniform>{};
+   }
+   else if (option == DiscMethodOption::UniformLog)
+   {
+      opv = DiscMethodParams<DiscMethodOption::UniformLog>{};
+   }
+   else if (option == DiscMethodOption::Random)
+   {
+      DiscMethodParams<DiscMethodOption::Random> op;
+      op.seed = in_val.at("Seed").as_integer();
+      opv = op;
+   }
+   else if (option == DiscMethodOption::RandomLog)
+   {
+      DiscMethodParams<DiscMethodOption::RandomLog> op;
+      op.seed = in_val.at("Seed").as_integer();
+      opv = op;
+   }
+}
+
+void TOMLConfigInput::ParseDirection
+   (std::string toml_string, DirectionParamsVariant &opv)
+{
+   toml::value in_val = toml::parse_str(toml_string);
+   DirectionOption option;
+   GetEnumerator(in_val.at("Type").as_string(), kDirectionNames, option);
+
+   if (option == DirectionOption::Constant)
+   {
+      DirectionParams<DirectionOption::Constant> op;
+      op.direction = toml::get<std::vector<double>>(in_val.at("Vector"));
+      opv = op;
+   }
+   else if (option == DirectionOption::RandomXYAngle)
+   {
+      DirectionParams<DirectionOption::RandomXYAngle> op;
+      op.min_angle = in_val.at("MinAngle").as_floating();
+      op.max_angle = in_val.at("MaxAngle").as_floating();
+      op.seed = in_val.at("Seed").as_integer();
+      opv = op;
+   }
+}
+
+void TOMLConfigInput::ParseSource
+   (std::string toml_string, SourceParamsVariant &opv)
+{
+   toml::value in_val = toml::parse_str(toml_string);
+
+   SourceOption option;
+   GetEnumerator(in_val.at("Type").as_string(), kSourceNames, option);
+
+   if (option == SourceOption::SingleWave)
+   {
+      SourceParams<SourceOption::SingleWave> op;
+
+      op.amp = in_val.at("Amplitude").as_floating();
+      op.freq = in_val.at("Frequency").as_floating();
+      op.direction = toml::get<std::vector<double>>(
+                                       in_val.at("DirVector"));
+      op.phase = in_val.at("Phase").as_floating();
+      op.speed = *(in_val.at("Speed").as_string().data());
+
+      opv = op;
+   }
+   else if (option == SourceOption::WaveSpectrum)
+   {
+      SourceParams<SourceOption::WaveSpectrum> op;
+      
+      op.amps = toml::get<std::vector<double>>(
+                                          in_val.at("Amplitudes"));
+      op.freqs = toml::get<std::vector<double>>(
+                                          in_val.at("Frequencies"));
+      op.directions = toml::get<std::vector<std::vector<double>>>(
+                                          in_val.at("DirVectors"));
+      op.phases = toml::get<std::vector<double>>(
+                                             in_val.at("Phases"));
+      std::vector<std::string> speed_strs = 
+                  toml::get<std::vector<std::string>>(in_val.at("Speeds"));
+      op.speeds.resize(speed_strs.size());
+      std::transform(speed_strs.begin(), speed_strs.end(), op.speeds.begin(),
+                     [](std::string &s) -> char { return *(s.data()); });
+      
+      opv = op;
+   }
+   else if (option == SourceOption::PSD)
+   {
+      SourceParams<SourceOption::PSD> op;
+
+      op.dim_fac = in_val.at("ScaleFactor").as_floating();
+      op.phase_seed = in_val.at("PhaseSeed").as_integer();
+      op.speed = *(in_val.at("Speed").as_string().data());
+      
+      ParseFunction(toml::format(in_val.at("InputPSD")), op.input_psd);
+      
+      toml::value in_disc_val = in_val.at("Discretization");
+      op.min_disc_freq = in_disc_val.at("Min").as_floating();
+      op.max_disc_freq = in_disc_val.at("Max").as_floating();
+      op.num_waves = in_disc_val.at("N").as_integer();
+      GetEnumerator(in_disc_val.at("Interval").as_string(), kIntervalNames,
+                      op.int_method);
+      
+      ParseDiscMethod(toml::format(in_disc_val.at("Method")), op.disc_params);
+
+      ParseDirection(toml::format(in_val.at("Direction")), op.dir_params);
+
+      opv = op;
+   }
+   else if (option == SourceOption::WaveCSV)
+   {
+      SourceParams<SourceOption::WaveCSV> op;
+      op.file = in_val.at("File").as_string();
+      opv = op;
+   }
+}
+
+void TOMLConfigInput::ParseComputation
+   (std::string toml_string, CompParams &op)
+{
+   toml::value in_val = toml::parse_str(toml_string);
+   op.t0 = in_val.at("t0").as_floating();
+   GetEnumerator(in_val.at("Kernel").as_string(), kKernelNames, 
+                  op.kernel);
 }
 
 void TOMLConfigInput::ParsePrecice
-   (std::string precice_serialized, PreciceParams &params)
+   (std::string toml_string, PreciceParams &op)
 {
-   toml::value in_precice = toml::parse_str(precice_serialized);
-   params.participant_name = in_precice.at("ParticipantName")
+   toml::value in_val = toml::parse_str(toml_string);
+   
+   op.participant_name = in_val.at("ParticipantName")
                                              .as_string();
-   params.config_file = in_precice.at("ConfigFile").as_string();
-   params.fluid_mesh_name = in_precice.at("FluidMeshName").as_string();
-   params.mesh_access_region = 
-         toml::get<std::vector<double>>(in_precice.at("MeshAccessRegion"));
+   op.config_file = in_val.at("ConfigFile").as_string();
+   op.fluid_mesh_name = in_val.at("FluidMeshName").as_string();
+   op.mesh_access_region = 
+         toml::get<std::vector<double>>(in_val.at("MeshAccessRegion"));
 }
 
 TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
@@ -207,7 +377,7 @@ TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
 
    // Parse base flow parameters
    toml::value in_base_flow = file.at("BaseFlow");
-   ParseBaseFlow(toml::format(in_base_flow));
+   ParseBaseFlow(toml::format(in_base_flow), base_flow_);
    if (out)
    {
       PrintBaseFlowParams(*out);
@@ -217,7 +387,7 @@ TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
    toml::array in_sources = file.at("Sources").as_array();
    for (const toml::value &in_source : in_sources)
    {
-      ParseSource(toml::format(in_source));
+      ParseSource(toml::format(in_source), sources_.emplace_back());
    }
    if (out)
    {
@@ -226,7 +396,7 @@ TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
 
    // Parse compute fields of run
    toml::value in_comp = file.at("Computation");
-   ParseComputation(toml::format(in_comp));
+   ParseComputation(toml::format(in_comp), comp_);
    if (out)
    {
       PrintCompParams(*out);
@@ -236,163 +406,12 @@ TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
    if (file.contains("preCICE"))
    {
       toml::value in_precice = file.at("preCICE");
-      ParsePrecice(toml::format(in_precice));
+      precice_ = PreciceParams{};
+      ParsePrecice(toml::format(in_precice), *precice_);
       if (out)
       {
          PrintPreciceParams(*out);
       }
-   }
-}
-
-/// Internal helper function here for parsing InputXYParams
-void GetInputXYParams(toml::value in_xy_data, InputXYParamsVariant &ipv)
-{
-   InputXYOption in_xy_option;
-   GetEnumerator(in_xy_data.at("Type").as_string(), kInputXYNames, 
-                     in_xy_option);
-   if (in_xy_option == InputXYOption::Here)
-   {
-      InputXYParams<InputXYOption::Here> xy_params;
-      xy_params.x = toml::get<std::vector<double>>(
-                                          in_xy_data.at("X"));
-      xy_params.y = toml::get<std::vector<double>>(
-                                          in_xy_data.at("Y"));
-      ipv = xy_params;
-   }
-   else if (in_xy_option == InputXYOption::FromCSV)
-   {
-      InputXYParams<InputXYOption::FromCSV> xy_params;
-      xy_params.file = in_xy_data.at("File").as_string();
-      ipv = xy_params;
-   }
-}
-
-void TOMLConfigInput::ParseSource(std::string source_serialized)
-{
-   toml::value in_source = toml::parse_str(source_serialized);
-   std::string mode_type = in_source.at("Type").as_string();
-
-   SourceOption source_op;
-   GetEnumerator(mode_type, kSourceNames, source_op);
-
-   if (source_op == SourceOption::SingleWave)
-   {
-      SourceParams<SourceOption::SingleWave> meta;
-
-      meta.amp = in_source.at("Amplitude").as_floating();
-      meta.freq = in_source.at("Frequency").as_floating();
-      meta.direction = toml::get<std::vector<double>>(
-                                       in_source.at("DirVector"));
-      meta.phase = in_source.at("Phase").as_floating();
-      meta.speed = *(in_source.at("Speed").as_string().data());
-
-      sources_.emplace_back(meta);
-   }
-   else if (source_op == SourceOption::WaveSpectrum)
-   {
-      SourceParams<SourceOption::WaveSpectrum> meta;
-      
-      meta.amps = toml::get<std::vector<double>>(
-                                          in_source.at("Amplitudes"));
-      meta.freqs = toml::get<std::vector<double>>(
-                                          in_source.at("Frequencies"));
-      meta.directions = toml::get<std::vector<std::vector<double>>>(
-                                          in_source.at("DirVectors"));
-      meta.phases = toml::get<std::vector<double>>(
-                                             in_source.at("Phases"));
-      std::vector<std::string> speed_strs = 
-                  toml::get<std::vector<std::string>>(in_source.at("Speeds"));
-      meta.speeds.resize(speed_strs.size());
-      std::transform(speed_strs.begin(), speed_strs.end(), meta.speeds.begin(),
-                     [](std::string &s) -> char { return *(s.data()); });
-      
-      sources_.emplace_back(meta);
-   }
-   else if (source_op == SourceOption::PSD)
-   {
-      SourceParams<SourceOption::PSD> meta;
-
-      toml::value in_input = in_source.at("InputPSD");
-      FunctionOption func_option;
-      GetEnumerator(in_input.at("Type").as_string(), kFunctionNames, 
-                        func_option);
-
-      if (func_option == FunctionOption::PiecewiseLinear)
-      {
-         FunctionParams<FunctionOption::PiecewiseLinear> fp;
-         GetInputXYParams(in_input.at("Data"), fp.input_xy);
-         meta.input_psd = fp;
-      }
-      else if (func_option == FunctionOption::PiecewiseLogLog)
-      {
-         FunctionParams<FunctionOption::PiecewiseLogLog> fp;
-         GetInputXYParams(in_input.at("Data"), fp.input_xy);
-         meta.input_psd = fp;
-      }
-
-      meta.dim_fac = in_source.at("ScaleFactor").as_floating();
-      
-      toml::value in_disc = in_source.at("Discretization");
-      meta.min_disc_freq = in_disc.at("Min").as_floating();
-      meta.max_disc_freq = in_disc.at("Max").as_floating();
-      meta.num_waves = in_disc.at("N").as_integer();
-      GetEnumerator(in_disc.at("Interval").as_string(), kIntervalNames,
-                      meta.int_method);
-      
-      toml::value in_disc_method = in_disc.at("Method");
-      DiscMethodOption disc_option;
-      GetEnumerator(in_disc_method.at("Type").as_string(), kDiscMethodNames,
-                     disc_option);
-      if (disc_option == DiscMethodOption::Uniform)
-      {
-         meta.disc_params = DiscMethodParams<DiscMethodOption::Uniform>{};
-      }
-      else if (disc_option == DiscMethodOption::UniformLog)
-      {
-         meta.disc_params = DiscMethodParams<DiscMethodOption::UniformLog>{};
-      }
-      else if (disc_option == DiscMethodOption::Random)
-      {
-         DiscMethodParams<DiscMethodOption::Random> disc_params;
-         disc_params.seed = in_disc_method.at("Seed").as_integer();
-         meta.disc_params = disc_params;
-      }
-      else if (disc_option == DiscMethodOption::RandomLog)
-      {
-         DiscMethodParams<DiscMethodOption::RandomLog> disc_params;
-         disc_params.seed = in_disc_method.at("Seed").as_integer();
-         meta.disc_params = disc_params;
-      }
-
-      toml::value in_dir = in_source.at("Direction");
-      DirectionOption dir_option;
-      GetEnumerator(in_dir.at("Type").as_string(), kDirectionNames, dir_option);
-      if (dir_option == DirectionOption::Constant)
-      {
-         DirectionParams<DirectionOption::Constant> dir_params;
-         dir_params.direction = toml::get<std::vector<double>>(
-                                                in_dir.at("Vector"));
-         meta.dir_params = dir_params;
-      }
-      else if (dir_option == DirectionOption::RandomXYAngle)
-      {
-         DirectionParams<DirectionOption::RandomXYAngle> dir_params;
-         dir_params.min_angle = in_dir.at("MinAngle").as_floating();
-         dir_params.max_angle = in_dir.at("MaxAngle").as_floating();
-         dir_params.seed = in_dir.at("Seed").as_integer();
-         meta.dir_params = dir_params;
-      }
-
-      meta.phase_seed = in_source.at("PhaseSeed").as_integer();
-      meta.speed = *(in_source.at("Speed").as_string().data());
-
-      sources_.emplace_back(meta);
-   }
-   else if (source_op == SourceOption::WaveCSV)
-   {
-      SourceParams<SourceOption::WaveCSV> meta;
-      meta.file = in_source.at("File").as_string();
-      sources_.emplace_back(meta);
    }
 }
 

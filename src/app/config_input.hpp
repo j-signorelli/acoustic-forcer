@@ -108,29 +108,57 @@ public:
     * @brief Parse base flow parameters from a serialized TOML string of that
     * section.
     */
-   static void ParseBaseFlow(std::string base_flow_serialized, 
-                              BaseFlowParams &params);
+   static void ParseBaseFlow(std::string toml_string, 
+                              BaseFlowParams &op);
+
+   /**
+    * @brief Parse input xy parameters from a serialized TOML string of that
+    * section.
+    */
+   static void ParseInputXY(std::string toml_string,
+                              InputXYParamsVariant &opv);
+
+   /**
+    * @brief Parse function parameters from a serialized TOML string of that
+    * section.
+    */
+   static void ParseFunction(std::string toml_string,
+                              FunctionParamsVariant &opv);
+
+   /**
+    * @brief Parse disc. method parameters from a serialized TOML string of
+    * that section.
+    */
+   static void ParseDiscMethod(std::string toml_string,
+                                 DiscMethodParamsVariant &opv);
+   
+   /**
+    * @brief Parse direction parameters from a serialized TOML string of that
+    * section.
+    */
+   static void ParseDirection(std::string toml_string,
+                              DirectionParamsVariant &opv);
 
    /**
     * @brief Parse source parameters from a serialized TOML string of that
-    * section, and append it to \ref sources_.
+    * section.
     */
-   static void ParseSource(std::string source_serialized,
-                           SourceParamsVariant &params_var);
+   static void ParseSource(std::string toml_string,
+                           SourceParamsVariant &opv);
 
    /**
     * @brief Parse computation parameters from a serialized TOML string of that
     * section.
     */
-   static void ParseComputation(std::string comp_serialized,
-                                 CompParams &params);
+   static void ParseComputation(std::string toml_string,
+                                 CompParams &op);
 
    /**
     * @brief Parse preCICE parameters from a serialized TOML string of that
     * section.
     */
-   static void ParsePrecice(std::string precice_serialized,
-                              PreciceParams &params);
+   static void ParsePrecice(std::string toml_string,
+                              PreciceParams &op);
 
 
    /// Construct an uninitialized TOMLConfigInput object.
