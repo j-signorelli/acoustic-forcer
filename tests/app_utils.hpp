@@ -16,76 +16,112 @@
 namespace jabber_test
 {
 
-/**
- * @brief Generator for a random \ref jabber_app::InputXYParamsVariant.
- * 
- * @details If option is provided at construction, params type will stay 
- * same throughout object life. Otherwise, params type is randomized 
- * with every call to \ref next().
- */
-class RandomInputXYGenerator 
-   : public Catch::Generators::IGenerator<jabber_app::InputXYParamsVariant>
+template<OptionEnum E, typename ParamsVariant, typename ParamGenerators>
+class RandomParamsGenerator
+   : public Catch::Generators::IGenerator<ParamsVariant>
 {
 private:
-   const std::optional<jabber_app::InputXYOption> option_;
-   RandomOptionGenerator<jabber_app::InputXYOption> ro_gen_;
+   const std::optional<E> option_;
+   RandomOptionGenerator<E> ro_gen_;
 
-   jabber_app::InputXYParamsVariant opv_;
+   ParamsVariant opv_;
 
-   // For InputXYOption::Here
-   const std::size_t xy_size_;
-   Catch::Generators::ChunkGenerator<double> x_gen_, y_gen_;
-
-   // For InputXYOption::FromCSV
-   Catch::Generators::GeneratorWrapper<int> ri_file_suffix_gen_;
+   ParamGenerators rparam_gen_;
 
 public:
-   RandomInputXYGenerator
-      (const std::optional<jabber_app::InputXYOption> option=std::nullopt);
-
-   jabber_app::InputXYParamsVariant const& get() const override
-   {
-      return opv_;
-   }
-
-   bool next() override;
-};
-
-/**
- * @brief Generator for a random \ref jabber_app::FunctionParamsVariant.
- * 
- * @details If option is provided at construction, params type will stay 
- * same throughout object life. Otherwise, params type is randomized 
- * with every call to \ref next().
- */
-class RandomFunctionGenerator 
-   : public Catch::Generators::IGenerator<jabber_app::FunctionParamsVariant>
-{
-private:
-   const std::optional<jabber_app::FunctionOption> option_;
-   RandomOptionGenerator<jabber_app::FunctionOption> ro_gen_;
-
-   jabber_app::FunctionParamsVariant opv_;
-
-   // For FunctionOption::PiecewiseLinear and FunctionOption::PiecewiseLogLog
-   RandomOptionGenerator<jabber_app::InputXYOption> rixy_opt_gen_;
-   RandomInputXYGenerator rixy_gen_;
-
-public:
-   RandomFunctionGenerator
-      (const std::optional<jabber_app::FunctionOption> option=std::nullopt)
+   RandomParamsGenerator(const std::optional<E> option=std::nullopt)
    : option_(option)
    {
       static_cast<void>(next());
    }
-   jabber_app::FunctionParamsVariant const& get() const override
+
+   ParamsVariant const& get() const override
    {
       return opv_;
    }
 
-   bool next() override;
+   bool next() override
+   {
+      E use_option;
+      if (!option_)
+      {
+         ro_gen_.next();
+         use_option = ro_gen_.get();
+      }
+      else
+      {
+         use_option = *option_;
+      }
+
+      rparam_gen_(use_option, opv_);
+
+      return true;
+   }
 };
 
+class RandomInputXYGenerators
+{
+private:
+   // For InputXYOption::Here
+   const std::size_t xy_size_
+   Catch::Generators::ChunkGenerator<double> x_gen_, y_gen_;
+
+   // For InputXYOption::FromCSV
+   Catch::Generators::GeneratorWrapper<int> ri_file_suffix_gen_;
+public:
+
+};
+
+class RandomFunctionGenerators
+{
+private:
+   // For FunctionOption::PiecewiseLinear and FunctionOption::PiecewiseLogLog
+   Catch::Generators::GeneratorWrapper<InputXYParamsVariant> rixy_gen_;
+
+public:
+   void next(const FunctionOption &option, FunctionParamsVariant &opv);
+};
+
+class RandomDiscMethodGenerators
+{
+private:
+   // For DiscMethodOption::Random and DiscMethodOption::RandomLog
+   Catch::Generators::GeneratorWrapper<int> ri_seed_gen_;
+
+public:
+   void next(const DiscMethodOption &option, DiscMethodParamsVariant &opv);
+};
+
+class RandomDirectionGenerators
+{
+private:
+   // For DirectionOption::Constant
+   const int dim;
+   Catch::Generators::ChunkGenerator<double> dir_gen;
+
+   // For DirectionOption::RandomXYAngle
+   Catch::Generators::GeneratorWrapper<double> rf_min_gen_, rf_max_gen_;
+   Catch::Generators::GeneratorWrapper<int> ri_seed_gen_;
+public:
+   void next(const DirectionOption &option, DirectionParamsVariant &opv);
+};
+
+class RandomTransferGenerators
+{
+private:
+   // TODO
+public:
+   void next(const TransferOption &option, TransferParamsVariant &opv);
+};
+
+class RandomSourceGenerators
+{
+private:
+   Catch::Generators::GeneratorWrapper<FunctionParamsVariant> rfunc_gen_;
+   
+public:
+   void next(const SourceOption &option, SourceParamsVariant &opv);
+};
 
 /**
  * @brief Generator-wrapper creator for random params of 
@@ -101,27 +137,38 @@ constexpr auto random_params(std::optional<E> V=std::nullopt)
    {
       if constexpr (std::same_as<E, InputXYOption>)
       {
-         return RandomInputXYGenerator();
+         return RandomParamsGenerator<InputXYOption, InputXYParamsVariant,
+                                       RandomInputXYGenerators>(); 
+
       }
       else if constexpr (std::same_as<E, FunctionOption>)
       {
-         return RandomFunctionGenerator();
+         return RandomFunctionGenerator<FunctionOption, FunctionParamsVariant,
+                                          RandomFunctionGenerators>();
       }
       else if constexpr (std::same_as<E, DiscMethodOption>)
       {
-         return RandomDiscMethodGenerator();
+         return RandomDiscMethodGenerator<DiscMethodOption, 
+                                          DiscMethodParamsVariant,
+                                          RandomDiscMethodGenerators>();
       }
       else if constexpr (std::same_as<E, DirectionOption>)
       {
-         return RandomDirectionGenerator();
+         return RandomDirectionGenerator<DirectionOption,
+                                          DirectionParamsVariant,
+                                          RandomDirectionGenerators>();
       }
       else if constexpr (std::same_as<E, TransferOption>)
       {
-         return RandomTransferGenerator();
+         return RandomTransferGenerator<TransferOption,
+                                          TransferParamsVariant,
+                                          RandomTransferGenerators>();
       }
       else if constexpr (std::same_as<E, SourceOption>)
       {
-         return RandomSourceGenerator();
+         return RandomSourceGenerator<SourceOption,
+                                       SourceParamsVariant,
+                                       RandomSourceGenerators>();
       }
 
    }());

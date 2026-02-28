@@ -93,6 +93,41 @@ bool RandomFunctionGenerator::next()
    return true;
 }
 
+bool RandomDiscMethodGenerator::next()
+{
+   DiscMethodOption use_option;
+   if (!option_)
+   {  
+      ro_gen_.next();
+      use_option = ro_gen_.get();
+   }
+   else
+   {
+      use_option = *option_;
+   }
+
+   if (use_option == FunctionOption::PiecewiseLinear)
+   {
+      rixy_gen_.next();
+      FunctionParams<FunctionOption::PiecewiseLinear> op;
+      op.input_xy = rixy_gen_.get();
+      opv_ = op;
+   }
+   else if (use_option == FunctionOption::PiecewiseLogLog)
+   {
+      rixy_gen_.next();
+      FunctionParams<FunctionOption::PiecewiseLogLog> op;
+      op.input_xy = rixy_gen_.get();
+      opv_ = op;
+   }
+   else
+   {
+      throw std::logic_error("Invalid or unimplemented InputXYOption.");
+   }
+
+   return true;
+}
+
 // DiscMethodParamsVariant GenerateRandomDiscMethod(DiscMethod d, int seed)
 // {
 //    DiscMethodParamsVariant dmpv;
