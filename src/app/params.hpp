@@ -457,7 +457,7 @@ struct SourceParams<SourceOption::PSD>
    char speed;
 
    /// Transfer function parameters.
-   TransferParamsVariant tf_params;
+   // TransferParamsVariant tf_params;
 };
 
 template<>

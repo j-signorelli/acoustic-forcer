@@ -47,7 +47,9 @@ bool RandomInputXYGenerator::next()
       ri_file_suffix_gen_.next();
       
       InputXYParams<InputXYOption::FromCSV> op;
-      op.file = ri_file_suffix_gen_.get();
+      op.file = "test_file." + std::to_string(ri_file_suffix_gen_.get()) 
+                  + ".csv";
+      opv_ = op;
    }
    else
    {
@@ -90,29 +92,6 @@ bool RandomFunctionGenerator::next()
 
    return true;
 }
-// FunctionParamsVariant GenerateRandomFunction(FunctionType f, int seed)
-// {
-//    FunctionParamsVariant fpv;
-//    if (f == FunctionType::PiecewiseLinear)
-//    {
-//       FunctionTypeParams<FunctionType::PiecewiseLinear> fp;
-//       InputXY ixy_option = GenerateRandomOption<InputXY>(seed++);
-//       fp.input_xy = GenerateRandomInputXY(ixy_option, seed++);
-//       fpv = fp;
-//    }
-//    else if (f == FunctionType::PiecewiseLogLog)
-//    {
-//       FunctionTypeParams<FunctionType::PiecewiseLogLog> fp;
-//       InputXY ixy_option = GenerateRandomOption<InputXY>(seed++);
-//       fp.input_xy = GenerateRandomInputXY(ixy_option, seed++);
-//       fpv = fp;
-//    }
-//    else
-//    {
-//       throw std::logic_error("Invalid or unimplemented FunctionType.");
-//    }
-//    return fpv;
-// }
 
 // DiscMethodParamsVariant GenerateRandomDiscMethod(DiscMethod d, int seed)
 // {
