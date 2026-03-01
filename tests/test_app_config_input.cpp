@@ -47,38 +47,39 @@ TEST_CASE("TOMLConfigInput::ParseBaseFlow", "[App][TOMLConfigInput]")
 
 TEMPLATE_TEST_CASE_SIG("TOMLConfigInput Parse Options", 
    "[App][TOMLConfigInput]",
-   ((OptionEnum OptionE, 
-      typename ParamsVariant,
-      void(*Parser)(std::string, ParamsVariant&)),
-      OptionE, ParamsVariant, Parser),
+   ((OptionEnum OptionE,
+      void(*Parser)(std::string, ParamsVariant<OptionE>&)),
+      OptionE, Parser),
 
    // InputXYOption:
-   (InputXYOption, InputXYParamsVariant, TOMLConfigInput::ParseInputXY)
+   (InputXYOption, TOMLConfigInput::ParseInputXY)
    
    // FunctionOption:
-   ,(FunctionOption, FunctionParamsVariant, TOMLConfigInput::ParseFunction)
+   ,(FunctionOption, TOMLConfigInput::ParseFunction)
 
    // DiscMethodOption:
-   ,(DiscMethodOption, DiscMethodParamsVariant, 
-         TOMLConfigInput::ParseDiscMethod)
+   ,(DiscMethodOption, TOMLConfigInput::ParseDiscMethod)
 
    // DirectionOption:
-   ,(DirectionOption, DirectionParamsVariant, 
-         TOMLConfigInput::ParseDirection)
+   ,(DirectionOption, TOMLConfigInput::ParseDirection)
+
+   // TransferOption:
+   //,(TransferOption, TOMLConfigInput::ParseTransfer)
+
+   // SourceOption:
+   ,(SourceOption, TOMLConfigInput::ParseSource)
    )
 {
    const OptionE kOption = GENERATE(options<OptionE>());
-   ParamsVariant opv = 
+   const ParamsVariant<OptionE> opv = 
       GENERATE_REF(take(1, random_params<OptionE>(kOption)));
 
-   std::string in_str = TOMLWriteParams(opv);
-   CAPTURE(in_str);
+   std::string in_str = TOMLWriteParams<OptionE>(opv);
 
-   ParamsVariant opv_parsed;
-   SUCCEED("");
-   //Parser(in_str, opv_parsed);
+   ParamsVariant<OptionE> opv_parsed;
+   Parser(in_str, opv_parsed);
 
-//   std::visit(TestParamsVisitor{opv}, opv_parsed);
+   TestParamsEqual<OptionE>(opv, opv_parsed);
 }
 
 // TEST_CASE("TOMLConfigInput::ParseSource", "[App][TOMLConfigInput]")

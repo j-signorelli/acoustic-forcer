@@ -183,7 +183,7 @@ static void GetEnumerator(const std::string_view input_str,
 void TOMLConfigInput::ParseInputXY
    (std::string toml_string, InputXYParamsVariant &opv)
 {
-   toml::value in_val = toml::parse_str(toml_string);
+   toml::table in_val = toml::parse_str(toml_string).as_table();
    InputXYOption option;
    GetEnumerator(in_val.at("Type").as_string(), kInputXYNames, 
                      option);
@@ -213,12 +213,14 @@ void TOMLConfigInput::ParseFunction
    if (option == FunctionOption::PiecewiseLinear)
    {
       FunctionParams<FunctionOption::PiecewiseLinear> op;
+      in_val.at("Data").as_table_fmt().fmt = toml::table_format::multiline;
       ParseInputXY(toml::format(in_val.at("Data")), op.input_xy);
       opv = op;
    }
    else if (option == FunctionOption::PiecewiseLogLog)
    {
       FunctionParams<FunctionOption::PiecewiseLogLog> op;
+      in_val.at("Data").as_table_fmt().fmt = toml::table_format::multiline;
       ParseInputXY(toml::format(in_val.at("Data")), op.input_xy);
       opv = op;
    }
@@ -326,6 +328,7 @@ void TOMLConfigInput::ParseSource
       op.phase_seed = in_val.at("PhaseSeed").as_integer();
       op.speed = *(in_val.at("Speed").as_string().data());
       
+      in_val.at("InputPSD").as_table_fmt().fmt = toml::table_format::multiline;
       ParseFunction(toml::format(in_val.at("InputPSD")), op.input_psd);
       
       toml::value in_disc_val = in_val.at("Discretization");
@@ -335,8 +338,10 @@ void TOMLConfigInput::ParseSource
       GetEnumerator(in_disc_val.at("Interval").as_string(), kIntervalNames,
                       op.int_method);
       
+      in_disc_val.at("Method").as_table_fmt().fmt = toml::table_format::multiline;
       ParseDiscMethod(toml::format(in_disc_val.at("Method")), op.disc_params);
 
+      in_val.at("Direction").as_table_fmt().fmt = toml::table_format::multiline;
       ParseDirection(toml::format(in_val.at("Direction")), op.dir_params);
 
       opv = op;
