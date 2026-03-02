@@ -5,13 +5,13 @@ namespace jabber
 {
 
 /**
- * @brief Compute the transfer function $\chi$ using the analytical 
+ * @brief Compute the transfer function \f$\chi\f$ using the analytical 
  * low-frequency limit form in Chaudhry and Chandler, 2017.
  * 
  * @param mach_bar      Freestream Mach number.
  * @param gamma         Specific heat ratio.
  * @param speed         Wave speed, 'S' for slow, 'F' for fast.
- * @return double       $\chi$.
+ * @return double       \f$\chi\f$.
  */
 double LowFrequencyLimitTF(double mach_bar, double gamma, char speed);
 

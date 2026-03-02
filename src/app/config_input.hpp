@@ -20,7 +20,7 @@ private:
       return std::format("{}", f);
    }
 
-   /// Get string of double vector \p vec with precision \ref kPrecision.
+   /// Get string of double vector \p vec.
    static std::string OutRealVec(const std::vector<double> &vec, 
                                     const std::string_view delim=", ")
    {
