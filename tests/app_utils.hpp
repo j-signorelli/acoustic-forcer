@@ -25,9 +25,9 @@ namespace jabber_test
  * different output parameter. 
  * 
  */
-template<typename T, typename V=T::Option>
+template<typename T>
 T::ParamsVariant GetRandomParams
-   (const V &option=random_option<typename T::Option>().get())
+   (const typename T::Option &option=random_option<typename T::Option>().get())
 {
    using namespace jabber_app;
    using namespace Catch::Generators;
