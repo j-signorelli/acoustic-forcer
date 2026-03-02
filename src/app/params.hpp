@@ -331,7 +331,8 @@ struct TransferParams<TransferOption::Input>
 template<>
 struct TransferParams<TransferOption::FlowNormalFit>
 {
-   // TODO
+   /// Shock standoff distance from pitot probe.
+   double shock_standoff_dist;
 };
 
 /// All transfer parameter options.

@@ -225,7 +225,7 @@ void SourceVisitor::operator()
    std::vector<double> freqs(op.num_waves);
    const double min_freq = op.min_disc_freq;
    const double max_freq = op.max_disc_freq;
-   std::visit(DiscMethodVisitor{min_freq,max_freq, freqs}, op.disc_params);
+   std::visit(DiscMethodVisitor{min_freq,max_freq,freqs}, op.disc_params);
 
    // Sort the frequencies
    std::sort(freqs.begin(), freqs.end());

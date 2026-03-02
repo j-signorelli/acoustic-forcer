@@ -294,15 +294,16 @@ void TOMLConfigInput::ParseTransfer
    else if (option == TransferOption::Input)
    {
       TransferParams<TransferOption::Input> op;
-      in_val.at("Function").as_table_fmt().fmt = toml::table_format::multiline;
-      ParseFunction(toml::format(in_val.at("Function")), op.input_tf);
+      in_val.at("InputTF").as_table_fmt().fmt = toml::table_format::multiline;
+      ParseFunction(toml::format(in_val.at("InputTF")), op.input_tf);
       opv = op;
    }
    else if (option == TransferOption::FlowNormalFit)
    {
-      opv = TransferParams<TransferOption::FlowNormalFit>{};
+      TransferParams<TransferOption::FlowNormalFit> op;
+      op.shock_standoff_dist = in_val.at("ShockStandoffDist").as_floating();
+      opv = op;
    }
-
 }
 
 void TOMLConfigInput::ParseSource

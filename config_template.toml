@@ -52,6 +52,16 @@ Direction.Seed=17
 # Direction.Type="Constant"
 # Direction.Vector=[1.0,1.0,1.0]
 
+# Leave out if not using...
+TransferFunction.Type="LowFrequencyLimit"
+# or
+# TransferFunction.Type="Input"
+# TransferFunction.InputTF.Type="PiecewiseLinear" # or PiecewiseLogLog
+# ... and all other Function settings
+# or
+# TransferFunction.Type="FlowNormalFit"
+# TransferFunction.ShockStandoffDist=1e-3
+
 [Computation]
 t0=0.0
 

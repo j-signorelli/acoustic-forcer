@@ -200,7 +200,9 @@ ParamsVariant<E> GetRandomParams(const E &option)
       }
       else if (option == TransferOption::FlowNormalFit)
       {
-         opv = TransferParams<TransferOption::FlowNormalFit>{};
+         TransferParams<TransferOption::FlowNormalFit> op;
+         op.shock_standoff_dist = take(1,random(0.5e-3, 2.5e-3)).get();
+         opv = op;
       }
    }
    else if constexpr (std::same_as<E,SourceOption>)
@@ -421,8 +423,13 @@ std::string TOMLWriteParams
       {
          if constexpr (V == TransferOption::Input)
          {
-            out_params.emplace("Function", 
+            out_params.emplace("InputTF", 
                   TOMLWriteParams<FunctionOption>(op.input_tf, true));
+         }
+         else if constexpr (V == TransferOption::FlowNormalFit)
+         {
+            out_params.emplace("ShockStandoffDist", 
+                                 TOMLWriteValue(op.shock_standoff_dist));
          }
       }
       else if constexpr (std::same_as<E, SourceOption>)
@@ -571,6 +578,10 @@ void TestParamsEqual
             if constexpr (V1 == TransferOption::Input)
             {
                TestParamsEqual<FunctionOption>(op1.input_tf, op2.input_tf);
+            }
+            else if constexpr (V1 == TransferOption::FlowNormalFit)
+            {
+               CHECK(op1.shock_standoff_dist == op2.shock_standoff_dist);
             }
          }
          else if constexpr (std::same_as<E, SourceOption>)
