@@ -64,6 +64,7 @@ TransferFunction.Type="LowFrequencyLimit"
 
 [Computation]
 t0=0.0
+Kernel="GridPoint"
 
 [preCICE]
 ParticipantName="Jabber"
