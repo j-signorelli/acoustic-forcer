@@ -568,7 +568,10 @@ void TestParamsEqual
          }
          else if constexpr (std::same_as<E,TransferOption>)
          {
-            // TODO
+            if constexpr (V1 == TransferOption::Input)
+            {
+               TestParamsEqual<FunctionOption>(op1.input_tf, op2.input_tf);
+            }
          }
          else if constexpr (std::same_as<E, SourceOption>)
          {
