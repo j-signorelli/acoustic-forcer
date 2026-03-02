@@ -140,6 +140,13 @@ public:
                               DirectionParamsVariant &opv);
 
    /**
+    * @brief Parse transfer function parameters from a serialized TOML string of
+    * that section.
+    */
+   static void ParseTransfer(std::string toml_string,
+                              TransferParamsVariant &opv);
+
+   /**
     * @brief Parse source parameters from a serialized TOML string of that
     * section.
     */

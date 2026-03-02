@@ -22,9 +22,9 @@ TEST_CASE("TOMLConfigInput::ParseBaseFlow", "[App][TOMLConfigInput]")
 {
    const double kRho = GENERATE(take(1,random(0.1, 1.0)));
    const double kPBar = GENERATE(take(1,random(0.1, 2000.0)));
+   const int kDim = GENERATE(take(1,random(1,3)));
    const std::vector<double> kUBar = 
-                              GENERATE(take(1,chunk(take(1,random(1,3)).get(),
-                                                      random(0.0, 600.0))));
+                        GENERATE_REF(take(1,chunk(kDim, random(0.0, 600.0))));
    const double kGamma = GENERATE(take(1,random(0.1, 1.5)));
 
    const std::string base_flow_str = 
@@ -63,7 +63,7 @@ TEMPLATE_TEST_CASE_SIG("TOMLConfigInput Parse Options",
    ,(DirectionOption, TOMLConfigInput::ParseDirection)
 
    // TransferOption:
-   //,(TransferOption, TOMLConfigInput::ParseTransfer)
+   ,(TransferOption, TOMLConfigInput::ParseTransfer)
 
    // SourceOption:
    ,(SourceOption, TOMLConfigInput::ParseSource)

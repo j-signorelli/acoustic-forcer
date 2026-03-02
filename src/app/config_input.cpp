@@ -279,6 +279,32 @@ void TOMLConfigInput::ParseDirection
    }
 }
 
+void TOMLConfigInput::ParseTransfer
+   (std::string toml_string, TransferParamsVariant &opv)
+{
+   toml::value in_val = toml::parse_str(toml_string);
+
+   TransferOption option;
+   GetEnumerator(in_val.at("Type").as_string(), kTransferNames, option);
+
+   if (option == TransferOption::LowFrequencyLimit)
+   {
+      opv = TransferParams<TransferOption::LowFrequencyLimit>{};
+   }
+   else if (option == TransferOption::Input)
+   {
+      TransferParams<TransferOption::Input> op;
+      in_val.at("Function").as_table_fmt().fmt = toml::table_format::multiline;
+      ParseFunction(toml::format(in_val.at("Function")), op.input_tf);
+      opv = op;
+   }
+   else if (option == TransferOption::FlowNormalFit)
+   {
+      opv = TransferParams<TransferOption::FlowNormalFit>{};
+   }
+
+}
+
 void TOMLConfigInput::ParseSource
    (std::string toml_string, SourceParamsVariant &opv)
 {
@@ -338,12 +364,21 @@ void TOMLConfigInput::ParseSource
       GetEnumerator(in_disc_val.at("Interval").as_string(), kIntervalNames,
                       op.int_method);
       
-      in_disc_val.at("Method").as_table_fmt().fmt = toml::table_format::multiline;
+      in_disc_val.at("Method").as_table_fmt().fmt = 
+                                                toml::table_format::multiline;
       ParseDiscMethod(toml::format(in_disc_val.at("Method")), op.disc_params);
 
-      in_val.at("Direction").as_table_fmt().fmt = toml::table_format::multiline;
+      in_val.at("Direction").as_table_fmt().fmt = 
+                                                toml::table_format::multiline;
       ParseDirection(toml::format(in_val.at("Direction")), op.dir_params);
 
+      if (in_val.contains("TransferFunction"))
+      {
+         op.tf_params = TransferParamsVariant{};
+         in_val.at("TransferFunction").as_table_fmt().fmt = 
+                                                toml::table_format::multiline;
+         ParseTransfer(toml::format(in_val.at("TransferFunction")), *op.tf_params);
+      }
       opv = op;
    }
    else if (option == SourceOption::WaveCSV)

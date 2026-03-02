@@ -188,7 +188,20 @@ ParamsVariant<E> GetRandomParams(const E &option)
    }
    else if constexpr (std::same_as<E,TransferOption>)
    {
-      // TODO
+      if (option == TransferOption::LowFrequencyLimit)
+      {
+         opv = TransferParams<TransferOption::LowFrequencyLimit>{};
+      }
+      else if (option == TransferOption::Input)
+      {
+         TransferParams<TransferOption::Input> op;
+         op.input_tf = GetRandomParams(random_option<FunctionOption>().get());
+         opv = op;
+      }
+      else if (option == TransferOption::FlowNormalFit)
+      {
+         opv = TransferParams<TransferOption::FlowNormalFit>{};
+      }
    }
    else if constexpr (std::same_as<E,SourceOption>)
    {
@@ -233,6 +246,15 @@ ParamsVariant<E> GetRandomParams(const E &option)
          op.int_method = random_option<jabber::Interval::Method>().get();
          op.disc_params = GetRandomParams(random_option<DiscMethodOption>().get());
          op.dir_params = GetRandomParams(random_option<DirectionOption>().get());
+         if (take(1,random(0,1)).get())
+         {
+            op.tf_params = GetRandomParams(random_option<TransferOption>().get());
+         }
+         else
+         {
+            op.tf_params = std::nullopt;
+         }
+
          opv = op;
       }
       else if (option == SourceOption::WaveCSV)
@@ -397,11 +419,11 @@ std::string TOMLWriteParams
       }
       else if constexpr (std::same_as<E, TransferOption>)
       {
-         // TODO.
-         // if constexpr (V == TransferOption::Input)
-         // {
-         //    out_params.emplace("")
-         // }
+         if constexpr (V == TransferOption::Input)
+         {
+            out_params.emplace("Function", 
+                  TOMLWriteParams<FunctionOption>(op.input_tf, true));
+         }
       }
       else if constexpr (std::same_as<E, SourceOption>)
       {
@@ -440,6 +462,12 @@ std::string TOMLWriteParams
                         TOMLWriteParams<DiscMethodOption>(op.disc_params, true));
             out_params.emplace("Direction", 
                         TOMLWriteParams<DirectionOption>(op.dir_params, true));
+            
+            if (op.tf_params.has_value())
+            {
+               out_params.emplace("TransferFunction", 
+                        TOMLWriteParams<TransferOption>(*op.tf_params, true));
+            }
          }
          else if constexpr (V == SourceOption::WaveCSV)
          {
@@ -577,7 +605,14 @@ void TestParamsEqual
                TestParamsEqual<DiscMethodOption>(op1.disc_params, 
                                                    op2.disc_params);
                TestParamsEqual<DirectionOption>(op1.dir_params, 
-                                                op2.dir_params);                                                   
+                                                op2.dir_params);
+                                                
+               REQUIRE(op1.tf_params.has_value() == op2.tf_params.has_value());
+               if (op1.tf_params.has_value())
+               {
+                  TestParamsEqual<TransferOption>
+                     (*op1.tf_params, *op2.tf_params);
+               }
 
             }
             else if constexpr (V1 == SourceOption::WaveSpectrum)

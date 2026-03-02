@@ -6,6 +6,7 @@
 #include <string>
 #include <variant>
 #include <array>
+#include <optional>
 
 #include <jabber.hpp>
 
@@ -283,9 +284,6 @@ static_assert(std::variant_size_v<DirectionParamsVariant> ==
 /// Transfer function options.
 enum class TransferOption : std::uint8_t
 {
-   /// Do not use a transfer function.
-   None,
-
    /**
     * @brief Analytical low-frequency limit transfer function, from Chaudhry
     * & Candler, 2017.
@@ -312,7 +310,6 @@ static constexpr std::array<std::string_view,
                            static_cast<std::size_t>(TransferOption::Size)>
 kTransferNames = 
 {
-   "None",               // TransferOption::None
    "LowFrequencyLimit",  // TransferOption::LowFrequencyLimit
    "Input",              // TransferOption::Input
    "FlowNormalFit"       // TransferOption::FlowNormalFit
@@ -339,8 +336,7 @@ struct TransferParams<TransferOption::FlowNormalFit>
 
 /// All transfer parameter options.
 using TransferParamsVariant 
-   = std::variant<TransferParams<TransferOption::None>,
-                  TransferParams<TransferOption::LowFrequencyLimit>,
+   = std::variant<TransferParams<TransferOption::LowFrequencyLimit>,
                   TransferParams<TransferOption::Input>,
                   TransferParams<TransferOption::FlowNormalFit>>;
 static_assert(std::variant_size_v<TransferParamsVariant> == 
@@ -456,8 +452,8 @@ struct SourceParams<SourceOption::PSD>
    /// Wave speeds to use.
    char speed;
 
-   /// Transfer function parameters.
-   // TransferParamsVariant tf_params;
+   /// Transfer function parameters. None if not set.
+   std::optional<TransferParamsVariant> tf_params;
 };
 
 template<>
