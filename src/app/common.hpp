@@ -20,12 +20,13 @@ void PrintBanner(std::ostream &out);
 void Normalize(std::span<const double> vec, std::span<double> norm_vec);
 
 /**
- * @brief All visitor options for each InputXYParams, for initializing 
+ * @brief All visitor options for each InputXY::Params, for initializing 
  * \ref x and \ref y vectors.
  * 
  */
 struct InputXYVisitor
 {  
+   using enum InputXY::Option;
 
    /// Reference to x-data vector to set.
    std::vector<double> &x;
@@ -33,32 +34,36 @@ struct InputXYVisitor
    /// Reference to y-data vector to set.
    std::vector<double> &y;
 
-   void operator() (const InputXYParams<InputXYOption::Here> &op);
-   void operator() (const InputXYParams<InputXYOption::FromCSV> &op);
+   void operator() (const InputXY::Params<Here> &op);
+   void operator() (const InputXY::Params<FromCSV> &op);
 };
 
 /**
- * @brief All visitor options for each FunctionTypeParams, for initializing a
+ * @brief All visitor options for each FunctionType::Params, for initializing a
  * \ref jabber::Function or \ref jabber::BasePSD type.
  * 
  */
-struct FunctionVisitor
+struct FunctionTypeVisitor
 {
+   using enum FunctionType::Option;
+
    /// Function to initialize
    std::variant<std::unique_ptr<jabber::Function>*,
                 std::unique_ptr<jabber::BasePSD>*> T_ptr_ptr_var;
 
-   void operator() (const FunctionParams<FunctionOption::PiecewiseLinear> &op);
-   void operator() (const FunctionParams<FunctionOption::PiecewiseLogLog> &op);
+   void operator() (const FunctionType::Params<PiecewiseLinear> &op);
+   void operator() (const FunctionType::Params<PiecewiseLogLog> &op);
 };
 
 /**
- * @brief All visitor options for each DiscMethodParams, for initializing
+ * @brief All visitor options for each DiscMethod::Params, for initializing
  * a discretized frequency range, \p freqs.
  * 
  */
 struct DiscMethodVisitor
 {  
+   using enum DiscMethod::Option;
+
    /// Minimum frequency bound.
    const double &min_freq;
 
@@ -68,40 +73,44 @@ struct DiscMethodVisitor
    /// **Sized** frequency vector to initialize.
    std::vector<double> &freqs;
 
-   void operator() (const DiscMethodParams<DiscMethodOption::Uniform> &op);
-   void operator() (const DiscMethodParams<DiscMethodOption::UniformLog> &op);
-   void operator() (const DiscMethodParams<DiscMethodOption::Random> &op);
-   void operator() (const DiscMethodParams<DiscMethodOption::RandomLog> &op);
+   void operator() (const DiscMethod::Params<Uniform> &op);
+   void operator() (const DiscMethod::Params<UniformLog> &op);
+   void operator() (const DiscMethod::Params<Random> &op);
+   void operator() (const DiscMethod::Params<RandomLog> &op);
 };
 
 /**
- * @brief All visitor options for each DirectionParams, for initializing
+ * @brief All visitor options for each Direction::Params, for initializing
  * wave directional vectors in \p k_hats.
  * 
  */
 struct DirectionVisitor
 {
+   using enum Direction::Option;
+
    /// **Sized** vector of direction vectors for each wave.
    std::vector<std::vector<double>> &k_hats;
 
-   void operator() (const DirectionParams<DirectionOption::Constant> &op);
-   void operator() (const DirectionParams<DirectionOption::RandomXYAngle> &op);
+   void operator() (const Direction::Params<Constant> &op);
+   void operator() (const Direction::Params<RandomXYAngle> &op);
 };
 
 
 /**
- * @brief All visitor options for each SourceParams, for initializing 
+ * @brief All visitor options for each Source::Params, for initializing 
  * \ref jabber::Wave's for each type and appending to \p waves.
  * 
  */
 struct SourceVisitor
 {
+   using enum Source::Option;
+
    /// Reference of wave vector to append jabber::Wave structs to.
    std::vector<jabber::Wave> &waves;
-   void operator() (const SourceParams<SourceOption::SingleWave> &op);
-   void operator() (const SourceParams<SourceOption::WaveSpectrum> &op);
-   void operator() (const SourceParams<SourceOption::PSD> &op);
-   void operator() (const SourceParams<SourceOption::WaveCSV> &op);
+   void operator() (const Source::Params<SingleWave> &op);
+   void operator() (const Source::Params<WaveSpectrum> &op);
+   void operator() (const Source::Params<PSD> &op);
+   void operator() (const Source::Params<WaveCSV> &op);
 };
 
 /**

@@ -319,7 +319,7 @@ TEST_CASE("2D flowfield computation via app library", "[2D][Compute][App]")
       // Set source in config
       for (int w = 0; w < kNumWaves; w++)
       {
-         SourceParams<SourceOption::SingleWave> wave;
+         Source::Params<Source::Option::SingleWave> wave;
          wave.amp = kPAmps[w];
          wave.direction = kWaveDirs[w];
          wave.freq = kFreqs[w];

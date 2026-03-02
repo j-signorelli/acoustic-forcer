@@ -52,7 +52,7 @@ protected:
    BaseFlowParams base_flow_;
 
    /// Input source parameters.
-   std::vector<SourceParamsVariant> sources_;
+   std::vector<Source::ParamsVariant> sources_;
 
    /// Input computation parameters.
    CompParams comp_;
@@ -69,10 +69,10 @@ public:
    const BaseFlowParams& BaseFlow() const { return base_flow_; }
 
    /// Get reference to source parameters.
-   std::vector<SourceParamsVariant>& Sources() { return sources_; }
+   std::vector<Source::ParamsVariant>& Sources() { return sources_; }
 
    /// Get const reference to source parameters.
-   const std::vector<SourceParamsVariant>& Sources() const { return sources_; }
+   const std::vector<Source::ParamsVariant>& Sources() const { return sources_; }
 
    /// Get reference to computation parameters.
    CompParams& Comp() { return comp_; }
@@ -116,42 +116,42 @@ public:
     * section.
     */
    static void ParseInputXY(std::string toml_string,
-                              InputXYParamsVariant &opv);
+                              InputXY::ParamsVariant &opv);
 
    /**
     * @brief Parse function parameters from a serialized TOML string of that
     * section.
     */
-   static void ParseFunction(std::string toml_string,
-                              FunctionParamsVariant &opv);
+   static void ParseFunctionType(std::string toml_string,
+                              FunctionType::ParamsVariant &opv);
 
    /**
     * @brief Parse disc. method parameters from a serialized TOML string of
     * that section.
     */
    static void ParseDiscMethod(std::string toml_string,
-                                 DiscMethodParamsVariant &opv);
+                                 DiscMethod::ParamsVariant &opv);
    
    /**
     * @brief Parse direction parameters from a serialized TOML string of that
     * section.
     */
    static void ParseDirection(std::string toml_string,
-                              DirectionParamsVariant &opv);
+                              Direction::ParamsVariant &opv);
 
    /**
     * @brief Parse transfer function parameters from a serialized TOML string of
     * that section.
     */
-   static void ParseTransfer(std::string toml_string,
-                              TransferParamsVariant &opv);
+   static void ParseTransferFunction(std::string toml_string,
+                              TransferFunction::ParamsVariant &opv);
 
    /**
     * @brief Parse source parameters from a serialized TOML string of that
     * section.
     */
    static void ParseSource(std::string toml_string,
-                           SourceParamsVariant &opv);
+                           Source::ParamsVariant &opv);
 
    /**
     * @brief Parse computation parameters from a serialized TOML string of that

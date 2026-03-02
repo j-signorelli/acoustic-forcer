@@ -46,39 +46,36 @@ TEST_CASE("TOMLConfigInput::ParseBaseFlow", "[App][TOMLConfigInput]")
 
 TEMPLATE_TEST_CASE_SIG("TOMLConfigInput Parse Options", 
    "[App][TOMLConfigInput]",
-   ((OptionEnum OptionE,
-      void(*Parser)(std::string, ParamsVariant<OptionE>&)),
-      OptionE, Parser),
+   ((typename T,
+      void(*Parser)(std::string, typename T::ParamsVariant&)),
+      T, Parser),
 
-   // InputXYOption:
-   (InputXYOption, TOMLConfigInput::ParseInputXY)
+   (InputXY, TOMLConfigInput::ParseInputXY)
    
-   // FunctionOption:
-   ,(FunctionOption, TOMLConfigInput::ParseFunction)
+   ,(FunctionType, TOMLConfigInput::ParseFunctionType)
 
-   // DiscMethodOption:
-   ,(DiscMethodOption, TOMLConfigInput::ParseDiscMethod)
+   ,(DiscMethod, TOMLConfigInput::ParseDiscMethod)
 
-   // DirectionOption:
-   ,(DirectionOption, TOMLConfigInput::ParseDirection)
+   ,(Direction, TOMLConfigInput::ParseDirection)
 
-   // TransferOption:
-   ,(TransferOption, TOMLConfigInput::ParseTransfer)
+   ,(TransferFunction, TOMLConfigInput::ParseTransferFunction)
 
-   // SourceOption:
-   ,(SourceOption, TOMLConfigInput::ParseSource)
+   ,(Source, TOMLConfigInput::ParseSource)
    )
 {
-   const OptionE kOption = GENERATE(options<OptionE>());
-   const ParamsVariant<OptionE> opv = 
-      GENERATE_REF(take(5, random_params<OptionE>(kOption)));
+   using Option = typename T::Option;
+   using ParamsVariant = typename T::ParamsVariant;
 
-   std::string in_str = TOMLWriteParams<OptionE>(opv);
+   const Option kOption = GENERATE(options<Option>());
+   const ParamsVariant opv = 
+      GENERATE_REF(take(5, random_params<T>(kOption)));
 
-   ParamsVariant<OptionE> opv_parsed;
+   std::string in_str = TOMLWriteParams<T>(opv);
+
+   ParamsVariant opv_parsed;
    Parser(in_str, opv_parsed);
 
-   TestParamsEqual<OptionE>(opv, opv_parsed);
+   TestParamsEqual<T>(opv, opv_parsed);
 }
 
 TEST_CASE("TOMLConfigInput::ParseComputation", "[App][TOMLConfigInput]")
@@ -92,7 +89,8 @@ TEST_CASE("TOMLConfigInput::ParseComputation", "[App][TOMLConfigInput]")
       std::format(R"(
                      t0={}
                      Kernel='{}'
-                  )", kT0, GetName(kKernel));
+                  )", kT0, 
+                  KernelType::kNames[static_cast<std::size_t>(kKernel)]);
 
    CompParams params;
    TOMLConfigInput::ParseComputation(comp_str, params);

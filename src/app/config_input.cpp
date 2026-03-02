@@ -28,21 +28,23 @@ void ConfigInput::PrintBaseFlowParams(std::ostream &out) const
 void ConfigInput::PrintSourceParams(std::ostream &out) const
 {
 
+   using enum Source::Option;
+
    out << "Sources" << std::endl;
 
-   for (const SourceParamsVariant &source : sources_)
+   for (const Source::ParamsVariant &source : sources_)
    {
       std::visit(
       overloads
       {
-      [&out](const SourceParams<SourceOption::SingleWave> &wave)
+      [&out](const Source::Params<SingleWave> &wave)
       {
          std::size_t name_i 
-                        = static_cast<std::size_t>(SourceOption::SingleWave);
+                        = static_cast<std::size_t>(SingleWave);
                         
          constexpr int label_width = 11;
 
-         out << WriteParam("Type", kSourceNames[name_i], label_width);
+         out << WriteParam("Type", Source::kNames[name_i], label_width);
          out << WriteParam("Amplitude", OutReal(wave.amp), label_width);
          out << WriteParam("Frequency", OutReal(wave.freq), label_width);
          out << WriteParam("Direction", OutRealVec(wave.direction), 
@@ -51,10 +53,10 @@ void ConfigInput::PrintSourceParams(std::ostream &out) const
          out << WriteParam("Speed", std::string(&wave.speed), label_width);
          out << std::endl;
       },
-      [&out](const SourceParams<SourceOption::WaveSpectrum> &waves)
+      [&out](const Source::Params<WaveSpectrum> &waves)
       {
          std::size_t name_i = 
-                        static_cast<std::size_t>(SourceOption::WaveSpectrum);
+                        static_cast<std::size_t>(WaveSpectrum);
          
          constexpr int label_width = 13;
 
@@ -89,7 +91,7 @@ void ConfigInput::PrintSourceParams(std::ostream &out) const
                            ((i+1 == waves.speeds.size()) ? "]\n" :
                               std::format(",\n\t{:<{}}", "", label_width+3));
          }
-         out << WriteParam("Type", kSourceNames[name_i], label_width);
+         out << WriteParam("Type", Source::kNames[name_i], label_width);
          out << WriteParam("Amplitudes", amplitudes_str, label_width);
          out << WriteParam("Frequencies", freqs_str, label_width);
          out << WriteParam("Directions", dirs_str, label_width);
@@ -97,20 +99,20 @@ void ConfigInput::PrintSourceParams(std::ostream &out) const
          out << WriteParam("Speeds", speeds_str, label_width);
          out << std::endl;
       },
-      [&out](const SourceParams<SourceOption::PSD> &waves)
+      [&out](const Source::Params<PSD> &waves)
       {
          constexpr int label_width = 13;
 
          /// @todo: Finish this
          out << "Unimplemented verbose output for source type" << std::endl;
       },
-      [&out](const SourceParams<SourceOption::WaveCSV> &waves)
+      [&out](const Source::Params<WaveCSV> &waves)
       {
          constexpr int label_width = 7;
 
          std::size_t name_i = 
-                        static_cast<std::size_t>(SourceOption::WaveSpectrum);
-         out << WriteParam("Type", kSourceNames[name_i], label_width);
+                        static_cast<std::size_t>(WaveSpectrum);
+         out << WriteParam("Type", Source::kNames[name_i], label_width);
          out << WriteParam("File", waves.file, label_width);
          out << std::endl;
       }
@@ -125,8 +127,8 @@ void ConfigInput::PrintCompParams(std::ostream &out) const
    constexpr int label_width = 7;
    out << WriteParam("t0", OutReal(comp_.t0), label_width);
    out << WriteParam("Kernel", 
-                     kKernelNames[static_cast<std::size_t>(comp_.kernel)],
-                     label_width);
+                  KernelType::kNames[static_cast<std::size_t>(comp_.kernel)],
+                  label_width);
    out << std::endl;
 }
 
@@ -162,64 +164,68 @@ void TOMLConfigInput::ParseBaseFlow
 
 /// Internal helper function here for getting enumerator from string.
 template<typename T>
-static void GetEnumerator(const std::string_view input_str, 
-                           std::span<const std::string_view> option_names,
-                           T &val)
+T::Option GetOption(const std::string &name)
 {
-   const auto it = std::find(option_names.begin(), 
-                              option_names.end(), 
-                              input_str);
-   if (it == option_names.end())
+   using Option = typename T::Option;
+
+   const auto it = std::find(T::kNames.begin(), T::kNames.end(), name);
+
+   Option option;
+
+   if (it == T::kNames.end())
    {
       throw std::invalid_argument(std::format("Invalid input argument: {}",
-                                              input_str));
+                                              name));
    }
    else
    {
-      val = static_cast<T>(std::distance(option_names.begin(), it));
+      option = static_cast<T::Option>(std::distance(T::kNames.begin(), it));
    }
+   return option;
 }
 
 void TOMLConfigInput::ParseInputXY
-   (std::string toml_string, InputXYParamsVariant &opv)
+   (std::string toml_string, InputXY::ParamsVariant &opv)
 {
+   using enum InputXY::Option;
+
    toml::table in_val = toml::parse_str(toml_string).as_table();
-   InputXYOption option;
-   GetEnumerator(in_val.at("Type").as_string(), kInputXYNames, 
-                     option);
-   if (option == InputXYOption::Here)
+   InputXY::Option option = GetOption<InputXY>(in_val.at("Type").as_string());
+
+   if (option == Here)
    {
-      InputXYParams<InputXYOption::Here> op;
+      InputXY::Params<Here> op;
       op.x = toml::get<std::vector<double>>(in_val.at("X"));
       op.y = toml::get<std::vector<double>>(in_val.at("Y"));
       opv = op;
    }
-   else if (option == InputXYOption::FromCSV)
+   else if (option == FromCSV)
    {
-      InputXYParams<InputXYOption::FromCSV> op;
+      InputXY::Params<FromCSV> op;
       op.file = in_val.at("File").as_string();
       opv = op;
    }
 }
 
-void TOMLConfigInput::ParseFunction
-   (std::string toml_string, FunctionParamsVariant &opv)
+void TOMLConfigInput::ParseFunctionType
+   (std::string toml_string, FunctionType::ParamsVariant &opv)
 {
-   toml::value in_val = toml::parse_str(toml_string);
-   FunctionOption option;
-   GetEnumerator(in_val.at("Type").as_string(), kFunctionNames, 
-                        option);
+   using enum FunctionType::Option;
 
-   if (option == FunctionOption::PiecewiseLinear)
+   toml::value in_val = toml::parse_str(toml_string);
+   FunctionType::Option option = 
+            GetOption<FunctionType>(in_val.at("Type").as_string());
+
+   if (option == PiecewiseLinear)
    {
-      FunctionParams<FunctionOption::PiecewiseLinear> op;
+      FunctionType::Params<PiecewiseLinear> op;
       in_val.at("Data").as_table_fmt().fmt = toml::table_format::multiline;
       ParseInputXY(toml::format(in_val.at("Data")), op.input_xy);
       opv = op;
    }
-   else if (option == FunctionOption::PiecewiseLogLog)
+   else if (option == PiecewiseLogLog)
    {
-      FunctionParams<FunctionOption::PiecewiseLogLog> op;
+      FunctionType::Params<PiecewiseLogLog> op;
       in_val.at("Data").as_table_fmt().fmt = toml::table_format::multiline;
       ParseInputXY(toml::format(in_val.at("Data")), op.input_xy);
       opv = op;
@@ -227,51 +233,54 @@ void TOMLConfigInput::ParseFunction
 }
 
 void TOMLConfigInput::ParseDiscMethod
-   (std::string toml_string, DiscMethodParamsVariant &opv)
+   (std::string toml_string, DiscMethod::ParamsVariant &opv)
 {
-   toml::value in_val = toml::parse_str(toml_string);
-   DiscMethodOption option;
-   GetEnumerator(in_val.at("Type").as_string(), kDiscMethodNames,
-                  option);
+   using enum DiscMethod::Option;
 
-   if (option == DiscMethodOption::Uniform)
+   toml::value in_val = toml::parse_str(toml_string);
+   DiscMethod::Option option = 
+               GetOption<DiscMethod>(in_val.at("Type").as_string());
+
+   if (option == Uniform)
    {
-      opv = DiscMethodParams<DiscMethodOption::Uniform>{};
+      opv = DiscMethod::Params<Uniform>{};
    }
-   else if (option == DiscMethodOption::UniformLog)
+   else if (option == UniformLog)
    {
-      opv = DiscMethodParams<DiscMethodOption::UniformLog>{};
+      opv = DiscMethod::Params<UniformLog>{};
    }
-   else if (option == DiscMethodOption::Random)
+   else if (option == Random)
    {
-      DiscMethodParams<DiscMethodOption::Random> op;
+      DiscMethod::Params<Random> op;
       op.seed = in_val.at("Seed").as_integer();
       opv = op;
    }
-   else if (option == DiscMethodOption::RandomLog)
+   else if (option == RandomLog)
    {
-      DiscMethodParams<DiscMethodOption::RandomLog> op;
+      DiscMethod::Params<RandomLog> op;
       op.seed = in_val.at("Seed").as_integer();
       opv = op;
    }
 }
 
 void TOMLConfigInput::ParseDirection
-   (std::string toml_string, DirectionParamsVariant &opv)
+   (std::string toml_string, Direction::ParamsVariant &opv)
 {
-   toml::value in_val = toml::parse_str(toml_string);
-   DirectionOption option;
-   GetEnumerator(in_val.at("Type").as_string(), kDirectionNames, option);
+   using enum Direction::Option;
 
-   if (option == DirectionOption::Constant)
+   toml::value in_val = toml::parse_str(toml_string);
+   Direction::Option option = 
+                     GetOption<Direction>(in_val.at("Type").as_string());
+
+   if (option == Constant)
    {
-      DirectionParams<DirectionOption::Constant> op;
+      Direction::Params<Constant> op;
       op.direction = toml::get<std::vector<double>>(in_val.at("Vector"));
       opv = op;
    }
-   else if (option == DirectionOption::RandomXYAngle)
+   else if (option == RandomXYAngle)
    {
-      DirectionParams<DirectionOption::RandomXYAngle> op;
+      Direction::Params<RandomXYAngle> op;
       op.min_angle = in_val.at("MinAngle").as_floating();
       op.max_angle = in_val.at("MaxAngle").as_floating();
       op.seed = in_val.at("Seed").as_integer();
@@ -279,44 +288,47 @@ void TOMLConfigInput::ParseDirection
    }
 }
 
-void TOMLConfigInput::ParseTransfer
-   (std::string toml_string, TransferParamsVariant &opv)
+void TOMLConfigInput::ParseTransferFunction
+   (std::string toml_string, TransferFunction::ParamsVariant &opv)
 {
+   using enum TransferFunction::Option;
+
    toml::value in_val = toml::parse_str(toml_string);
 
-   TransferOption option;
-   GetEnumerator(in_val.at("Type").as_string(), kTransferNames, option);
+   TransferFunction::Option option = 
+            GetOption<TransferFunction>(in_val.at("Type").as_string());
 
-   if (option == TransferOption::LowFrequencyLimit)
+   if (option == LowFrequencyLimit)
    {
-      opv = TransferParams<TransferOption::LowFrequencyLimit>{};
+      opv = TransferFunction::Params<LowFrequencyLimit>{};
    }
-   else if (option == TransferOption::Input)
+   else if (option == Input)
    {
-      TransferParams<TransferOption::Input> op;
+      TransferFunction::Params<Input> op;
       in_val.at("InputTF").as_table_fmt().fmt = toml::table_format::multiline;
-      ParseFunction(toml::format(in_val.at("InputTF")), op.input_tf);
+      ParseFunctionType(toml::format(in_val.at("InputTF")), op.input_tf);
       opv = op;
    }
-   else if (option == TransferOption::FlowNormalFit)
+   else if (option == FlowNormalFit)
    {
-      TransferParams<TransferOption::FlowNormalFit> op;
+      TransferFunction::Params<FlowNormalFit> op;
       op.shock_standoff_dist = in_val.at("ShockStandoffDist").as_floating();
       opv = op;
    }
 }
 
 void TOMLConfigInput::ParseSource
-   (std::string toml_string, SourceParamsVariant &opv)
+   (std::string toml_string, Source::ParamsVariant &opv)
 {
+   using enum Source::Option;
+
    toml::value in_val = toml::parse_str(toml_string);
 
-   SourceOption option;
-   GetEnumerator(in_val.at("Type").as_string(), kSourceNames, option);
+   Source::Option option = GetOption<Source>(in_val.at("Type").as_string());
 
-   if (option == SourceOption::SingleWave)
+   if (option == SingleWave)
    {
-      SourceParams<SourceOption::SingleWave> op;
+      Source::Params<SingleWave> op;
 
       op.amp = in_val.at("Amplitude").as_floating();
       op.freq = in_val.at("Frequency").as_floating();
@@ -327,9 +339,9 @@ void TOMLConfigInput::ParseSource
 
       opv = op;
    }
-   else if (option == SourceOption::WaveSpectrum)
+   else if (option == WaveSpectrum)
    {
-      SourceParams<SourceOption::WaveSpectrum> op;
+      Source::Params<WaveSpectrum> op;
       
       op.amps = toml::get<std::vector<double>>(
                                           in_val.at("Amplitudes"));
@@ -347,23 +359,23 @@ void TOMLConfigInput::ParseSource
       
       opv = op;
    }
-   else if (option == SourceOption::PSD)
+   else if (option == PSD)
    {
-      SourceParams<SourceOption::PSD> op;
+      Source::Params<PSD> op;
 
       op.dim_fac = in_val.at("ScaleFactor").as_floating();
       op.phase_seed = in_val.at("PhaseSeed").as_integer();
       op.speed = *(in_val.at("Speed").as_string().data());
       
       in_val.at("InputPSD").as_table_fmt().fmt = toml::table_format::multiline;
-      ParseFunction(toml::format(in_val.at("InputPSD")), op.input_psd);
+      ParseFunctionType(toml::format(in_val.at("InputPSD")), op.input_psd);
       
       toml::value in_disc_val = in_val.at("Discretization");
       op.min_disc_freq = in_disc_val.at("Min").as_floating();
       op.max_disc_freq = in_disc_val.at("Max").as_floating();
       op.num_waves = in_disc_val.at("N").as_integer();
-      GetEnumerator(in_disc_val.at("Interval").as_string(), kIntervalNames,
-                      op.int_method);
+      op.int_method = 
+         GetOption<IntervalType>(in_disc_val.at("Interval").as_string());
       
       in_disc_val.at("Method").as_table_fmt().fmt = 
                                                 toml::table_format::multiline;
@@ -375,16 +387,17 @@ void TOMLConfigInput::ParseSource
 
       if (in_val.contains("TransferFunction"))
       {
-         op.tf_params = TransferParamsVariant{};
+         op.tf_params = TransferFunction::ParamsVariant{};
          in_val.at("TransferFunction").as_table_fmt().fmt = 
                                                 toml::table_format::multiline;
-         ParseTransfer(toml::format(in_val.at("TransferFunction")), *op.tf_params);
+         ParseTransferFunction(toml::format(in_val.at("TransferFunction")), 
+                                 *op.tf_params);
       }
       opv = op;
    }
-   else if (option == SourceOption::WaveCSV)
+   else if (option == WaveCSV)
    {
-      SourceParams<SourceOption::WaveCSV> op;
+      Source::Params<WaveCSV> op;
       op.file = in_val.at("File").as_string();
       opv = op;
    }
@@ -395,8 +408,7 @@ void TOMLConfigInput::ParseComputation
 {
    toml::value in_val = toml::parse_str(toml_string);
    op.t0 = in_val.at("t0").as_floating();
-   GetEnumerator(in_val.at("Kernel").as_string(), kKernelNames, 
-                  op.kernel);
+   op.kernel = GetOption<KernelType>(in_val.at("Kernel").as_string());
 }
 
 void TOMLConfigInput::ParsePrecice
