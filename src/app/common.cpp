@@ -194,6 +194,41 @@ void DirectionVisitor::operator()
    }
 }
 
+void TransferFunctionVisitor::operator()
+   (const TransferFunction::Params<LowFrequencyLimit> &op)
+{
+   const double &p_bar = base_flow_params.p;
+   const double &rho_bar = base_flow_params.rho;
+   const double &gamma = base_flow_params.gamma;
+   const double mach_bar = std::sqrt(gamma*p_bar/rho_bar);
+
+   LowFrequencyLimitTF(mach_bar, gamma, speed, powers);
+}
+
+void TransferFunctionVisitor::operator()
+   (const TransferFunction::Params<Input> &op)
+{
+   std::unique_ptr<Function> tf;
+   std::visit(FunctionTypeVisitor{&tf}, op.input_tf);
+
+   for (std::size_t i = 0; i < freqs.size(); i++)
+   {
+      powers[i] /= (*tf)(freqs[i]);
+   }
+}
+
+void TransferFunctionVisitor::operator()
+   (const TransferFunction::Params<FlowNormalFit> &op)
+{
+   const double &p_bar = base_flow_params.p;
+   const double &rho_bar = base_flow_params.rho;
+   const double &gamma = base_flow_params.gamma;
+   const double mach_bar = std::sqrt(gamma*p_bar/rho_bar);
+
+   FlowNormalFitTF(mach_bar, gamma, speed, op.shock_standoff_dist,
+                     freqs, powers);
+}
+
 void SourceVisitor::operator()
    (const Source::Params<SingleWave> &op)
 {
@@ -235,8 +270,12 @@ void SourceVisitor::operator()
    psd->Discretize(freqs, op.int_method, powers);
 
    // Apply transfer function to the powers
-   // TODO.
-
+   if (op.tf_params.has_value())
+   {
+      std::visit(TransferFunctionVisitor{base_flow_params, freqs, op.speed,
+                                          powers},
+                  *op.tf_params);
+   }
    // Compute the amplitudes of each wave, with dimensionalization factor
    std::vector<double> amps(freqs.size());
    for (std::size_t i = 0; i < amps.size(); i++)
@@ -292,7 +331,7 @@ AcousticField InitializeAcousticField(const ConfigInput &conf,
    // Assemble vector of wave structs based on input source
    for (const Source::ParamsVariant &source : sources_conf)
    {
-      std::visit(SourceVisitor{field.Waves()}, source);
+      std::visit(SourceVisitor{base_conf, field.Waves()}, source);
    }
 
    // Finalize the acoustic field initialization

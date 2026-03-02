@@ -95,6 +95,31 @@ struct DirectionVisitor
    void operator() (const Direction::Params<RandomXYAngle> &op);
 };
 
+/**
+ * @brief All visitor options for each TransferFunction::Params, for
+ * applying a transfer function to given \ref powers.
+ * 
+ */
+struct TransferFunctionVisitor
+{
+   using enum TransferFunction::Option;
+
+   /// Base flow parameters.
+   const BaseFlowParams &base_flow_params;
+
+   /// Array of frequencies to evaluate for.
+   const std::vector<double> &freqs;
+
+   /// Wave speed (for all).
+   const char &speed;
+
+   /// Array of powers to update; same size as \ref freqs.
+   std::vector<double> &powers;
+
+   void operator() (const TransferFunction::Params<LowFrequencyLimit> &op);
+   void operator() (const TransferFunction::Params<Input> &op);
+   void operator() (const TransferFunction::Params<FlowNormalFit> &op);
+};
 
 /**
  * @brief All visitor options for each Source::Params, for initializing 
@@ -105,8 +130,11 @@ struct SourceVisitor
 {
    using enum Source::Option;
 
+   const BaseFlowParams &base_flow_params;
+
    /// Reference of wave vector to append jabber::Wave structs to.
    std::vector<jabber::Wave> &waves;
+   
    void operator() (const Source::Params<SingleWave> &op);
    void operator() (const Source::Params<WaveSpectrum> &op);
    void operator() (const Source::Params<PSD> &op);
