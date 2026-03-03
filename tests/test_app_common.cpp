@@ -5,26 +5,23 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <catch2/matchers/catch_matchers_vector.hpp>
+#include <catch2/generators/catch_generators_all.hpp>
 
 #include <jabber_app.hpp>
 
 #include <filesystem>
 #include <fstream>
 #include <numeric>
+#include <vector>
 
 using namespace jabber_app;
 using namespace Catch::Matchers;
-
-// Helper type for the std::visit
-// (https://en.cppreference.com/w/cpp/utility/variant/visit)
-template<class... Ts>
-struct overloads : Ts... { using Ts::operator()...; };
-
+using namespace Catch::Generators;
 
 namespace jabber_test
 {
 
-TEST_CASE("Normalize", "[App]")
+TEST_CASE("Normalize", "[App][Common]")
 {   
    constexpr std::size_t kDim = 3;
    std::vector<double> vec = GENERATE(take(1,chunk(kDim,random(0.0,1.0))));
@@ -43,6 +40,34 @@ TEST_CASE("Normalize", "[App]")
                                                    0.0);
    CAPTURE(vec, norm_vec);
    REQUIRE_THAT(dot_product, WithinRel(vec_mag, 1e-12));
+}
+
+TEST_CASE("GetRankPartition", "[App][Common]")
+{
+   const int kVDim = GENERATE(1,2,3);
+   const int kN = GENERATE(take(2,random(10,100)));
+
+   const int kSize = GENERATE_REF(range(1, 2*kN));
+
+   CAPTURE(kVDim, kN, kSize);
+   
+   const std::vector<double> values = take(1,
+                                          chunk(kN*kVDim,random(-10.0,10.0)))
+                                          .get();
+
+   // Test by appending all subspans together + comparing against original
+   std::span<const double> r_sub_values;
+   std::vector<double> values_test;
+   for (std::size_t r = 0; r < kSize; r++)
+   {
+      GetRankPartition<double>(values, kVDim, r, kSize, r_sub_values);
+
+      values_test.insert(values_test.end(), 
+                           r_sub_values.begin(),
+                           r_sub_values.end());
+   }
+
+   REQUIRE_THAT(values, Equals(values_test));
 }
 
 // TEST_CASE("InputXYVisitor", "[App]")

@@ -154,6 +154,41 @@ jabber::AcousticField InitializeAcousticField(const ConfigInput &conf,
                                                 std::span<const double> coords,
                                                 int dim);
 
+
+/**
+ * @brief Extremely simple function to get subspan of data from \p global 
+ * to \p local for basic MPI-partitioning. Data must be ordered in a SoA 
+ * format.
+ * 
+ * @tparam T         Type.
+ * @param global     Global data set to get partition of. Note that all
+ *                   ranks must have this defined and equal.
+ * @param rank       Rank to get partition of.
+ * @param vdim       Vector dimension of each data.
+ * @param size       Number of ranks to partition across.
+ * @param local      Output rank-local data sub-span to set based on args.
+ */
+template<typename T>
+void GetRankPartition(std::span<const T> global, int vdim, int rank, int size, 
+                        std::span<const T> &local)
+{
+   const std::size_t global_num_dat = global.size()/vdim;
+   const std::size_t rank_num_dat = vdim*(global_num_dat/size +
+                                          (rank < (global_num_dat % size) 
+                                             ? 1 
+                                             : 0));
+
+   const std::size_t rank_offset = vdim*(rank*(global_num_dat/size) +
+                                          (rank < (global_num_dat % size)
+                                             ? rank 
+                                             : (global_num_dat % size)));
+   
+   
+   // std::cout << "Rank " << rank << " | NumDat: " << rank_num_dat << " | Offset: " << rank_offset <<  
+   //             " | N/S = " << global_num_dat/size << " | N%S = " << (global_num_dat % size) << std::endl;
+   local = global.subspan(rank_offset, rank_num_dat);
+}
+
 } // namespace jabber_app
 
 #endif // JABBER_APP_COMMON
