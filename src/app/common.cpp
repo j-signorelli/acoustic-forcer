@@ -238,7 +238,8 @@ void SourceVisitor::operator()
 {
    std::vector<double> k_hat(op.direction.size(), 0.0);
    Normalize(op.direction, k_hat);
-   waves.emplace_back(op.amp, op.freq, op.phase*M_PI/180.0, op.speed, k_hat);
+   waves.push_back(Wave{op.amp, op.freq, op.phase*M_PI/180.0, op.speed, 
+                           k_hat});
 }
 
 void SourceVisitor::operator()
@@ -248,8 +249,8 @@ void SourceVisitor::operator()
    {
       std::vector<double> k_hat(op.directions[i].size(), 0.0);
       Normalize(op.directions[i], k_hat);
-      waves.emplace_back(op.amps[i], op.freqs[i], op.phases[i]*M_PI/180.0, 
-                           op.speeds[i], k_hat);
+      waves.push_back(Wave{op.amps[i], op.freqs[i], op.phases[i]*M_PI/180.0, 
+                           op.speeds[i], k_hat});
    }
 }
 
@@ -303,8 +304,8 @@ void SourceVisitor::operator()
    // Finally, assemble the individual Wave structs
    for (std::size_t i = 0; i < op.num_waves; i++)
    {
-      const Wave w{amps[i], freqs[i], phases[i], op.speed, k_hats[i]};
-      waves.emplace_back(w);
+      waves.push_back(Wave{amps[i], freqs[i], phases[i], op.speed,
+                           k_hats[i]});
    }
 }
 
