@@ -184,8 +184,6 @@ void GetRankPartition(std::span<const T> global, int vdim, int rank, int size,
                                              : (global_num_dat % size)));
    
    
-   // std::cout << "Rank " << rank << " | NumDat: " << rank_num_dat << " | Offset: " << rank_offset <<  
-   //             " | N/S = " << global_num_dat/size << " | N%S = " << (global_num_dat % size) << std::endl;
    local = global.subspan(rank_offset, rank_num_dat);
 }
 
