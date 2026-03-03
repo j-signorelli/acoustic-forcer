@@ -15,6 +15,7 @@ using namespace jabber;
 using namespace jabber_app;
 using namespace Catch::Matchers;
 using namespace Catch::Generators;
+
 namespace jabber_test
 {
 
