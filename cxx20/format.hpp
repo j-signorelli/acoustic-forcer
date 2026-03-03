@@ -2,6 +2,7 @@
 #ifdef USE_FMTLIB_POLYFILL
    // std::format polyfill using fmtlib
    #include <fmt/core.h>
+   #include <fmt/chrono.h>
    namespace std 
    {
       using fmt::format;
