@@ -149,8 +149,10 @@ int main(int argc, char *argv[])
 #ifdef JABBER_WITH_MPI
    std::vector<dur_t> local_compute_times(passes+warmup_passes);
 
-   // Rank of max compute time for each iteration
-   std::vector<int> max_compute_ranks(passes+warmup_passes);
+   // Rank of max compute time for each iteration - only store on root
+   std::vector<int> max_compute_ranks;
+   ROOT max_compute_ranks.resize(passes+warmup_passes);
+
    ROOT std::cout << std::endl
                   << "Running with MPI enabled! Outputted times are the max "
                      "across all ranks." << std::endl << std::endl;
@@ -180,10 +182,13 @@ int main(int argc, char *argv[])
       MPI_Allreduce(MPI_IN_PLACE, &time_rank, 1, MPI_DOUBLE_INT, MPI_MAXLOC,
                      MPI_COMM_WORLD);
 
-      ROOT compute_times[i] = dur_t(time_rank.t);
-      max_compute_ranks[i] = time_rank.r;
+      ROOT
+      {
+         compute_times[i] = dur_t(time_rank.t);
+         max_compute_ranks[i] = time_rank.r;
+      }
 #else
-      compute_times[i] = std::chrono::duration_cast<dur_t>(end - start);
+      compute_times[i] = end - start;
 #endif // JABBER_WITH_MPI
 
       ROOT
@@ -214,19 +219,69 @@ int main(int argc, char *argv[])
                   << "Average Compute() Time: " << ave_dur << std::endl;
    }
 
-// #ifdef JABBER_WITH_MPI
-//    // Have all ranks compute histogram of worst-rank for all iterations
-//    std::vector<std::size_t> rank_counts(size, 0.0);
-//    for (std::size_t i = 0; i < size; i++)
-//    {
-//       rank_counts[compute_ranks[i]]++;
-//    }
-//    std::sort(rank_counts.begin(), rank_counts.end());
+#ifdef JABBER_WITH_MPI
    
-//    // Have each rank compute their local average duration
+   // Have each rank compute their local average duration
+   dur_t local_total_dur = 
+         std::accumulate(std::next(local_compute_times.begin(), warmup_passes),
+                         local_compute_times.end(), 
+                          dur_t(0.0));
+   dur_t local_ave_dur = local_total_dur/passes;
 
-//    ROOT std::cout << "Printing rank mean compute times"
-// #endif // JABBER_WITH_MPI
+   // Gather all mean durations + num coordinates to root
+   struct RankData
+   {
+      double local_ave;
+      int num_pts;
+   };
+
+   RankData rank_data;
+   rank_data.local_ave = local_ave_dur.count();
+   rank_data.num_pts = coords.size()/dim;
+
+   std::vector<RankData> all_rank_data;
+   ROOT all_rank_data.resize(size);
+   MPI_Gather(&rank_data, 1, MPI_DOUBLE_INT, all_rank_data.data(), 1, 
+               MPI_DOUBLE_INT, 0, MPI_COMM_WORLD);
+
+   ROOT 
+   {
+      // Compute histogram of worst-rank counts to determine worst.
+      std::vector<std::size_t> rank_counts(size, 0.0);
+      for (std::size_t i = 0; i < passes; i++)
+      {
+         rank_counts[max_compute_ranks[warmup_passes+i]]++;
+      }
+      const int worst_rank = 
+         std::distance(rank_counts.begin(), 
+                     std::max_element(rank_counts.begin(),rank_counts.end()));
+
+      std::cout << "Rank " << worst_rank << " was the slowest rank for " << 
+                   rank_counts[worst_rank] << " iterations."
+                   << std::endl << std::endl;
+
+      // Sort indices of rank_ave_dur based on their value
+      std::vector<int> r_idxs(size);
+      std::iota(r_idxs.begin(), r_idxs.end(), 0);
+      std::sort(r_idxs.begin(), r_idxs.end(), 
+               [&all_rank_data](std::size_t i1, std::size_t i2) 
+               { 
+                  return all_rank_data[i1].local_ave > 
+                              all_rank_data[i2].local_ave;
+               });
+      
+      std::cout << "Printing rank mean compute times in order of "
+                     "slowest to fastest..." << std::endl;
+
+      for (const int &r : r_idxs)
+      {
+         std::cout << std::format("Rank {:>3}:   {:<10} with {} points", 
+                                    r, dur_t(all_rank_data[r].local_ave),
+                                    all_rank_data[r].num_pts)
+                   << std::endl;
+      }
+   }
+#endif // JABBER_WITH_MPI
    return 0;
 }
 
