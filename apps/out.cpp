@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
    std::cout << LINE << std::endl;
 
    std::vector<Wave> waves;
-   for (const SourceParamsVariant &spv : conf.Sources())
+   for (const Source::ParamsVariant &spv : conf.Sources())
    {
       std::visit(SourceVisitor{waves}, spv);
    }
