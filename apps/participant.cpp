@@ -3,18 +3,40 @@
 #include <cxxopts.hpp>
 #include <precice/precice.hpp>
 
+#ifdef JABBER_WITH_MPI
+#include <mpi.h>
+#endif // JABBER_WITH_MPI
+
 #include <iostream>
 #include <regex>
+
+/// Simple macro for enclosing code section to occur only for rank 0
+#ifdef JABBER_WITH_MPI
+   #define ROOT if (rank == 0)
+#else
+   #define ROOT
+#endif
 
 using namespace jabber;
 using namespace jabber_app;
 
 int main(int argc, char *argv[])
 {
-   PrintBanner(std::cout);
-   std::cout << "Jabber preCICE Participant" << std::endl
-               << LINE << std::endl;
+#ifdef JABBER_WITH_MPI
+   MPI_Init(&argc, &argv);
+   
+   int rank, size;
+   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+#endif // JABBER_WITH_MPI
+
+   ROOT
+   {
+      PrintBanner(std::cout);
+      std::cout << "Jabber preCICE Participant" << std::endl
+                  << LINE << std::endl;
+   }
    // Option parser:
    cxxopts::Options options("jabber_participant", 
       "preCICE participant for coupling acoustic forcing with flow "
@@ -26,24 +48,28 @@ int main(int argc, char *argv[])
 
    std::string args_str = result.arguments_string();
    args_str = std::regex_replace(args_str, std::regex("\n"), "\n\t");
-   std::cout << "Command Line Arguments\n\t" << args_str << std::endl
-               << LINE << std::endl;
-               
+
+   ROOT std::cout << "Command Line Arguments\n\t" << args_str << std::endl
+                  << LINE << std::endl;
+
    if (result.count("help"))
    {
-      std::cout << options.help() << std::endl;
+
+      ROOT std::cout << options.help() << std::endl;
       return 0;
    }
    if (result.count("config") == 0)
    {
-      std::cout << "Error: no config file specified." << std::endl;
+      ROOT std::cout << "Error: no config file specified." << std::endl;
       return 1;
    }
    
    // Parse config file
    std::string config_file = result["config"].as<std::string>();
-   TOMLConfigInput conf(config_file, &std::cout);
-   std::cout << LINE << std::endl;
+   std::ostream *os = nullptr;
+   ROOT os = &std::cout;
+   TOMLConfigInput conf(config_file, os);
+   ROOT std::cout << LINE << std::endl;
 
    // Get the preCICE input
    const PreciceParams &precice_conf = *(conf.Precice());
@@ -64,10 +90,22 @@ int main(int argc, char *argv[])
    participant.getMeshVertexIDsAndCoordinates(precice_conf.fluid_mesh_name,
                                               vertex_ids, coords);
 
+#ifdef JABBER_WITH_MPI
+   std::span<const double> rank_coords;
+   std::span<const int> rank_vertex_ids;
+
+   GetRankPartition<double>(coords, dim, rank, size, rank_coords);
+   coords = std::vector<double>(rank_coords.begin(), rank_coords.end());
+
+   GetRankPartition<int>(vertex_ids, 1, rank, size, rank_vertex_ids);
+   vertex_ids = std::vector<int>(rank_vertex_ids.begin(), 
+                                 rank_vertex_ids.end());
+#endif // JABBER_WITH_MPI
+
    // Assemble AcousticField object
-   std::cout << "Assembling acoustic field data... ";
+   ROOT std::cout << "Assembling acoustic field data... ";
    AcousticField field = InitializeAcousticField(conf, coords, dim);
-   std::cout << "Done!" << std::endl;
+   ROOT std::cout << "Done!" << std::endl;
 
    double time = conf.Comp().t0;
    double dt;

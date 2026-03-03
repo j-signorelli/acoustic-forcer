@@ -2,26 +2,49 @@
 #include <jabber_app.hpp>
 #include <cxxopts.hpp>
 
+#ifdef JABBER_WITH_MPI
+#include <mpi.h>
+#endif // JABBER_WITH_MPI
+
 #include <iostream>
 #include <cmath>
 #include <regex>
 #include <chrono>
 #include <random>
 
+/// Simple macro for enclosing code section to occur only for rank 0
+#ifdef JABBER_WITH_MPI
+   #define ROOT if (rank == 0)
+#else
+   #define ROOT
+#endif
+
 using namespace jabber;
 using namespace jabber_app;
+
+// Define duration type alias
+using dur_t = std::chrono::duration<double, std::micro>;
 
 /// Create a dummy grid.
 void CreateGrid(const int dim, const int num_pts_d, const double extent, 
                   std::vector<double> &coords);
 
-
 int main(int argc, char *argv[])
 {
-   PrintBanner(std::cout);
-   std::cout << "Jabber Profiler Tool" << std::endl
-               << LINE << std::endl;
+#ifdef JABBER_WITH_MPI
+   MPI_Init(&argc, &argv);
+   
+   int rank, size;
+   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+   MPI_Comm_size(MPI_COMM_WORLD, &size);
+#endif // JABBER_WITH_MPI
 
+   ROOT
+   {
+      PrintBanner(std::cout);
+      std::cout << "Jabber Profiler Tool" << std::endl
+                  << LINE << std::endl;
+   }
    // Option parser:
    cxxopts::Options options("jabber_profile", 
       "Simple profiler tool to obtain execution times of a given config file \
@@ -47,17 +70,17 @@ int main(int argc, char *argv[])
    
    std::string args_str = result.arguments_string();
    args_str = std::regex_replace(args_str, std::regex("\n"), "\n\t");
-   std::cout << "Command Line Arguments\n\t" << args_str << std::endl 
-               << LINE << std::endl;
+   ROOT std::cout << "Command Line Arguments\n\t" << args_str << std::endl 
+                  << LINE << std::endl;
 
    if (result.count("help"))
    {
-      std::cout << options.help() << std::endl;
+      ROOT std::cout << options.help() << std::endl;
       return 0;
    }
    if (result.count("config") == 0)
    {
-      std::cout << "Error: no config file specified." << std::endl;
+      ROOT std::cout << "Error: no config file specified." << std::endl;
       return 1;
    }
 
@@ -70,33 +93,44 @@ int main(int argc, char *argv[])
 
    // Parse config file
    std::string config_file = result["config"].as<std::string>();
-   TOMLConfigInput conf(config_file, &std::cout);
-   std::cout << LINE << std::endl;
+   std::ostream *os = nullptr;
+   ROOT os = &std::cout;
+   TOMLConfigInput conf(config_file, os);
+   ROOT std::cout << LINE << std::endl;
 
    // Output grid information to console
-   std::cout << "Grid\n";
-   std::cout << "\tDimension: ";
-   for (int d = 0; d < dim; d++)
+   ROOT
    {
-      std::cout << num_pts_d << (d+1==dim ? "" : "x");
+      std::cout << "Grid\n";
+      std::cout << "\tDimension: ";
+      for (int d = 0; d < dim; d++)
+      {
+         std::cout << num_pts_d << (d+1==dim ? "" : "x");
+      }
+      std::cout << std::endl;
+      std::cout << "\tExtents: ";
+      for (int d = 0; d < dim; d++)
+      {
+         std::cout << "[0," << extent << "]" << ((d + 1 == dim) ? "" : "x");
+      }
+      std::cout << std::endl;
+      std::cout << "\tNumber of points: " << num_pts_total << std::endl;
+      std::cout << "\tSpacing: " << (extent/(num_pts_d-1.0)) << std::endl;
    }
-   std::cout << std::endl;
-   std::cout << "\tExtents: ";
-   for (int d = 0; d < dim; d++)
-   {
-      std::cout << "[0," << extent << "]" << ((d + 1 == dim) ? "" : "x");
-   }
-   std::cout << std::endl;
-   std::cout << "\tNumber of points: " << num_pts_total << std::endl;
-   std::cout << "\tSpacing: " << (extent/(num_pts_d-1.0)) << std::endl;
 
    // Create a simple [0,1]^dim grid
    std::vector<double> coords(num_pts_total*dim);
    CreateGrid(dim, num_pts_d, extent, coords);
 
+#ifdef JABBER_WITH_MPI
+   // Partition the coordinates.
+   std::span<const double> rank_coords;
+   GetRankPartition<double>(coords, dim, rank, size, rank_coords);
+   coords = std::vector<double>(rank_coords.begin(), rank_coords.end());
+#endif // JABBER_WITH_MPI
+
    // Initialize AcousticField
    AcousticField field = InitializeAcousticField(conf, coords, dim);
-
 
    // Create an array of randomized times
    std::mt19937 gen(0);
@@ -107,41 +141,92 @@ int main(int argc, char *argv[])
       time_rand[i] = real_dist(gen);
    }
 
+   // When JABBER_WITH_MPI, this holds max compute time for each iteration,
+   // across all ranks.
+   std::vector<dur_t> compute_times;
+   ROOT compute_times.resize(passes+warmup_passes);
+
+#ifdef JABBER_WITH_MPI
+   std::vector<dur_t> local_compute_times(passes+warmup_passes);
+
+   // Rank of max compute time for each iteration
+   std::vector<int> max_compute_ranks(passes+warmup_passes);
+   ROOT std::cout << std::endl
+                  << "Running with MPI enabled! Outputted times are the max "
+                     "across all ranks." << std::endl << std::endl;
+   struct TimeRank
+   {
+      double t;
+      int r;
+   } time_rank;
+#endif // JABBER_WITH_MPI
+
    // Run profiling loop
-   std::vector<std::chrono::duration<double, std::micro>> 
-      compute_times(passes+warmup_passes);
-   for (int i = 0; i < time_rand.size(); i++)
+   for (int i = 0; i < warmup_passes+passes; i++)
    {
       const std::chrono::time_point<std::chrono::steady_clock> start =
         std::chrono::steady_clock::now();
       field.Compute(time_rand[i]);
       const std::chrono::time_point<std::chrono::steady_clock> end =
         std::chrono::steady_clock::now();
-
-      compute_times[i] = 
-            std::chrono::duration_cast<std::chrono::microseconds>(end - start);
       
-      if (i < warmup_passes)
+#ifdef JABBER_WITH_MPI
+      local_compute_times[i] = end - start;
+
+      time_rank.t = local_compute_times[i].count();
+      time_rank.r = rank;
+
+      // Get the max compute time and rank across all ranks
+      MPI_Allreduce(MPI_IN_PLACE, &time_rank, 1, MPI_DOUBLE_INT, MPI_MAXLOC,
+                     MPI_COMM_WORLD);
+
+      ROOT compute_times[i] = dur_t(time_rank.t);
+      max_compute_ranks[i] = time_rank.r;
+#else
+      compute_times[i] = std::chrono::duration_cast<dur_t>(end - start);
+#endif // JABBER_WITH_MPI
+
+      ROOT
       {
-         std::cout << "Warmup Pass #" << (i+1) << ": " << compute_times[i]
-                   << std::endl;
-      }
-      else
-      {
-         std::cout << "Pass #" << (i+1-warmup_passes) << ": "
-                   << compute_times[i] << std::endl;
+         if (i < warmup_passes)
+         {
+            std::cout << "Warmup Pass #" << (i+1) << ": " << compute_times[i]
+                           << std::endl;
+         }
+         else
+         {
+            std::cout << "Pass #" << (i+1-warmup_passes) << ": "
+                           << compute_times[i] << std::endl;;
+         }
       }
    }
 
    // Compute the average compute time after warmups
-   std::chrono::duration<double, std::micro> total_dur(0.0);
-   for (int i = 0; i < passes; i++)
+   ROOT
    {
-      total_dur += compute_times[i+warmup_passes];
-   }
-   std::chrono::duration<double, std::micro> ave_dur = total_dur/passes;
+      dur_t total_dur = std::accumulate(std::next(compute_times.begin(), 
+                                                   warmup_passes),
+                                          compute_times.end(), 
+                                          dur_t(0.0));
+      dur_t ave_dur = total_dur/passes;
 
-   std::cout << LINE << std::endl << "Average Compute() Time: " << ave_dur << std::endl;
+      std::cout << LINE << std::endl 
+                  << "Average Compute() Time: " << ave_dur << std::endl;
+   }
+
+// #ifdef JABBER_WITH_MPI
+//    // Have all ranks compute histogram of worst-rank for all iterations
+//    std::vector<std::size_t> rank_counts(size, 0.0);
+//    for (std::size_t i = 0; i < size; i++)
+//    {
+//       rank_counts[compute_ranks[i]]++;
+//    }
+//    std::sort(rank_counts.begin(), rank_counts.end());
+   
+//    // Have each rank compute their local average duration
+
+//    ROOT std::cout << "Printing rank mean compute times"
+// #endif // JABBER_WITH_MPI
    return 0;
 }
 

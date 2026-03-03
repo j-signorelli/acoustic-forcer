@@ -37,12 +37,20 @@ option(JABBER_BUILD_TESTS
 option(JABBER_ENABLE_OPENMP
    "Build jabber with OpenMP support" OFF)
 
+option(JABBER_ENABLE_MPI
+   "Build jabber_app with MPI support" OFF)
+
 # Property of all targets to install
 set_property(GLOBAL PROPERTY JABBER_TARGETS_PROPERTY)
 
 if (JABBER_ENABLE_OPENMP)
    find_package(OpenMP REQUIRED COMPONENTS CXX)
    add_compile_definitions(JABBER_WITH_OPENMP)
+endif()
+
+if (JABBER_ENABLE_MPI)
+   find_package(MPI REQUIRED COMPONENTS CXX)
+   add_compile_definitions(JABBER_WITH_MPI)
 endif()
 
 # Build Jabber library
