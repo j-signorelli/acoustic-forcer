@@ -226,7 +226,7 @@ int main(int argc, char *argv[])
          InputXY::Params<FromCSV> input;
          input.file = result["input-psd"].as<std::string>();
          std::vector<double> in_freqs, in_psd;
-         InputXYVisitor psd_in(in_freqs, in_psd);
+         InputXYVisitor psd_in{in_freqs, in_psd};
          psd_in(input);
          for (std::size_t i = 0; i < in_freqs.size(); i++)
          {
