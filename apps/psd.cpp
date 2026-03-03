@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
       std::fprintf(gnuplot, "plot '-' title 'Computed' with points pt 1");
       if (result.count("input-psd") > 0)
       {
-         std::fprintf(gnuplot, ", '-' title 'Input PSD' with points pt 4");              
+         std::fprintf(gnuplot, ", '-' title 'Input PSD' with line");              
       }
       std::fprintf(gnuplot, "\n");
       for (std::size_t i = 0; i < freqs.size(); i++)

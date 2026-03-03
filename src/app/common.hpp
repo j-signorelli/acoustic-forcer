@@ -5,7 +5,8 @@
 
 #include <jabber.hpp>
 #include <iostream>
-
+#include <concepts>
+#include <memory>
 namespace jabber_app
 {
 
@@ -19,48 +20,50 @@ void PrintBanner(std::ostream &out);
 void Normalize(std::span<const double> vec, std::span<double> norm_vec);
 
 /**
- * @brief All visitor options for each SourceParams, for initializing 
- * \ref jabber::Wave's for each type and appending to \p waves.
- * 
- * @todo: Unit test?
+ * @brief All visitor options for each InputXY::Params, for initializing 
+ * \ref x and \ref y vectors.
  * 
  */
-struct SourceVisitor
-{
-   /// Reference of wave vector to append jabber::Wave structs to.
-   std::vector<jabber::Wave> &waves;
-   void operator() (const SourceParams<SourceOption::SingleWave> &sp);
-   void operator() (const SourceParams<SourceOption::WaveSpectrum> &sp);
-   void operator() (const SourceParams<SourceOption::DigitalPSD> &sp);
-   void operator() (const SourceParams<SourceOption::WaveCSV> &sp);
+struct InputXYVisitor
+{  
+   using enum InputXY::Option;
+
+   /// Reference to x-data vector to set.
+   std::vector<double> &x;
+
+   /// Reference to y-data vector to set.
+   std::vector<double> &y;
+
+   void operator() (const InputXY::Params<Here> &op);
+   void operator() (const InputXY::Params<FromCSV> &op);
 };
 
 /**
- * @brief All visitor options for each PSDInputParams, for initializing a 
- * digitized power spectral density input.
+ * @brief All visitor options for each FunctionType::Params, for initializing a
+ * \ref jabber::Function or \ref jabber::BasePSD type.
  * 
- * @todo: Unit test?
  */
-struct PSDInputVisitor
+struct FunctionTypeVisitor
 {
-   /// Frequency vector to initialize.
-   std::vector<double> &d_freqs;
-   
-   /// PSD vector to initialize.
-   std::vector<double> &d_psds;
+   using enum FunctionType::Option;
 
-   void operator() (const PSDInputParams<PSDInputOption::Here> &ip);
-   void operator() (const PSDInputParams<PSDInputOption::FromCSV> &ip);
+   /// Function to initialize
+   std::variant<std::unique_ptr<jabber::Function>*,
+                std::unique_ptr<jabber::BasePSD>*> T_ptr_ptr_var;
+
+   void operator() (const FunctionType::Params<PiecewiseLinear> &op);
+   void operator() (const FunctionType::Params<PiecewiseLogLog> &op);
 };
 
 /**
- * @brief All visitor options for each DiscMethodParams, for initializing
+ * @brief All visitor options for each DiscMethod::Params, for initializing
  * a discretized frequency range, \p freqs.
  * 
- * @todo: Unit test?
  */
 struct DiscMethodVisitor
 {  
+   using enum DiscMethod::Option;
+
    /// Minimum frequency bound.
    const double &min_freq;
 
@@ -70,25 +73,72 @@ struct DiscMethodVisitor
    /// **Sized** frequency vector to initialize.
    std::vector<double> &freqs;
 
-   void operator() (const DiscMethodParams<DiscMethodOption::Uniform> &dp);
-   void operator() (const DiscMethodParams<DiscMethodOption::UniformLog> &dp);
-   void operator() (const DiscMethodParams<DiscMethodOption::Random> &dp);
-   void operator() (const DiscMethodParams<DiscMethodOption::RandomLog> &dp);
+   void operator() (const DiscMethod::Params<Uniform> &op);
+   void operator() (const DiscMethod::Params<UniformLog> &op);
+   void operator() (const DiscMethod::Params<Random> &op);
+   void operator() (const DiscMethod::Params<RandomLog> &op);
 };
 
 /**
- * @brief All visitor options for each DirectionParams, for initializing
+ * @brief All visitor options for each Direction::Params, for initializing
  * wave directional vectors in \p k_hats.
  * 
- * @todo: Unit test?
  */
 struct DirectionVisitor
 {
+   using enum Direction::Option;
+
    /// **Sized** vector of direction vectors for each wave.
    std::vector<std::vector<double>> &k_hats;
 
-   void operator() (const DirectionParams<DirectionOption::Constant> &dp);
-   void operator() (const DirectionParams<DirectionOption::RandomXYAngle> &dp);
+   void operator() (const Direction::Params<Constant> &op);
+   void operator() (const Direction::Params<RandomXYAngle> &op);
+};
+
+/**
+ * @brief All visitor options for each TransferFunction::Params, for
+ * applying a transfer function to given \ref powers.
+ * 
+ */
+struct TransferFunctionVisitor
+{
+   using enum TransferFunction::Option;
+
+   /// Base flow parameters.
+   const BaseFlowParams &base_flow_params;
+
+   /// Array of frequencies to evaluate for.
+   const std::vector<double> &freqs;
+
+   /// Wave speed (for all).
+   const char &speed;
+
+   /// Array of powers to update; same size as \ref freqs.
+   std::vector<double> &powers;
+
+   void operator() (const TransferFunction::Params<LowFrequencyLimit> &op);
+   void operator() (const TransferFunction::Params<Input> &op);
+   void operator() (const TransferFunction::Params<FlowNormalFit> &op);
+};
+
+/**
+ * @brief All visitor options for each Source::Params, for initializing 
+ * \ref jabber::Wave's for each type and appending to \p waves.
+ * 
+ */
+struct SourceVisitor
+{
+   using enum Source::Option;
+
+   const BaseFlowParams &base_flow_params;
+
+   /// Reference of wave vector to append jabber::Wave structs to.
+   std::vector<jabber::Wave> &waves;
+   
+   void operator() (const Source::Params<SingleWave> &op);
+   void operator() (const Source::Params<WaveSpectrum> &op);
+   void operator() (const Source::Params<PSD> &op);
+   void operator() (const Source::Params<WaveCSV> &op);
 };
 
 /**
@@ -103,6 +153,39 @@ struct DirectionVisitor
 jabber::AcousticField InitializeAcousticField(const ConfigInput &conf, 
                                                 std::span<const double> coords,
                                                 int dim);
+
+
+/**
+ * @brief Extremely simple function to get subspan of data from \p global 
+ * to \p local for basic MPI-partitioning. Data must be ordered in a SoA 
+ * format.
+ * 
+ * @tparam T         Type.
+ * @param global     Global data set to get partition of. Note that all
+ *                   ranks must have this defined and equal.
+ * @param rank       Rank to get partition of.
+ * @param vdim       Vector dimension of each data.
+ * @param size       Number of ranks to partition across.
+ * @param local      Output rank-local data sub-span to set based on args.
+ */
+template<typename T>
+void GetRankPartition(std::span<const T> global, int vdim, int rank, int size, 
+                        std::span<const T> &local)
+{
+   const std::size_t global_num_dat = global.size()/vdim;
+   const std::size_t rank_num_dat = vdim*(global_num_dat/size +
+                                          (rank < (global_num_dat % size) 
+                                             ? 1 
+                                             : 0));
+
+   const std::size_t rank_offset = vdim*(rank*(global_num_dat/size) +
+                                          (rank < (global_num_dat % size)
+                                             ? rank 
+                                             : (global_num_dat % size)));
+   
+   
+   local = global.subspan(rank_offset, rank_num_dat);
+}
 
 } // namespace jabber_app
 

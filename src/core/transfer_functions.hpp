@@ -1,19 +1,42 @@
 #ifndef JABBER_TRANSFER_FUNCTIONS
 #define JABBER_TRANSFER_FUNCTIONS
 
+#include <span>
+
 namespace jabber
 {
 
 /**
- * @brief Compute the transfer function $\chi$ using the analytical 
- * low-frequency limit form in Chaudhry and Chandler, 2017.
+ * @brief Apply the transfer function \f$\chi^*\f$, the analytical 
+ * low-frequency limit form given in Equation 15 of Chaudhry and
+ * Chandler, 2017.
  * 
  * @param mach_bar      Freestream Mach number.
  * @param gamma         Specific heat ratio.
  * @param speed         Wave speed, 'S' for slow, 'F' for fast.
- * @return double       $\chi$.
+ * 
+ * @param powers        Powers to apply transfer function to.
  */
-double LowFrequencyLimitTF(double mach_bar, double gamma, char speed);
+void LowFrequencyLimitTF(double mach_bar, double gamma, char speed,
+                            std::span<double> powers);
+
+/**
+ * @brief Apply the transfer function \f$\chi\f$ obtained via 
+ * re-dimensionalization of a fit of the curve in Figure 14b of 
+ * Chaudhry and Chandler, 2017.
+ * 
+ * @param mach_bar      Freestream Mach number.
+ * @param gamma         Specific heat ratio.
+ * @param speed         Wave speed, 'S' for slow, 'F' for fast.
+ * @param delta         Shock standoff distance from pitot probe face.
+ * @param freqs         Frequencies, associated with each power in \p powers.
+ * 
+ * @param powers        Powers to apply transfer function to.
+ */
+void FlowNormalFitTF(double mach_bar, double gamma, char speed, 
+                        double delta, std::span<const double> freqs,
+                        std::span<double> powers);
+
 
 } // namespace jabber
 
