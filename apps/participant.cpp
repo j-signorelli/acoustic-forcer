@@ -22,10 +22,9 @@ using namespace jabber_app;
 
 int main(int argc, char *argv[])
 {
+   int rank=0, size=1;
 #ifdef JABBER_WITH_MPI
    MPI_Init(&argc, &argv);
-   
-   int rank, size;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -76,7 +75,7 @@ int main(int argc, char *argv[])
 
    // Initialize preCICE participant
    precice::Participant participant(precice_conf.participant_name,
-                                    precice_conf.config_file, 0, 1);
+                                    precice_conf.config_file, rank, size);
    participant.setMeshAccessRegion(precice_conf.fluid_mesh_name,
                                     precice_conf.mesh_access_region);
    participant.initialize();
