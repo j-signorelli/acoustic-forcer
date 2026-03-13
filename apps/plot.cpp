@@ -24,7 +24,11 @@ int main(int argc, char *argv[])
       ("c,config", "Config file.", cxxopts::value<std::string>())
       ("l,log", "Plot on a log-log scale.",
                     cxxopts::value<bool>()->default_value("false"))
-      ("h,help", "Print usage information.");
+      ("h,help", "Print usage information.")
+      ("n,nondim", 
+         "Nondimensionalize the pressure wave amplitudes using the "
+         "input base flow pressure.",
+                     cxxopts::value<bool>()->default_value("false"));
 
    cxxopts::ParseResult result = options.parse(argc, argv);
    
@@ -45,6 +49,7 @@ int main(int argc, char *argv[])
    }
 
    const bool loglog = result["log"].as<bool>();
+   const bool nd = result["nondim"].as<bool>();
 
    // Parse config file
    std::string config_file = result["config"].as<std::string>();
@@ -61,7 +66,7 @@ int main(int argc, char *argv[])
    for (std::size_t i = 0; i < waves.size(); i++)
    {
       freqs[i] = waves[i].frequency;
-      amps[i] = waves[i].amplitude;
+      amps[i] = waves[i].amplitude / (nd ? conf.BaseFlow().p : 1.0);
    }
 
    std::FILE* gnuplot = popen("gnuplot", "w");
