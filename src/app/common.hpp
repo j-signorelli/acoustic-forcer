@@ -157,7 +157,7 @@ jabber::AcousticField InitializeAcousticField(const ConfigInput &conf,
 
 /**
  * @brief Extremely simple function to get subspan of data from \p global 
- * to \p local for basic MPI-partitioning. Data must be ordered in a SoA 
+ * to \p local for basic MPI-partitioning. Data must be ordered in a AoS 
  * format.
  * 
  * @tparam T         Type.
