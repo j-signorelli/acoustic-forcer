@@ -21,82 +21,59 @@ void LowFrequencyLimitTF(double mach_bar, double gamma, char speed,
    }
 }
 
-/// Point struct of (f,chi).
-struct Point
-{
-   double f;
-   double chi;
-};
-
-Point operator+(const Point &pt1, const Point &pt2)
-{
-   return Point{pt1.f + pt2.f, pt1.chi + pt2.chi};
-}
-
-Point operator-(const Point &pt1, const Point &pt2)
-{
-   return Point{pt1.f - pt2.f, pt1.chi - pt2.chi};
-}
-
-template<typename T>
-   requires std::is_arithmetic_v<T>
-Point operator*(const T &c, const Point &pt)
-{
-   return Point{pt.f * c, pt.chi * c};
-}
-
-template<typename T>
-   requires std::is_arithmetic_v<T>
-Point operator+(const T &c, const Point &pt)
-{
-   return Point{pt.f + c, pt.chi + c};
-}
-
 struct FlowNormalBezierFit
 {
-   /// Control points for the flow-normal TF Bezier curve fit.
-   static constexpr std::array<Point, 9> kControlPts
-   {{ {0.0     ,    1.0},
-      {0.16204 ,    1.0},
-      {0.36886 , 2.1021},
-      {0.27954 , 4.6026},
-      {0.47948 , 4.6111},
-      {0.36266 , 6.9099},
-      {0.50724 , 2.5099},
-      {0.63124 , 1.6516},
-      {0.80111 , 1.3674}  }};
+   static constexpr int kN = 9;
 
-   static constexpr double kfMin = kControlPts.front().f;
-   static constexpr double kfMax = kControlPts.back().chi;
-   static constexpr int kN = kControlPts.size();
+   /// Control points for frequencies for the flow-normal TF Bezier curve fit.
+   static constexpr std::array<double, kN> kControlFreqs
+   {{0.0, 0.16204, 0.36886, 0.27954, 0.47948, 0.36266, 0.50724, 0.63124, 
+      0.80111}};
+
+   /**
+    * @brief Control points for transfer functions for the flow-normal TF
+    * Bezier curve fit.
+    */
+   static constexpr std::array<double, kN> kControlChis
+   {{1.0, 1.0, 2.1021, 4.6026, 4.6111, 6.9099, 2.5099, 1.6516, 1.3674}};
+
+   static constexpr double kfMin = kControlFreqs.front();
+   static constexpr double kfMax = kControlChis.back();
 
    /**
     * @brief Compute the Bezier curve defined by the points within
     * [ \p IMin , \p IMax ], using de Casteljau's algorithm.
     */
    template<std::size_t IMin, std::size_t IMax>
-   static Point B(double t)
+   static double B(const std::array<double, kN> controlPts, double t)
    {
       if constexpr (IMin == IMax)
       {
-         return kControlPts[IMin];
+         return controlPts[IMin];
       }
       else
       {
-         return (1-t)*B<IMin,IMax-1>(t) + t*B<IMin+1,IMax>(t);
+         return (1-t)*B<IMin,IMax-1>(controlPts, t)
+                  + t*B<IMin+1,IMax>(controlPts, t);
       }
    }
    
-   /// Evaluate the flow normal TF curve-fit at a given t.
-   static Point Eval(double t)
+   /// Evaluate the flow normal TF curve-fit frequency at a given t.
+   static double EvalFreq(double t)
    {
-      return B<0,kN>(t);
+      return B<0,kN>(kControlFreqs, t);
    }
 
-   /// Evaluate the derivative of the curve fit at a given t.
-   static Point DEval(double t)
+   /// Evaluate the flow normal TF curve-fit \f$\chi\f$ at a given t.
+   static double EvalChi(double t)
    {
-      return kN*(B<1,kN>(t) - B<0, kN-1>(t));
+      return B<0,kN>(kControlChis, t);
+   }
+
+   /// Evaluate the derivative of frequency of the curve fit at a given t.
+   static double DEvalFreq(double t)
+   {
+      return kN*(B<1,kN>(kControlFreqs, t) - B<0,kN-1>(kControlFreqs, t));
    }
 };
 
@@ -124,9 +101,10 @@ void FlowNormalFitTF(double mach_bar, double gamma, char speed,
             f_norm > FlowNormalBezierFit::kfMax)
       {
          std::string err_string = 
-            std::format("Frequency {} must be within range [{},{}].",
-                           f, FlowNormalBezierFit::kfMin, 
-                           FlowNormalBezierFit::kfMax);
+            std::format("Normalized frequency {} (non-normalized frequency {})"
+                        " must be within range [{},{}].",
+                        f_norm, freqs[i], FlowNormalBezierFit::kfMin, 
+                        FlowNormalBezierFit::kfMax);
 
          throw std::invalid_argument(err_string);
       }
@@ -135,8 +113,8 @@ void FlowNormalFitTF(double mach_bar, double gamma, char speed,
       double tnp1;
       for (std::size_t n = 0; n < kNumNewtonIt; n++)
       {
-         tnp1 = tn - FlowNormalBezierFit::Eval(tn).f
-                        / FlowNormalBezierFit::DEval(tn).f;
+         tnp1 = tn - (FlowNormalBezierFit::EvalFreq(tn) - f_norm)
+                        / FlowNormalBezierFit::DEvalFreq(tn);
          if (tnp1 < 0)
          {
             tnp1 = 0.0;
@@ -150,14 +128,19 @@ void FlowNormalFitTF(double mach_bar, double gamma, char speed,
          if (n >= kMinNewtonIt && std::abs(tnp1-tn) < kNewtonTol)
          {
             n = kNumNewtonIt;
-            powers[i] /= 
+            powers[i] /= (FlowNormalBezierFit::EvalChi(tnp1)*chi_star);
          }
          else if (n + 1 == kNumNewtonIt)
          {
             std::string err_string = 
-            std::format("Unable to converge to Bezier parameter t for "
-                        "frequency {}", f);
+               std::format("Unable to converge to Bezier parameter t for "
+                           "frequency {} (normalized frequency {})", 
+                           freqs[i], f_norm);
             throw std::logic_error(err_string);
+         }
+         else
+         {
+            tn = tnp1;
          }
       }
 
