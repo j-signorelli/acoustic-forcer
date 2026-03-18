@@ -38,7 +38,7 @@ struct FlowNormalBezierFit
    {{1.0, 1.0, 2.1021, 4.6026, 4.6111, 6.9099, 2.5099, 1.6516, 1.3674}};
 
    static constexpr double kfMin = kControlFreqs.front();
-   static constexpr double kfMax = kControlChis.back();
+   static constexpr double kfMax = kControlFreqs.back();
 
    /**
     * @brief Compute the Bezier curve defined by the points within
@@ -61,19 +61,19 @@ struct FlowNormalBezierFit
    /// Evaluate the flow normal TF curve-fit frequency at a given t.
    static double EvalFreq(double t)
    {
-      return B<0,kN>(kControlFreqs, t);
+      return B<0,kN-1>(kControlFreqs, t);
    }
 
    /// Evaluate the flow normal TF curve-fit \f$\chi\f$ at a given t.
    static double EvalChi(double t)
    {
-      return B<0,kN>(kControlChis, t);
+      return B<0,kN-1>(kControlChis, t);
    }
 
    /// Evaluate the derivative of frequency of the curve fit at a given t.
    static double DEvalFreq(double t)
    {
-      return kN*(B<1,kN>(kControlFreqs, t) - B<0,kN-1>(kControlFreqs, t));
+      return kN*(B<1,kN-1>(kControlFreqs, t) - B<0,kN-2>(kControlFreqs, t));
    }
 };
 
