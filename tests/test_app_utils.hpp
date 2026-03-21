@@ -43,7 +43,7 @@ T::ParamsVariant GetRandomParams
          const int in_size = random(10, 100).get();
          InputXY::Params<Here> op;
          op.x = chunk(in_size, random(0.0, 100e3)).get();
-         op.y = chunk(in_size, random(1e-9, 1e-12)).get();
+         op.y = chunk(in_size, random(1e-12, 1e-9)).get();
          opv = op;
       }
       else if (option == FromCSV)
