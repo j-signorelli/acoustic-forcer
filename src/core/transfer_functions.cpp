@@ -84,14 +84,14 @@ void FlowNormalFitTF(double mach_bar, double gamma, char speed,
    const double chi_star = 
       [&]() 
       { 
-         double c;
+         double c = 1.0;
          LowFrequencyLimitTF(mach_bar, gamma, speed, {&c,1});
-         return c;
+         return 1.0/c;
       }();
 
    // Compute Bezier curve parameter t for each freq using Newton's method
    constexpr std::size_t kNumNewtonIt = 100;
-   constexpr double kNewtonTol = 1e-14;
+   constexpr double kNewtonTol = 1e-12;
    constexpr std::size_t kMinNewtonIt = 10;
 
    for (std::size_t i = 0; i < freqs.size(); i++)
