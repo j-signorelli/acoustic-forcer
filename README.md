@@ -3,4 +3,3 @@ Jabber is a planar wave acoustic forcing library and app-suite to support the mo
 
 Final remaining TODOs:
 - [ ] Finish documentation
-- [ ] Flow-normal transfer function
