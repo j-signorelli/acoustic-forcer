@@ -77,7 +77,6 @@ struct InputXY
 
    using enum Option;
 
-   /// Strings associated with InputXY enumerators.
    static constexpr std::array<std::string_view, 
                      static_cast<std::size_t>(Size)>
    kNames = 
@@ -107,7 +106,6 @@ struct InputXY
       std::string file;
    };
 
-   /// Parameter variant type for InputXY.
    using ParamsVariant = std::variant<Params<Here>,Params<FromCSV>>;
 };
 
@@ -132,7 +130,6 @@ struct FunctionType
 
    using enum Option;
 
-   /// Strings associated with FunctionType enumerators.
    static constexpr std::array<std::string_view, 
                         static_cast<std::size_t>(Size)>
    kNames = 
@@ -162,24 +159,18 @@ struct FunctionType
    using ParamsVariant = std::variant<Params<PiecewiseLinear>,
                                        Params<PiecewiseLogLog>>;
 
-   /// Array indicating if FunctionType option has associated BasePSD type.
-   static constexpr std::array<bool, 
-                        static_cast<std::size_t>(Size)>
-   kFunctionHasPSDType = 
-   {
-      true,    // PiecewiseLinear
-      true,    // PiecewiseLogLog
-   };
-
 };
 // ----------------------------------------------------------------------------
+/**
+ * @brief All options associated with interval/frequency bin
+ * definition.
+ */
 struct IntervalType
 {
    using Option = jabber::Interval::Method;
 
    using enum Option;
 
-   /// Strings associated with jabber::Interval::Method enumerators.
    static constexpr std::array<std::string_view, 
                         static_cast<std::size_t>(Size)>
    kNames = 
@@ -191,31 +182,32 @@ struct IntervalType
 };
 
 // ----------------------------------------------------------------------------
+/**
+ * @brief All options and parameters associated with 1D discretization, such
+ * as frequencies.
+ */
 struct DiscMethod
 {
-   /**
-    * @brief Discretization method options for discretization of a continuous
-    * function (frequency selection of continuous PSD).
-    * 
-    */
    enum class Option : std::uint8_t
    {
       /**
-       * @brief Uniformly sample across interval. **Harmonic interaction
-       * may occur**.
+       * @brief Uniformly sample across range.
+       * @warning If discretizing frequencies, harmonic interaction
+       * may occur.
        */
       Uniform,
 
       /**
-       * @brief Uniformly sample across interval in log10 scaling. **Harmonic
-       * interaction may occur**.
+       * @brief Uniformly sample across range in log10 scaling.
+       * @warning If discretizing frequencies, harmonic interaction
+       * may occur.
        */
       UniformLog,
 
-      /// Random sampling of uniform distribution.
+      /// Random sampling with a uniform distribution.
       Random,
 
-      /// Random sampling of uniform distribution but on log10 scale.
+      /// Random sampling with a uniform distribution on log10 scale.
       RandomLog,
 
       /// Number of DiscMethod options
@@ -224,7 +216,6 @@ struct DiscMethod
    
    using enum Option;
 
-   /// Strings associated with DiscMethod enumerators.
    static constexpr std::array<std::string_view, 
                         static_cast<std::size_t>(Size)>
    kNames = 
@@ -261,15 +252,17 @@ struct DiscMethod
 };
 
 // ----------------------------------------------------------------------------
+/**
+ * @brief All options and parameters associated with direction specification.
+ */
 struct Direction
 {
-   /// Wave direction options.
    enum class Option : std::uint8_t
    {
       /// Constant direction.
       Constant,
 
-      /// Random angle in XY-plane from x-axis for each wave/frequency.
+      /// Random angle in XY-plane from x-axis for each wave.
       RandomXYAngle,
 
       /// Number of Direction options.
@@ -278,7 +271,6 @@ struct Direction
 
    using enum Option;
 
-   /// Strings associated with DiscMethod enumerators.
    static constexpr std::array<std::string_view, 
                         static_cast<std::size_t>(Size)>
    kNames = 
@@ -315,6 +307,10 @@ struct Direction
 };
 
 // ----------------------------------------------------------------------------
+/**
+ * @brief All options and parameters associated with transfer function
+ * selection.
+ */
 struct TransferFunction
 {
       /// Transfer function options.
@@ -323,7 +319,6 @@ struct TransferFunction
       /**
        * @brief Analytical low-frequency limit transfer function, from Chaudhry
        * & Candler, 2017.
-       * 
        */
       LowFrequencyLimit,
 
@@ -343,7 +338,6 @@ struct TransferFunction
 
    using enum Option;
 
-   /// Strings associated with TransferFunction enumerators.
    static constexpr std::array<std::string_view, 
                               static_cast<std::size_t>(Size)>
    kNames = 
@@ -378,9 +372,12 @@ struct TransferFunction
 };
 
 // ----------------------------------------------------------------------------
+/**
+ * @brief All options and parameters associated with acoustic forcing source
+ * definition.
+ */
 struct Source
 {
-   /// Acoustic source options.
    enum class Option : std::uint8_t
    {
       /// Single acoustic wave.
@@ -401,7 +398,6 @@ struct Source
    
    using enum Option;
 
-   /// Strings associated with Source enumerators.
    static constexpr std::array<std::string_view, 
                               static_cast<std::size_t>(Size)>
    kNames = 
@@ -472,13 +468,13 @@ struct Source
       /// Number of waves to discretize PSD to.
       std::size_t num_waves;
 
-      /// Interval method to use for frequency bin width.
+      /// Interval method to use for frequency bins.
       jabber::Interval::Method int_method;
 
-      /// Discretization method parameters.
+      /// Frequency discretization method parameters.
       DiscMethod::ParamsVariant disc_params;
 
-      /// Direction method parameters.
+      /// Wave direction parameters.
       Direction::ParamsVariant dir_params;
 
       /// Seed to use for wave phase randomization.
@@ -498,20 +494,21 @@ struct Source
       std::string file;
    };
 
-   /// All source parameter options.
    using ParamsVariant = std::variant<Params<SingleWave>,Params<WaveSpectrum>,
                                        Params<PSD>,Params<WaveCSV>>;
 };
 
 
 // ----------------------------------------------------------------------------
+/**
+ * @brief All options associated with kernel type selection.
+ */
 struct KernelType
 {
    using Option = jabber::AcousticField::Kernel;
 
    using enum Option;
 
-   /// Strings associated with jabber::AcousticField::Kernel enumerators.
    static constexpr std::array<std::string_view, 
                   static_cast<std::size_t>(Size)>
    kNames = 
