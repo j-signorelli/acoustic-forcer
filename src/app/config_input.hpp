@@ -105,69 +105,75 @@ public:
    void PrintPreciceParams(std::ostream &out) const;
 };
 
-/// Parsed TOML config file input.
+/**
+ * @brief TOML config file input.
+ * 
+ * @details This class accepts a TOML config file and parses it appropriately.
+ * Separate static parsing functions are defined which accept a TOML-formatted
+ * string for flexibility and simpler unit testing.
+ */
 class TOMLConfigInput : public ConfigInput
 {
 public:
 
    /**
-    * @brief Parse base flow parameters from a serialized TOML string of that
+    * @brief Parse BaseFlowParams from a serialized TOML string of that
     * section.
     */
    static void ParseBaseFlow(std::string toml_string, 
                               BaseFlowParams &op);
 
    /**
-    * @brief Parse input xy parameters from a serialized TOML string of that
+    * @brief Parse InputXY parameters from a serialized TOML string of that
     * section.
     */
    static void ParseInputXY(std::string toml_string,
                               InputXY::ParamsVariant &opv);
 
    /**
-    * @brief Parse function parameters from a serialized TOML string of that
+    * @brief Parse FunctionType parameters from a serialized TOML string of that
     * section.
     */
    static void ParseFunctionType(std::string toml_string,
                               FunctionType::ParamsVariant &opv);
 
    /**
-    * @brief Parse disc. method parameters from a serialized TOML string of
+    * @brief Parse DiscMethod parameters from a serialized TOML string of
     * that section.
     */
    static void ParseDiscMethod(std::string toml_string,
                                  DiscMethod::ParamsVariant &opv);
    
    /**
-    * @brief Parse direction parameters from a serialized TOML string of that
+    * @brief Parse Direction parameters from a serialized TOML string of that
     * section.
     */
    static void ParseDirection(std::string toml_string,
                               Direction::ParamsVariant &opv);
 
    /**
-    * @brief Parse transfer function parameters from a serialized TOML string of
+    * @brief Parse TransferFunction parameters from a serialized TOML string of
     * that section.
     */
    static void ParseTransferFunction(std::string toml_string,
                               TransferFunction::ParamsVariant &opv);
 
    /**
-    * @brief Parse source parameters from a serialized TOML string of that
+    * @brief Parse Source parameters from a serialized TOML string of that
     * section.
     */
    static void ParseSource(std::string toml_string,
                            Source::ParamsVariant &opv);
 
    /**
-    * @brief Parse computation parameters from a serialized TOML string of that
+    * @brief Parse Computation parameters from a serialized TOML string of that
     * section.
     */
    static void ParseComputation(std::string toml_string,
                                  CompParams &op);
 
    /**
-    * @brief Parse preCICE parameters from a serialized TOML string of that
+    * @brief Parse PreciceParams from a serialized TOML string of that
     * section.
     */
    static void ParsePrecice(std::string toml_string,
@@ -176,6 +182,7 @@ public:
 
    /// Construct an uninitialized TOMLConfigInput object.
    TOMLConfigInput() {};
+   
    /**
     * @brief Construct a new TOMLConfigInput object.
     * 
