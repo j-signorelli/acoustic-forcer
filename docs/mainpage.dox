@@ -24,4 +24,5 @@
  * - @link out.cpp \c jabber_out @endlink: @copybrief out.cpp
  * - @link viz.cpp \c jabber_viz @endlink: @copybrief viz.cpp
  * - @link participant.cpp \c jabber_participant @endlink: @copybrief participant.cpp
+ *
  */

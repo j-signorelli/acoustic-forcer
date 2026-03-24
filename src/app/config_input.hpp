@@ -13,7 +13,11 @@ namespace jabber_app
 /**
  * @defgroup config_group Input Configuration & File Parsing
  * @{
- * 
+ *
+ * @details Presently, Jabber has either ConfigInput for a developer-facing
+ * configuration or TOMLConfigInput for runtime-parsing of a TOML-style config
+ * file, which is used for all apps in the app suite. See config_template.toml
+ * for guidance on preparing a TOML config file.
  */
 
 /// Complete input configuration.
@@ -182,7 +186,7 @@ public:
 
    /// Construct an uninitialized TOMLConfigInput object.
    TOMLConfigInput() {};
-   
+
    /**
     * @brief Construct a new TOMLConfigInput object.
     * 
