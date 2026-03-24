@@ -7,6 +7,13 @@ namespace jabber
 {
 
 /**
+ * @defgroup kernels_group Compute Kernels
+ * @{
+ * 
+ */
+   
+
+/**
    * @brief Kernel function for evaluating perturbed base flow, with series
    * summation inner loop/vectorization over each gridpoint.
    * 
@@ -69,6 +76,9 @@ void ComputeKernel(const std::size_t num_pts, const double rho_bar,
                         double *__restrict__ rho,
                         double *__restrict__ rhoV,
                         double *__restrict__ rhoE);
+
+/// @}
+// end of kernels_group
 
 } // namespace jabber
 

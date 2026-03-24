@@ -5,6 +5,12 @@
 
 namespace jabber
 {
+/**
+ * @defgroup tf_group Transfer Functions
+ * @{
+ * 
+ * @details @todo
+ */
 
 /**
  * @brief Apply the transfer function \f$\chi^*\f$, the analytical 
@@ -37,6 +43,8 @@ void FlowNormalFitTF(double mach_bar, double gamma, char speed,
                         double delta, std::span<const double> freqs,
                         std::span<double> powers);
 
+/// @}
+// end of tf_group
 
 } // namespace jabber
 

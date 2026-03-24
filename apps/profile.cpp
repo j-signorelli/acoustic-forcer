@@ -1,3 +1,9 @@
+/**
+ * @file profile.cpp
+ * @brief Simple profiler tool to obtain execution times of a given config file
+ * and grid.
+ */
+
 #include <jabber.hpp>
 #include <jabber_app.hpp>
 #include <cxxopts.hpp>

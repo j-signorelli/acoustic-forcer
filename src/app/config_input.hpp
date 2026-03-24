@@ -10,7 +10,13 @@
 namespace jabber_app
 {
 
-/// Parsed config file input
+/**
+ * @defgroup config_group Input Configuration & File Parsing
+ * @{
+ * 
+ */
+
+/// Complete input configuration.
 class ConfigInput
 {
 private:
@@ -180,6 +186,9 @@ public:
    TOMLConfigInput(std::string config_file, std::ostream *out=nullptr);
 
 };
+
+/// @}
+// end of config_group
 
 } // namespace jabber_app
 

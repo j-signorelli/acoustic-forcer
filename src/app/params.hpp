@@ -12,9 +12,38 @@
 
 namespace jabber_app
 {
+/**
+ * @defgroup params_group All Parameters/Settings
+ * @{
+ * @brief All input parameter options and structs.
+ * 
+ * @details To support settings that accept multiple different types of input,
+ * these "option-specific" settings are enclosed in a struct with the following
+ * schema:
+ * 
+ *    1. An enum `Option` of underlying type `std::uint8_t` with its final
+ *       enumerator being `Size`,
+ *    2. A string array `kNames` of size `Size`, associating a name with
+ *       each `Option`,
+ *    3. A primary template for a struct called `Params`, accepting an
+ *       `Option`, with explicitly-specialized versions for each `Option` as
+ *       needed, and
+ *    4. A `std::variant` called `ParamsVar` containing a `Params` type for all
+ *       `Option`s.
+ * 
+ * This schema was carefully crafted to reap the following benefits:
+ * 
+ *    - Enclosing all relevant information for an option-specific setting into a 
+ *      single struct,
+ *    - Readability, including explicit input variable names and the ability to 
+ *      use `using enum ...;` inside each struct, and
+ *    - Flexibility to define a `concept` for it if desired in the future.
+ * 
+ * All other settings that do not have >1 option are defined in standalone structs.
+ */
 
 // ----------------------------------------------------------------------------
-/// Struct for base flow parameters
+/// Base flow parameters.
 struct BaseFlowParams
 {
    /// Density.
@@ -31,9 +60,9 @@ struct BaseFlowParams
 };
 
 // ----------------------------------------------------------------------------
+/// All options and parameters associated with input x,y data.
 struct InputXY
 {
-   /// Input XY data options.
    enum class Option : std::uint8_t
    {
       /// Provide x,y data directly in config file.
@@ -83,9 +112,12 @@ struct InputXY
 };
 
 // ----------------------------------------------------------------------------
+/**
+ * @brief All options and parameters associated with R->R continuous
+ * function definition.
+ */
 struct FunctionType
 {
-   /// Input R->R function options.
    enum class Option : std::uint8_t
    {
       /// Piecewise linear fit.
@@ -523,6 +555,8 @@ struct PreciceParams
 };
 
 // ----------------------------------------------------------------------------
+/// @}
+// end of params_group
 
 } // namespace jabber_app
 

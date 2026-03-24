@@ -1,3 +1,8 @@
+/**
+ * @file viz.cpp
+ * @brief Visualizer of acoustic field from config file using MFEM w/ GLVis.
+ */
+
 #include <jabber.hpp>
 #include <jabber_app.hpp>
 #include <cxxopts.hpp>
@@ -13,7 +18,7 @@ using namespace mfem;
 
 /**
  * @brief Simple field visualizer, copied directly from 
- * mfem/miniapps/common/fem_extras.cpp/hpp
+ * mfem/miniapps/common/fem_extras.cpp/.hpp
  * 
  */
 void VisualizeField(socketstream &sock, const char *vishost, int visport,

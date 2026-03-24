@@ -5,8 +5,8 @@
 
 #include <jabber.hpp>
 #include <iostream>
-#include <concepts>
 #include <memory>
+
 namespace jabber_app
 {
 
@@ -18,6 +18,12 @@ void PrintBanner(std::ostream &out);
 
 /// Normalize the provided vector data
 void Normalize(std::span<const double> vec, std::span<double> norm_vec);
+
+/**
+ * @defgroup pproc_group Parameter Processing
+ * @{
+ * 
+ */
 
 /**
  * @brief All visitor options for each InputXY::Params, for initializing 
@@ -140,6 +146,9 @@ struct SourceVisitor
    void operator() (const Source::Params<PSD> &op);
    void operator() (const Source::Params<WaveCSV> &op);
 };
+
+/// @}
+// end of pproc_group
 
 /**
  * @brief Initialize a \ref jabber::AcousticField object from user input and 

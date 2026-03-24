@@ -9,7 +9,13 @@
 namespace jabber
 {
 
-/// Intermediary helper-struct for initializing waves in AcousticField.
+/**
+ * @defgroup env_group Disturbance Environment Definition & Evaluation
+ * @{
+ * 
+ */
+
+/// Base acoustic wave definition.
 struct Wave
 {
    /// Wave amplitude, p'.
@@ -316,6 +322,9 @@ public:
    std::span<const double> Energy() const { return rhoE_; }
 
 };
+
+/// @}
+// end of env_group
 
 } // namespace jabber
 

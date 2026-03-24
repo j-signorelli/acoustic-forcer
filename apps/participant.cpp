@@ -1,3 +1,9 @@
+/**
+ * @file participant.cpp
+ * @brief preCICE participant for coupling acoustic forcing with flow 
+ * simulations.
+ */
+
 #include <jabber.hpp>
 #include <jabber_app.hpp>
 #include <cxxopts.hpp>

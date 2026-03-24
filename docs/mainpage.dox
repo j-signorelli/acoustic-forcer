@@ -8,11 +8,20 @@
  *
  * # Core Library
  * - @ref psd_group
- * - Transfer functions
- * - Initializing and evaluating flowfield with acoustic disturbances
- * - Compute kernel(s)
+ * - @ref tf_group
+ * - @ref env_group
+ * - @ref kernels_group
  * 
  * # App Library
+ * - @ref params_group
+ * - @ref config_group
+ * - @ref pproc_group
  * 
  * # App Suite
+ * - @link psd.cpp \c jabber_psd @endlink: @copybrief apps/psd.cpp
+ * - @link plot.cpp \c jabber_plot @endlink: @copybrief plot.cpp
+ * - @link profile.cpp \c jabber_profile @endlink: @copybrief profile.cpp
+ * - @link out.cpp \c jabber_out @endlink: @copybrief out.cpp
+ * - @link viz.cpp \c jabber_viz @endlink: @copybrief viz.cpp
+ * - @link participant.cpp \c jabber_participant @endlink: @copybrief participant.cpp
  */
