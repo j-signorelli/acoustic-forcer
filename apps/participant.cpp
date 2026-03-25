@@ -2,6 +2,10 @@
  * @file participant.cpp
  * @brief preCICE participant for coupling acoustic forcing with flow 
  * simulations.
+ * 
+ * @details 
+ * 
+ * @todo EMPHASIZE IMPORTANCE OF THIS -- computing acoustic forcing every timestep by fluid solver is super expensive
  */
 
 #include <jabber.hpp>
