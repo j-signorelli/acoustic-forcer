@@ -88,10 +88,10 @@ AcousticField::AcousticField(int dim, std::span<const double> coords,
 void AcousticField::Finalize()
 {
    // Allocate non-time-varying constants
-   amplitude_.resize(NumWaves());
-   omega_.resize(NumWaves());
-   mod_k_hat_.resize(Dim()*NumWaves());
-   k_dot_x_p_phi_.resize(NumWaves()*NumPoints());
+   kernel_args_.amplitude.resize(NumWaves());
+   kernel_args_.omega.resize(NumWaves());
+   kernel_args_.mod_k_hat.resize(Dim()*NumWaves());
+   kernel_args_.k_dot_x_p_phi.resize(NumWaves()*NumPoints());
 
    // Note that performance of below was not carefully considered
    for (int w = 0; w < NumWaves(); w++)
@@ -99,10 +99,10 @@ void AcousticField::Finalize()
       const Wave &wave = Waves()[w];
 
       // Set amplitude
-      amplitude_[w] = wave.amplitude;
+      kernel_args_.amplitude[w] = wave.amplitude;
 
       // Compute + set ω=2πf
-      omega_[w] = 2*M_PI*wave.frequency;
+      kernel_args_.omega[w] = 2*M_PI*wave.frequency;
 
       // Compute U·k_hat±c and set mod_k_hat_
       double denom = (wave.speed == 'S' ? -c_infty_ : c_infty_);
@@ -110,20 +110,20 @@ void AcousticField::Finalize()
       for (int d = 0; d < Dim(); d++)
       {
          denom += U_bar_[d]*wave.k_hat[d];
-         mod_k_hat_[d*NumWaves() + w] = wave.k_hat[d]*speed_encoder;
+         kernel_args_.mod_k_hat[d*NumWaves() + w] = wave.k_hat[d]*speed_encoder;
       }
 
       // Compute magnitude of wavelength vector k
-      double k = omega_[w]/denom;
+      double k = kernel_args_.omega[w]/denom;
 
       // Compute + set k·x+φ
       std::size_t w_offset = w*NumPoints();
       for (std::size_t i = 0; i < NumPoints(); i++)
       {  
-         k_dot_x_p_phi_[w_offset + i] = wave.phase;
+         kernel_args_.k_dot_x_p_phi[w_offset + i] = wave.phase;
          for (int d = 0; d < Dim(); d++)
          {
-            k_dot_x_p_phi_[w_offset + i] += wave.k_hat[d]*k*coords_[d][i];
+            kernel_args_.k_dot_x_p_phi[w_offset + i] += wave.k_hat[d]*k*coords_[d][i];
          }
       }
    }
@@ -139,23 +139,26 @@ void AcousticField::Compute(double t)
    // Dispatch to appropriate kernel
    if (Dim() == 1)
    {
-      ComputeKernel<1>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
-                        NumWaves(), amplitude_.data(), omega_.data(),
-                        mod_k_hat_.data(), k_dot_x_p_phi_.data(), t, rho_.data(),
+      GridPointKernel<1>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
+                        NumWaves(), kernel_args_.amplitude.data(), 
+                        kernel_args_.omega.data(), kernel_args_.mod_k_hat.data(),
+                        kernel_args_.k_dot_x_p_phi.data(), t, rho_.data(),
                         rhoV_.data(), rhoE_.data());
    }
    else if (Dim() == 2)
    {
-      ComputeKernel<2>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
-                        NumWaves(), amplitude_.data(), omega_.data(),
-                        mod_k_hat_.data(), k_dot_x_p_phi_.data(), t, rho_.data(),
+      GridPointKernel<2>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
+                        NumWaves(), kernel_args_.amplitude.data(), 
+                        kernel_args_.omega.data(), kernel_args_.mod_k_hat.data(),
+                        kernel_args_.k_dot_x_p_phi.data(), t, rho_.data(),
                         rhoV_.data(), rhoE_.data());
    }
    else
    {
-      ComputeKernel<3>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
-                        NumWaves(), amplitude_.data(), omega_.data(),
-                        mod_k_hat_.data(), k_dot_x_p_phi_.data(), t, rho_.data(),
+      GridPointKernel<3>(NumPoints(), rho_bar_, p_bar_, U_bar_.data(), gamma_,
+                        NumWaves(), kernel_args_.amplitude.data(), 
+                        kernel_args_.omega.data(), kernel_args_.mod_k_hat.data(),
+                        kernel_args_.k_dot_x_p_phi.data(), t, rho_.data(),
                         rhoV_.data(), rhoE_.data());
    }
 }

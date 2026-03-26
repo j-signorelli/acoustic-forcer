@@ -262,7 +262,7 @@ TEST_CASE("3D flowfield computation via kernel", "[3D][Compute][Kernels]")
       for (const double &time : kTimes)
       {
          // Compute
-         ComputeKernel<3>(kNumPts, kRhoBar, kPBar, kUBar.data(), kGamma,
+         GridPointKernel<3>(kNumPts, kRhoBar, kPBar, kUBar.data(), kGamma,
                            kNumWaves, kPAmps.data(), omega.data(), 
                            mod_wave_dir.data(), k_dot_x_p_phi.data(), time, 
                            rho.data(), rhoU.data(), rhoE.data());

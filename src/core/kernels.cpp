@@ -6,7 +6,7 @@ namespace jabber
 {
 
 template<std::size_t TDim>
-void ComputeKernel(const std::size_t num_pts, const double rho_bar,
+void GridPointKernel(const std::size_t num_pts, const double rho_bar,
                      const double p_bar, const double *U_bar, 
                      const double gamma, const int num_waves, 
                      const double *wave_amps, const double *wave_omegas,
@@ -109,7 +109,7 @@ void ComputeKernel(const std::size_t num_pts, const double rho_bar,
 }
 
 // Explicit instantiation for Dims 1-3
-template void ComputeKernel<1>(const std::size_t, const double,
+template void GridPointKernel<1>(const std::size_t, const double,
                                  const double, const double *, 
                                  const double, const int, 
                                  const double *, 
@@ -121,7 +121,7 @@ template void ComputeKernel<1>(const std::size_t, const double,
                                  double *__restrict__,
                                  double *__restrict__);
                                 
-template void ComputeKernel<2>(const std::size_t, const double,
+template void GridPointKernel<2>(const std::size_t, const double,
                                  const double, const double *, 
                                  const double, const int, 
                                  const double *, 
@@ -133,7 +133,7 @@ template void ComputeKernel<2>(const std::size_t, const double,
                                  double *__restrict__,
                                  double *__restrict__);
 
-template void ComputeKernel<3>(const std::size_t, const double,
+template void GridPointKernel<3>(const std::size_t, const double,
                                  const double, const double *, 
                                  const double, const int, 
                                  const double *, 

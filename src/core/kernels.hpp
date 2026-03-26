@@ -65,7 +65,7 @@ namespace jabber
    * @param rhoE             Output flow energy to compute, sized \p num_pts.
 */
 template<std::size_t TDim>
-void ComputeKernel(const std::size_t num_pts, const double rho_bar,
+void GridPointKernel(const std::size_t num_pts, const double rho_bar,
                         const double p_bar, const double *U_bar, 
                         const double gamma, const int num_waves, 
                         const double *wave_amps, 

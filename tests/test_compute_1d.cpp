@@ -216,7 +216,7 @@ TEST_CASE("1D flowfield computation via kernel", "[1D][Compute][Kernels]")
       for (const double &time : kTimes)
       {
          // Compute
-         ComputeKernel<1>(kNumPts, kRhoBar, kPBar, &kUBar, kGamma, kNumWaves,
+         GridPointKernel<1>(kNumPts, kRhoBar, kPBar, &kUBar, kGamma, kNumWaves,
                            kPAmps.data(), omega.data(), mod_wave_dir.data(), 
                            k_dot_x_p_phi.data(), time, rho.data(), 
                            rhoU.data(), rhoE.data());

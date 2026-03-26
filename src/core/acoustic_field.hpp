@@ -107,45 +107,49 @@ private:
    std::vector<Wave> waves_;
 
    /**
-    * @brief Array of all wave amplitudes p', assembled in \ref Finalize(),
-    * for contiguous memory storage.
+    * @brief Struct of kernel-prepped data structures, initialized in 
+    * \ref Finalize().
     * 
     * @details Pre-assembling this before calls to \ref Compute() is required.
-    * Size is \ref NumWaves().
     */
-   std::vector<double> amplitude_;
+   struct
+   {
+      /**
+       * @brief Array of all wave amplitudes p' in contiguous memory storage.
+       * 
+       * @details Size is \ref NumWaves().
+       */
+      std::vector<double> amplitude;
 
-   /**
-    * @brief Array of all **modified** (speed-encoded) wave direction vectors 
-    * assembled in \ref Finalize() for contiguous memory storage. For fast 
-    * acoustic waves, this holds just the wave direction vector. For slow
-    * acoustic waves, this holds the inverted/negated wave direction vector.
-    * 
-    * @details Pre-assembling this before calls to \ref Compute() is required.
-    * Size is \ref Dim() * \ref NumWaves(). This is a flattened array ordered
-    * as [dim][wave].
-    */
-   std::vector<double> mod_k_hat_;
+      /**
+       * @brief Array of all **modified** (speed-encoded) wave direction
+       * vectors assembled with contiguous memory storage. 
+       * For fast acoustic waves, this holds just the wave direction vector.
+       * For slow acoustic waves, this holds the inverted/negated wave
+       * direction vector.
+       * 
+       * @details Size is \ref Dim() * \ref NumWaves(). This is a 
+       * flattened array ordered as [dim][wave].
+       */
+      std::vector<double> mod_k_hat;
 
-   /**
-    * @brief k·x+φ term computed in \ref Finalize() once for each wave and
-    * point.
-    * 
-    * @details Pre-computing this before calls to \ref Compute() is required, 
-    * as it reduces redundant inner-loop FLOPs. Size is \ref NumWaves() * 
-    * \ref NumPoints(). This is a flattened array is ordered as [wave][point]
-    * for \ref kernel_ Kernel::GridPoint.
-    */
-   std::vector<double> k_dot_x_p_phi_;
+      /**
+       * @brief k·x+φ term computed for each wave and point.
+       * 
+       * @details Size is \ref NumWaves() * \ref NumPoints(). This is a 
+       * flattened array is ordered as [wave][point].
+       */
+      std::vector<double> k_dot_x_p_phi;
 
-   /**
-    * @brief ω=2πf coefficient computed in \ref Finalize() once for each wave
-    * and point.
-    * 
-    * @details Pre-computing this before calls to \ref Compute() is required, 
-    * as it reduces redundant inner-loop FLOPs. Size is \ref NumWaves().
-    */
-   std::vector<double> omega_;
+      /**
+       * @brief ω=2πf coefficient computed for each wave and point.
+       * 
+       * @details Pre-computing this before calls to \ref Compute() is required, 
+       * as it reduces redundant inner-loop FLOPs. Size is \ref NumWaves().
+       */
+      std::vector<double> omega;
+
+   } kernel_args_;
 
    /**
     * @brief Fluid density ρ, computed in \ref Compute().
