@@ -95,7 +95,7 @@ private:
    const double gamma_;
 
    /// Base flow speed of sound
-   const double c_infty_;
+   const double c_bar_;
 
    /// Kernel type to use.
    const Kernel kernel_;
@@ -115,51 +115,54 @@ private:
    struct
    {
       /**
-       * @brief Array of all wave amplitudes p' in contiguous memory storage.
+       * @brief Density series coefficients, \f$\frac{1}{\bar{c}^2}p'_j\f$.
        * 
        * @details Size is \ref NumWaves().
        */
-      std::vector<double> amplitude;
+      std::vector<double> rho_coeffs;
 
       /**
-       * @brief Array of all **modified** (speed-encoded) wave direction
-       * vectors assembled with contiguous memory storage. 
-       * For fast acoustic waves, this holds just the wave direction vector.
-       * For slow acoustic waves, this holds the inverted/negated wave
-       * direction vector.
+       * @brief Momentum series coefficients,
+       * \f$\frac{1}{\bar{\rho}\bar{c}}(\pm 1)\hat{k_j}\f$.
        * 
-       * @details Size is \ref Dim() * \ref NumWaves(). This is a 
-       * flattened array ordered as [dim][wave].
+       * @details Size is \ref Dim() x \ref NumWaves(). Ordered as [dim][wave].
        */
-      std::vector<double> mod_k_hat;
+      std::vector<double> rhoV_coeffs;
 
       /**
-       * @brief k·x+φ term computed for each wave and point.
+       * @brief Energy series coefficients, \f$\frac{1}{(\gamma-1)}p'_j\f$.
        * 
-       * @details Size is \ref NumWaves() * \ref NumPoints(). This is a 
-       * flattened array is ordered as [wave][point].
+       * @details Size is \ref NumWaves().
+       */
+      std::vector<double> rhoE_coeffs;
+
+      /**
+       * @brief Acoustic wave angular frequencies, \f$\omega=2\pi f\f$.
+       * 
+       * @details Size is \ref NumWaves().
+       */
+      std::vector<double> wave_omegas;
+
+      /**
+       * @brief \f$\vec{k}\cdot x+\phi\f$ term computed for all waves at all
+       * points.
+       * 
+       * @details Size is \ref NumWaves() x \ref NumPoints(). Ordering depends
+       * on \ref kernel_.
        */
       std::vector<double> k_dot_x_p_phi;
-
-      /**
-       * @brief ω=2πf coefficient computed for each wave and point.
-       * 
-       * @details Pre-computing this before calls to \ref Compute() is required, 
-       * as it reduces redundant inner-loop FLOPs. Size is \ref NumWaves().
-       */
-      std::vector<double> omega;
 
    } kernel_args_;
 
    /**
-    * @brief Fluid density ρ, computed in \ref Compute().
+    * @brief Fluid density \f$\rho\f$, computed in \ref Compute().
     * 
     * @details Size is \ref NumPoints().
     */
    std::vector<double> rho_;
 
    /**
-    * @brief Fluid momentum ρu, computed in \ref Compute().
+    * @brief Fluid momentum \f$\rho\vec{u}\f$, computed in \ref Compute().
     * 
     * @details Size is \ref NumPoints() * \ref Dim(), with data in XXX YYY 
     * ordering.
@@ -167,7 +170,7 @@ private:
    std::vector<double> rhoV_;
 
    /**
-    * @brief Fluid energy ρE, computed in \ref Compute().
+    * @brief Fluid energy \f$\rho E\f$, computed in \ref Compute().
     * 
     * @details Size is \ref NumPoints().
     */
@@ -236,15 +239,9 @@ public:
     * @brief Finalize the acoustic field, to be called after specifying all
     * waves, before \ref Compute().
     * 
-    * @details This function:
-    *    1. Evaluates factors that are constant in time to reduce inner-loop
-    *       FLOPS in \ref Compute() (In particular, \ref k_dot_x_p_phi_, 
-    *       \ref omega_, and \ref mod_k_hat_).
-    *    2. Assembles pressure wave amplitudes in \ref amplitude_ such that
-    *       they are contiguous in memory.
-    *    3. Allocates the flowfield solution memory \ref rho_, \ref rhoV_, 
-    *       and \ref rhoE_ vectors.
-    *
+    * @details This function initializes \ref kernel_args_ based on
+    * \ref kernel_ and allocates the flowfield solution \ref rho_, 
+    * \ref rhoV_, and \ref rhoE_ vectors.
     */
    void Finalize();
 
