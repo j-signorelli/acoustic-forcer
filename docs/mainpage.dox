@@ -18,11 +18,11 @@
  * - @ref pproc_group
  * 
  * # App Suite
- * - @link psd.cpp \c jabber_psd @endlink: @copybrief apps/psd.cpp
- * - @link plot.cpp \c jabber_plot @endlink: @copybrief plot.cpp
- * - @link profile.cpp \c jabber_profile @endlink: @copybrief profile.cpp
- * - @link out.cpp \c jabber_out @endlink: @copybrief out.cpp
- * - @link viz.cpp \c jabber_viz @endlink: @copybrief viz.cpp
- * - @link participant.cpp \c jabber_participant @endlink: @copybrief participant.cpp
+ * - @link jabber_psd.cpp \c jabber_psd @endlink: @copybrief jabber_psd.cpp
+ * - @link jabber_plot.cpp \c jabber_plot @endlink: @copybrief jabber_plot.cpp
+ * - @link jabber_profile.cpp \c jabber_profile @endlink: @copybrief jabber_profile.cpp
+ * - @link jabber_out.cpp \c jabber_out @endlink: @copybrief jabber_out.cpp
+ * - @link jabber_viz.cpp \c jabber_viz @endlink: @copybrief jabber_viz.cpp
+ * - @link jabber_participant.cpp \c jabber_participant @endlink: @copybrief jabber_participant.cpp
  *
  */

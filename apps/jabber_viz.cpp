@@ -1,5 +1,5 @@
 /**
- * @file viz.cpp
+ * @file jabber_viz.cpp
  * @brief Visualizer of acoustic field from config file using MFEM w/ GLVis.
  */
 

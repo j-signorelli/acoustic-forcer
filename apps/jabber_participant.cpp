@@ -1,5 +1,5 @@
 /**
- * @file participant.cpp
+ * @file jabber_participant.cpp
  * @brief preCICE participant for coupling acoustic forcing with flow 
  * simulations.
  * 

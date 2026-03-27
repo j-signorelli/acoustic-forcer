@@ -1,5 +1,5 @@
 /**
- * @file profile.cpp
+ * @file jabber_profile.cpp
  * @brief Simple profiler tool to obtain execution times of a given config file
  * and grid.
  */

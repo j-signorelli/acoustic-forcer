@@ -1,5 +1,5 @@
 /**
- * @file plot.cpp
+ * @file jabber_plot.cpp
  * @brief Generate a plot of the final wave spectra from a config file.
  */
 

@@ -1,5 +1,5 @@
 /**
- * @file psd.cpp
+ * @file jabber_psd.cpp
  * @brief Compute and plot a PSD from a probe of the exact
  * flowfield computed by Jabber using Welch's method.
  * @details Welch's method here has been verified to match SciPy's
