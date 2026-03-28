@@ -9,7 +9,7 @@ namespace jabber
  * @defgroup tf_group Transfer Functions
  * @{
  * 
- * @details @todo
+ * @details @todo \f$\chi=\frac{\frac{p'_{02}}{p_{02}}}{\frac{p'}{p_\infty}}\f$
  */
 
 /**
