@@ -173,7 +173,9 @@ T::ParamsVariant GetRandomParams
       {
          Source::Params<PSD> op;
          op.input_psd = GetRandomParams<FunctionType>();
-         op.dim_fac = random(1.0, 10.0).get();
+         op.scale_fac = random(0,1).get() ? 
+                           std::optional<double>{random(1.0, 10.0).get()}
+                           : std::nullopt;
          op.phase_seed = random(1,100).get();
          op.speed = random(0,1).get() ? 'S' : 'F';
          op.min_disc_freq = random(1e3,10e3).get();
@@ -401,7 +403,11 @@ std::string TOMLWriteParams
          {
             out_params.emplace("InputPSD", 
                         TOMLWriteParams<FunctionType>(op.input_psd, true));
-            out_params.emplace("ScaleFactor", TOMLWriteValue(op.dim_fac));
+            if (op.scale_fac)
+            {
+               out_params.emplace("ScaleFactor", 
+                                    TOMLWriteValue(op.scale_fac.value()));
+            }
             out_params.emplace("PhaseSeed", TOMLWriteValue(op.phase_seed));
             out_params.emplace("Speed", TOMLWriteValue(op.speed));
             out_params.emplace("Discretization.Min", 
@@ -567,7 +573,7 @@ void TestParamsEqual
             }
             else if constexpr (V1 == PSD)
             {
-               CHECK(op1.dim_fac == op2.dim_fac);
+               CHECK(op1.scale_fac == op2.scale_fac);
                CHECK(op1.min_disc_freq == op2.min_disc_freq);
                CHECK(op1.max_disc_freq == op2.max_disc_freq);
                CHECK(op1.num_waves == op2.num_waves);

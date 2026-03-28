@@ -456,8 +456,8 @@ struct Source
       /// PSD function representation (f, PSD).
       FunctionType::ParamsVariant input_psd;
 
-      /// (For PSD unit V^2/Hz) Scaling factor to multiply V by.
-      double dim_fac;
+      /// (For PSD unit V^2/Hz) Scaling factor to multiply power V^2 by.
+      std::optional<double> scale_fac;
 
       /// Minimum wave frequency in discrete frequency selection range.
       double min_disc_freq;

@@ -280,7 +280,7 @@ void SourceVisitor::operator()
    std::vector<double> amps(freqs.size());
    for (std::size_t i = 0; i < amps.size(); i++)
    {
-      amps[i] = std::sqrt(2*powers[i])*op.dim_fac;
+      amps[i] = std::sqrt(2*powers[i]*op.scale_fac.value_or(1.0));
    }
 
    // Compute the phases of each wave
