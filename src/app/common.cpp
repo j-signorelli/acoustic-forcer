@@ -276,11 +276,12 @@ void SourceVisitor::operator()
                                           powers},
                   *op.tf_params);
    }
-   // Compute the amplitudes of each wave, with dimensionalization factor
+   // Compute the amplitudes of each wave + dimensionalize
    std::vector<double> amps(freqs.size());
    for (std::size_t i = 0; i < amps.size(); i++)
    {
-      amps[i] = std::sqrt(2*powers[i]*op.scale_fac.value_or(1.0));
+      amps[i] = std::sqrt(2*powers[i]*op.scale_fac.value_or(1.0))
+                  *base_flow_params.p;
    }
 
    // Compute the phases of each wave
