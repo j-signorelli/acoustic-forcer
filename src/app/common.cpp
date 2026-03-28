@@ -128,7 +128,7 @@ void FunctionTypeVisitor::operator()
 void DiscMethodVisitor::operator()
    (const DiscMethod::Params<Uniform> &op)
 {
-   const double df = (max_freq - min_freq)/(freqs.size()-1);
+   const double df = (max_freq - min_freq)/(freqs.size()+1);
    for (std::size_t i = 0; i < freqs.size(); i++)
    {
       freqs[i] = min_freq + df*i;
@@ -138,7 +138,7 @@ void DiscMethodVisitor::operator()
 void DiscMethodVisitor::operator()
    (const DiscMethod::Params<UniformLog> &op)
 {
-   const double log_df = std::log10(max_freq/min_freq)/(freqs.size()-1);
+   const double log_df = std::log10(max_freq/min_freq)/(freqs.size()+1);
    const double log_min_freq = std::log10(min_freq);
    for (std::size_t i = 0; i < freqs.size(); i++)
    {
