@@ -334,7 +334,7 @@ void SourceVisitor::operator()
    ReadWaves(is, waves);
 }
 
-AcousticField InitializeAcousticField(const ConfigInput &conf, 
+std::unique_ptr<AcousticField> InitializeAcousticField(const ConfigInput &conf, 
                                        std::span<const double> coords,
                                        int dim)
 {
@@ -344,17 +344,17 @@ AcousticField InitializeAcousticField(const ConfigInput &conf,
    const std::vector<Source::ParamsVariant> &sources_conf = conf.Sources();
 
    // Initialize acoustic field
-   AcousticField field(dim, coords, base_conf.p, base_conf.rho,
+   std::unique_ptr<AcousticField> field = std::make_unique<AcousticField>(dim, coords, base_conf.p, base_conf.rho,
                         base_conf.U, base_conf.gamma, comp_conf.kernel);
 
    // Assemble vector of wave structs based on input source
    for (const Source::ParamsVariant &source : sources_conf)
    {
-      std::visit(SourceVisitor{base_conf, field.Waves()}, source);
+      std::visit(SourceVisitor{base_conf, field->Waves()}, source);
    }
 
    // Finalize the acoustic field initialization
-   field.Finalize();
+   field->Finalize();
 
    return std::move(field);
 

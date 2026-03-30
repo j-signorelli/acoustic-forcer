@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 #endif // JABBER_WITH_MPI
 
    // Initialize AcousticField
-   AcousticField field = InitializeAcousticField(conf, coords, dim);
+   std::unique_ptr<AcousticField> field = InitializeAcousticField(conf, coords, dim);
 
    // Create an array of randomized times
    std::mt19937 gen(0);
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
    {
       const std::chrono::time_point<std::chrono::steady_clock> start =
         std::chrono::steady_clock::now();
-      field.Compute(time_rand[i]);
+      field->Compute(time_rand[i]);
       const std::chrono::time_point<std::chrono::steady_clock> end =
         std::chrono::steady_clock::now();
       

@@ -159,7 +159,7 @@ struct SourceVisitor
  * @param dim           Spatial dimension of mesh.
  * @return jabber::AcousticField    Finalized acoustic field.
  */
-jabber::AcousticField InitializeAcousticField(const ConfigInput &conf, 
+std::unique_ptr<jabber::AcousticField> InitializeAcousticField(const ConfigInput &conf, 
                                                 std::span<const double> coords,
                                                 int dim);
 

@@ -1,6 +1,7 @@
 #include "kernels.hpp"
 
 #include <cmath>
+#include <memory>
 
 namespace jabber
 {
@@ -19,24 +20,35 @@ void ComputeKernel(const std::size_t num_pts, const double rho_bar,
                         double *__restrict__ rhoV,
                         double *__restrict__ rhoE)
 {
+ 
+   // Explicitly tell compiler to assume memory is aligned
+   const double *__restrict__ a_rho_coeffs = std::assume_aligned<MEMALIGN_BYTES>(rho_coeffs);
+   const double *__restrict__ a_rhoV_coeffs = std::assume_aligned<MEMALIGN_BYTES>(rhoV_coeffs);
+   const double *__restrict__ a_rhoE_coeffs = std::assume_aligned<MEMALIGN_BYTES>(rhoE_coeffs);
+   const double *__restrict__ a_wave_omegas = std::assume_aligned<MEMALIGN_BYTES>(wave_omegas);
+   const double *__restrict__ a_k_dot_x_p_phi = std::assume_aligned<MEMALIGN_BYTES>(k_dot_x_p_phi);
+   double *__restrict__ a_rho = std::assume_aligned<MEMALIGN_BYTES>(rho);
+   double *__restrict__ a_rhoV = std::assume_aligned<MEMALIGN_BYTES>(rhoV);
+   double *__restrict__ a_rhoE = std::assume_aligned<MEMALIGN_BYTES>(rhoE);
+
    const double rhoE_init = p_bar/(gamma-1.0);
 
    if constexpr (TGridInnerLoop)
    {
       for (std::size_t i = 0; i < num_pts; i++)
       {
-         rho[i] = rho_bar;
+         a_rho[i] = rho_bar;
 
-         rhoV[i] = U_bar[0];
+         a_rhoV[i] = U_bar[0];
          if constexpr(TDim > 1)
          {
-            rhoV[num_pts + i] = U_bar[1];
+            a_rhoV[num_pts + i] = U_bar[1];
          }
          if constexpr(TDim > 2)
          {
-            rhoV[2*num_pts + i] = U_bar[2];
+            a_rhoV[2*num_pts + i] = U_bar[2];
          }
-         rhoE[i] = rhoE_init;
+         a_rhoE[i] = rhoE_init;
       }
 
       // Add contribution of each wave
@@ -47,30 +59,30 @@ void ComputeKernel(const std::size_t num_pts, const double rho_bar,
 #endif // JABBER_WITH_OPENMP
       for (int w = 0; w < num_waves; w++)
       {
-         const double rho_coeff_w = rho_coeffs[w];
-         const double rhoV1_coeff_w = rhoV_coeffs[w];
-         const double rhoV2_coeff_w = TDim > 1 ? rhoV_coeffs[num_waves + w] : 0;
-         const double rhoV3_coeff_w = TDim > 2 ? rhoV_coeffs[2*num_waves + w] : 0;
-         const double rhoE_coeff_w = rhoE_coeffs[w];
-         const double omt = wave_omegas[w]*t;
+         const double rho_coeff_w = a_rho_coeffs[w];
+         const double rhoV1_coeff_w = a_rhoV_coeffs[w];
+         const double rhoV2_coeff_w = TDim > 1 ? a_rhoV_coeffs[num_waves + w] : 0;
+         const double rhoV3_coeff_w = TDim > 2 ? a_rhoV_coeffs[2*num_waves + w] : 0;
+         const double rhoE_coeff_w = a_rhoE_coeffs[w];
+         const double omt = a_wave_omegas[w]*t;
 
          const std::size_t w_offset = w*num_pts;
 
          for (std::size_t i = 0; i < num_pts; i++)
          {
-            const double cos_w = std::cos(k_dot_x_p_phi[w_offset + i] - omt);
+            const double cos_w = std::cos(a_k_dot_x_p_phi[w_offset + i] - omt);
 
-            rho[i] += rho_coeff_w*cos_w;
-            rhoV[i] += rhoV1_coeff_w*cos_w;
+            a_rho[i] += rho_coeff_w*cos_w;
+            a_rhoV[i] += rhoV1_coeff_w*cos_w;
             if constexpr(TDim > 1)
             {
-               rhoV[num_pts + i] += rhoV2_coeff_w*cos_w;
+               a_rhoV[num_pts + i] += rhoV2_coeff_w*cos_w;
             }
             if constexpr(TDim > 2)
             {
-               rhoV[2*num_pts + i] += rhoV3_coeff_w*cos_w;
+               a_rhoV[2*num_pts + i] += rhoV3_coeff_w*cos_w;
             }
-            rhoE[i] += rhoE_coeff_w*cos_w;
+            a_rhoE[i] += rhoE_coeff_w*cos_w;
 
          }
       }
@@ -92,32 +104,32 @@ void ComputeKernel(const std::size_t num_pts, const double rho_bar,
          
          for (int w = 0; w < num_waves; w++)
          {
-            const double omt = wave_omegas[w]*t;
-            const double cos_w = std::cos(k_dot_x_p_phi[i_offset + w] - omt);
+            const double omt = a_wave_omegas[w]*t;
+            const double cos_w = std::cos(a_k_dot_x_p_phi[i_offset + w] - omt);
 
-            rho_i += rho_coeffs[w]*cos_w;
-            rhoV1_i += rhoV_coeffs[w]*cos_w;
+            rho_i += a_rho_coeffs[w]*cos_w;
+            rhoV1_i += a_rhoV_coeffs[w]*cos_w;
             if constexpr (TDim > 1)
             {
-               rhoV2_i += rhoV_coeffs[num_waves + w]*cos_w;
+               rhoV2_i += a_rhoV_coeffs[num_waves + w]*cos_w;
             }
             if constexpr (TDim > 2)
             {
-               rhoV3_i += rhoV_coeffs[2*num_waves + w]*cos_w;
+               rhoV3_i += a_rhoV_coeffs[2*num_waves + w]*cos_w;
             }
-            rhoE_i += rhoE_coeffs[w]*cos_w;
+            rhoE_i += a_rhoE_coeffs[w]*cos_w;
          }
-         rho[i] = rho_i;
-         rhoV[i] = rhoV1_i;
+         a_rho[i] = rho_i;
+         a_rhoV[i] = rhoV1_i;
          if constexpr (TDim > 1)
          {
-            rhoV[num_pts + i] = rhoV2_i;
+            a_rhoV[num_pts + i] = rhoV2_i;
          }
          if constexpr (TDim > 2)
          {
-            rhoV[2*num_pts + i] = rhoV3_i;
+            a_rhoV[2*num_pts + i] = rhoV3_i;
          }
-         rhoE[i] = rhoE_i;
+         a_rhoE[i] = rhoE_i;
       }
    }
 
@@ -125,31 +137,31 @@ void ComputeKernel(const std::size_t num_pts, const double rho_bar,
    {
       double mag_u = 0.0;
       
-      const double val0 = rhoV[i];
+      const double val0 = a_rhoV[i];
       mag_u += val0*val0;
       if constexpr (TDim > 1)
       {
-         const double val1 = rhoV[num_pts + i];
+         const double val1 = a_rhoV[num_pts + i];
          mag_u += val1*val1;
       }
       if constexpr (TDim > 2)
       {
-         const double val2 = rhoV[2*num_pts + i];
+         const double val2 = a_rhoV[2*num_pts + i];
          mag_u += val2*val2;
       }
-      rhoE[i] += 0.5*rho[i]*mag_u;
+      a_rhoE[i] += 0.5*a_rho[i]*mag_u;
    }
    
    for (std::size_t i = 0; i < num_pts; i++)
    {
-      rhoV[i] *= rho[i];
+      a_rhoV[i] *= a_rho[i];
       if constexpr (TDim > 1)
       {
-         rhoV[num_pts + i] *= rho[i];
+         a_rhoV[num_pts + i] *= a_rho[i];
       }
       if constexpr (TDim > 2)
       {
-         rhoV[2*num_pts + i] *= rho[i];
+         a_rhoV[2*num_pts + i] *= a_rho[i];
       }
    }
 }

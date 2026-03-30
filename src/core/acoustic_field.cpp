@@ -59,6 +59,14 @@ void ReadWaves(std::istream &in, std::vector<Wave> &waves)
    }
 }
 
+double* AcousticField::AlignedAlloc(std::size_t size)
+{
+   const std::size_t num_multiples = 
+                           (size*sizeof(double) - 1)/MEMALIGN_BYTES + 1;
+   return static_cast<double*>(
+      std::aligned_alloc(MEMALIGN_BYTES, MEMALIGN_BYTES*num_multiples));
+}
+
 AcousticField::AcousticField(int dim, std::span<const double> coords,
                   double p_bar, double rho_bar,
                   const std::vector<double> U_bar, double gamma,
@@ -88,11 +96,12 @@ AcousticField::AcousticField(int dim, std::span<const double> coords,
 void AcousticField::Finalize()
 {
    // Allocate non-time-varying constants
-   kernel_args_.rho_coeffs.resize(NumWaves());
-   kernel_args_.rhoV_coeffs.resize(Dim()*NumWaves());
-   kernel_args_.rhoE_coeffs.resize(NumWaves());
-   kernel_args_.wave_omegas.resize(NumWaves());
-   kernel_args_.k_dot_x_p_phi.resize(NumWaves()*NumPoints());
+   kernel_args_ = KernelArgs{};
+   kernel_args_.rho_coeffs = AlignedAlloc(NumWaves());
+   kernel_args_.rhoV_coeffs = AlignedAlloc(Dim()*NumWaves());
+   kernel_args_.rhoE_coeffs = AlignedAlloc(NumWaves());
+   kernel_args_.wave_omegas = AlignedAlloc(NumWaves());
+   kernel_args_.k_dot_x_p_phi = AlignedAlloc(NumPoints()*NumWaves());
 
    // Note that performance of below was not carefully considered
    for (int w = 0; w < NumWaves(); w++)
@@ -144,9 +153,12 @@ void AcousticField::Finalize()
    }
 
    // Allocate flow solution memory
-   rho_.resize(NumPoints());
-   rhoV_.resize(NumPoints()*Dim());
-   rhoE_.resize(NumPoints());
+   std::free(rho_);
+   std::free(rhoV_);
+   std::free(rhoE_);
+   rho_ = AlignedAlloc(NumPoints());
+   rhoV_ = AlignedAlloc(Dim()*NumPoints());
+   rhoE_ = AlignedAlloc(NumPoints());
 }
 
 void AcousticField::Compute(double t)
@@ -162,23 +174,23 @@ void AcousticField::Compute(double t)
             {
                ComputeKernel<Dims, true>(NumPoints(), rho_bar_, p_bar_, 
                                     U_bar_.data(), gamma_, NumWaves(), t,
-                                    kernel_args_.rho_coeffs.data(),
-                                    kernel_args_.rhoV_coeffs.data(),
-                                    kernel_args_.rhoE_coeffs.data(), 
-                                    kernel_args_.wave_omegas.data(), 
-                                    kernel_args_.k_dot_x_p_phi.data(), 
-                                    rho_.data(), rhoV_.data(), rhoE_.data());
+                                    kernel_args_.rho_coeffs,
+                                    kernel_args_.rhoV_coeffs,
+                                    kernel_args_.rhoE_coeffs, 
+                                    kernel_args_.wave_omegas, 
+                                    kernel_args_.k_dot_x_p_phi, 
+                                    rho_, rhoV_, rhoE_);
             }
             else if (kernel_ == Kernel::Wave)
             {
                ComputeKernel<Dims, false>(NumPoints(), rho_bar_, p_bar_, 
                                     U_bar_.data(), gamma_, NumWaves(), t,
-                                    kernel_args_.rho_coeffs.data(),
-                                    kernel_args_.rhoV_coeffs.data(),
-                                    kernel_args_.rhoE_coeffs.data(), 
-                                    kernel_args_.wave_omegas.data(), 
-                                    kernel_args_.k_dot_x_p_phi.data(), 
-                                    rho_.data(), rhoV_.data(), rhoE_.data());
+                                    kernel_args_.rho_coeffs,
+                                    kernel_args_.rhoV_coeffs,
+                                    kernel_args_.rhoE_coeffs, 
+                                    kernel_args_.wave_omegas, 
+                                    kernel_args_.k_dot_x_p_phi, 
+                                    rho_, rhoV_, rhoE_);
             }
             else
             {

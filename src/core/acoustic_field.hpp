@@ -110,19 +110,16 @@ private:
    std::vector<Wave> waves_;
 
    /**
-    * @brief Struct of kernel-prepped data structures, initialized in 
-    * \ref Finalize().
-    * 
-    * @details Pre-assembling this before calls to \ref Compute() is required.
+    * @brief Struct of kernel-prepped data structures.
     */
-   struct
+   struct KernelArgs
    {
       /**
        * @brief Density series coefficients, \f$\frac{1}{\bar{c}^2}p'_j\f$.
        * 
        * @details Size is \ref NumWaves().
        */
-      std::vector<double> rho_coeffs;
+      double *rho_coeffs = nullptr;
 
       /**
        * @brief Momentum series coefficients,
@@ -130,21 +127,21 @@ private:
        * 
        * @details Size is \ref Dim() x \ref NumWaves(). Ordered as [dim][wave].
        */
-      std::vector<double> rhoV_coeffs;
+      double *rhoV_coeffs = nullptr;
 
       /**
        * @brief Energy series coefficients, \f$\frac{1}{(\gamma-1)}p'_j\f$.
        * 
        * @details Size is \ref NumWaves().
        */
-      std::vector<double> rhoE_coeffs;
+      double *rhoE_coeffs = nullptr;
 
       /**
        * @brief Acoustic wave angular frequencies, \f$\omega=2\pi f\f$.
        * 
        * @details Size is \ref NumWaves().
        */
-      std::vector<double> wave_omegas;
+      double *wave_omegas = nullptr;
 
       /**
        * @brief \f$\vec{k}\cdot x+\phi\f$ term computed for all waves at all
@@ -153,16 +150,32 @@ private:
        * @details Size is \ref NumWaves() x \ref NumPoints(). Ordering depends
        * on \ref kernel_.
        */
-      std::vector<double> k_dot_x_p_phi;
+      double *k_dot_x_p_phi = nullptr;
 
-   } kernel_args_;
+      ~KernelArgs()
+      {
+         std::free(rho_coeffs);
+         std::free(rhoV_coeffs);
+         std::free(rhoE_coeffs);
+         std::free(wave_omegas);
+         std::free(k_dot_x_p_phi);
+      }
+   };
+   
+   /**
+    * @brief Kernel-prepped data structures, initialized in 
+    * \ref Finalize().
+    * 
+    * @details Pre-assembling this before calls to \ref Compute() is required.
+    */
+   KernelArgs kernel_args_;
 
    /**
     * @brief Fluid density \f$\rho\f$, computed in \ref Compute().
     * 
     * @details Size is \ref NumPoints().
     */
-   std::vector<double> rho_;
+   double* rho_ = nullptr;
 
    /**
     * @brief Fluid momentum \f$\rho\vec{u}\f$, computed in \ref Compute().
@@ -170,15 +183,20 @@ private:
     * @details Size is \ref NumPoints() * \ref Dim(), with data in XXX YYY 
     * ordering.
     */
-   std::vector<double> rhoV_;
+   double* rhoV_ = nullptr;
 
    /**
     * @brief Fluid energy \f$\rho E\f$, computed in \ref Compute().
     * 
     * @details Size is \ref NumPoints().
     */
-   std::vector<double> rhoE_;
+   double* rhoE_ = nullptr;
 
+   /**
+    * @brief Custom version of std::aligned_alloc that automatically computes
+    * correct size and returns double*
+    */
+   double* AlignedAlloc(std::size_t size);
 public:
    /**
     * @brief Construct a new AcousticField object.
@@ -262,14 +280,20 @@ public:
     * 
     * @warning This should only be called after \ref Compute().
     */
-   std::span<double> Density() { return rho_; }
+   std::span<double> Density()
+   { 
+      return std::span<double>(rho_, NumPoints()); 
+   }
    
    /**
     * @brief Get const span of computed flow densities.
     * 
     * @warning This should only be called after \ref Compute().
     */
-   std::span<const double> Density() const { return rho_; }
+   std::span<const double> Density() const 
+   { 
+      return std::span<const double>(rho_, NumPoints());
+   }
 
    /**
     * @brief Get span of flow momentum across all components.
@@ -278,7 +302,7 @@ public:
     */
    std::span<double> Momentum()
    { 
-      return std::span<double>(rhoV_);
+      return std::span<double>(rhoV_, NumPoints()*Dim());
    }
    
    /**
@@ -288,7 +312,7 @@ public:
     */
    std::span<const double> Momentum() const
    { 
-      return std::span<const double>(rhoV_);
+      return std::span<const double>(rhoV_, NumPoints()*Dim());
    }
 
    /**
@@ -298,7 +322,8 @@ public:
     */
    std::span<double> Momentum(int comp)
    { 
-      return std::span<double>(rhoV_).subspan(num_pts_*comp, num_pts_);
+      return std::span<double>(rhoV_, NumPoints()*Dim())
+               .subspan(NumPoints()*comp, NumPoints());
    }
    
    /**
@@ -308,7 +333,8 @@ public:
     */
    std::span<const double> Momentum(int comp) const
    { 
-      return std::span<const double>(rhoV_).subspan(num_pts_*comp, num_pts_);
+      return std::span<const double>(rhoV_, NumPoints()*Dim())
+               .subspan(NumPoints()*comp, NumPoints());
    }
 
    /**
@@ -316,15 +342,27 @@ public:
     * 
     * @warning This should only be called after \ref Compute().
     */
-   std::span<double> Energy() { return rhoE_; }
+   std::span<double> Energy()
+   {
+      return std::span<double>(rhoE_, NumPoints());
+   }
    
    /**
     * @brief Get const span of computed flow energy.
     * 
     * @warning This should only be called after \ref Compute().
     */
-   std::span<const double> Energy() const { return rhoE_; }
+   std::span<const double> Energy() const
+   {
+      return std::span<const double>(rhoE_, NumPoints());
+   }
 
+   ~AcousticField()
+   {
+      std::free(rho_);
+      std::free(rhoV_);
+      std::free(rhoE_);
+   }
 };
 
 /// @}

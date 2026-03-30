@@ -7,6 +7,15 @@ add_library(compiler_flag_requirements INTERFACE)
 target_compile_features(compiler_flag_requirements INTERFACE cxx_std_20)
 
 # Main Jabber compiler options:
+set(JABBER_MEMALIGN_BYTES 16 CACHE STRING 
+   "Memory-alignment to use in Jabber kernels.")
+
+option(JABBER_ENABLE_OPENMP
+   "Build jabber with OpenMP support" OFF)
+
+option(JABBER_ENABLE_MPI
+   "Build jabber_app with MPI support" OFF)
+
 option(JABBER_BUILD_PARTICIPANT 
    "Build Jabber preCICE participant app (requires preCICE)." OFF)
 
@@ -34,14 +43,10 @@ option(JABBER_BUILD_APP_LIB
 option(JABBER_BUILD_TESTS 
    "Build unit tests" ON)
 
-option(JABBER_ENABLE_OPENMP
-   "Build jabber with OpenMP support" OFF)
-
-option(JABBER_ENABLE_MPI
-   "Build jabber_app with MPI support" OFF)
-
 # Property of all targets to install
 set_property(GLOBAL PROPERTY JABBER_TARGETS_PROPERTY)
+
+add_definitions(-DMEMALIGN_BYTES=${JABBER_MEMALIGN_BYTES})
 
 if (JABBER_ENABLE_OPENMP)
    find_package(OpenMP REQUIRED COMPONENTS CXX)
