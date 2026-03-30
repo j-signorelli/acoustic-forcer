@@ -185,22 +185,27 @@ TEST_CASE("1D flowfield computation via kernel", "[1D][Compute][Kernels]")
 
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
+
+   const double kCBar = std::sqrt(kGamma*kPBar/kRhoBar);
    DYNAMIC_SECTION("Number of waves: " << kNumWaves)
    {
-      const double c_bar = std::sqrt(kGamma*kPBar/kRhoBar);
-
+      std::vector<double> rho_coeffs(kNumWaves);
+      std::vector<double> rhoV_coeffs(kNumWaves);
+      std::vector<double> rhoE_coeffs(kNumWaves);
+      std::vector<double> wave_omegas(kNumWaves);
       std::vector<double> k_dot_x_p_phi(kNumPts*kNumWaves);
-      std::vector<double> omega(kNumWaves);
-      std::vector<double> mod_wave_dir(kNumWaves);
 
       // Initialize kernel variables
       for (int w = 0; w < kNumWaves; w++)
       {
-         omega[w] = 2*M_PI*kFreqs[w];
-         mod_wave_dir[w] = (kSpeeds[w] == 'S' ? -1.0 : 1.0);
+         const int speed_encoder = (kSpeeds[w] == 'S' ? -1 : 1);
+         rho_coeffs[w] = kPAmps[w]/(kCBar*kCBar);
+         rhoV_coeffs[w] = speed_encoder*kPAmps[w]/(kRhoBar*kCBar);
+         rhoE_coeffs[w] = kPAmps[w]/(kGamma-1.0);
+         wave_omegas[w] = 2*M_PI*kFreqs[w];
 
-         const double k = (kSpeeds[w] == 'S' ? omega[w]/(kUBar - c_bar)
-                                             : omega[w]/(kUBar + c_bar));
+         const double k = (kSpeeds[w] == 'S' ? wave_omegas[w]/(kUBar - kCBar)
+                                             : wave_omegas[w]/(kUBar + kCBar));
          
          for (std::size_t i = 0; i < kNumPts; i++)
          {
@@ -216,8 +221,9 @@ TEST_CASE("1D flowfield computation via kernel", "[1D][Compute][Kernels]")
       for (const double &time : kTimes)
       {
          // Compute
-         ComputeKernel<1>(kNumPts, kRhoBar, kPBar, &kUBar, kGamma, kNumWaves,
-                           kPAmps.data(), omega.data(), mod_wave_dir.data(), 
+         GridPointKernel<1>(kNumPts, kRhoBar, kPBar, &kUBar, kGamma, kNumWaves,
+                           rho_coeffs.data(), rhoV_coeffs.data(), 
+                           rhoE_coeffs.data(), wave_omegas.data(), 
                            k_dot_x_p_phi.data(), time, rho.data(), 
                            rhoU.data(), rhoE.data());
 

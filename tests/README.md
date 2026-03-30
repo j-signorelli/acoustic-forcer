@@ -1,5 +1,6 @@
 # Unit Tests
-The following is detailed documentation on all of the unit tests performed - particularly any analytical solutions compared against.
+The following is detailed documentation on the compute unit tests, verifying flowfield calculation.
+
 ## Flowfield Equations:
 Density:
 $$

@@ -219,32 +219,35 @@ TEST_CASE("3D flowfield computation via kernel", "[3D][Compute][Kernels]")
 
    const int kNumWaves = GENERATE(1,2);
    CAPTURE(kNumWaves);
+
+   const double kCBar = std::sqrt(kGamma*kPBar/kRhoBar);
    DYNAMIC_SECTION("Number of waves: " << kNumWaves)
    {
-      const double c_bar = std::sqrt(kGamma*kPBar/kRhoBar);
-
+      std::vector<double> rho_coeffs(kNumWaves);
+      std::vector<double> rhoV_coeffs(3*kNumWaves);
+      std::vector<double> rhoE_coeffs(kNumWaves);
+      std::vector<double> wave_omegas(kNumWaves);
       std::vector<double> k_dot_x_p_phi(kNumPts*kNumWaves);
-      std::vector<double> omega(kNumWaves);
-      std::vector<double> mod_wave_dir(kNumWaves*3);
 
       // Initialize kernel variables
       for (int w = 0; w < kNumWaves; w++)
       {
-         omega[w] = 2*M_PI*kFreqs[w];
-
+         const int speed_encoder = (kSpeeds[w] == 'S' ? -1 : 1);
          const std::vector<double> k_hat = kWaveDirs[w];
-         const double mod_fac = (kSpeeds[w] == 'S' ? -1.0 : 1.0);
 
-         mod_wave_dir[w] = mod_fac*k_hat[0];
-         mod_wave_dir[kNumWaves+w] = mod_fac*k_hat[1];
-         mod_wave_dir[2*kNumWaves+w] = mod_fac*k_hat[2];
+         rho_coeffs[w] = kPAmps[w]/(kCBar*kCBar);
+         rhoV_coeffs[w] = speed_encoder*k_hat[0]*kPAmps[w]/(kRhoBar*kCBar);
+         rhoV_coeffs[kNumWaves+w] = speed_encoder*k_hat[1]*kPAmps[w]/(kRhoBar*kCBar);
+         rhoV_coeffs[2*kNumWaves+w] = speed_encoder*k_hat[2]*kPAmps[w]/(kRhoBar*kCBar);
+         rhoE_coeffs[w] = kPAmps[w]/(kGamma-1.0);
+         wave_omegas[w] = 2*M_PI*kFreqs[w];
+
          const double U_bar_dot_k_hat = kUBar[0]*k_hat[0] + kUBar[1]*k_hat[1]
                                                         + kUBar[2]*k_hat[2];
-
          const double k = (kSpeeds[w] == 'S' 
-                                    ? omega[w]/(U_bar_dot_k_hat - c_bar)
-                                    : omega[w]/(U_bar_dot_k_hat + c_bar));
-         
+                                    ? wave_omegas[w]/(U_bar_dot_k_hat - kCBar)
+                                    : wave_omegas[w]/(U_bar_dot_k_hat + kCBar));
+
          for (std::size_t i = 0; i < kNumPts; i++)
          {
             k_dot_x_p_phi[w*kNumPts + i] = k*(k_hat[0]*kCoords[i*3] 
@@ -262,10 +265,11 @@ TEST_CASE("3D flowfield computation via kernel", "[3D][Compute][Kernels]")
       for (const double &time : kTimes)
       {
          // Compute
-         ComputeKernel<3>(kNumPts, kRhoBar, kPBar, kUBar.data(), kGamma,
-                           kNumWaves, kPAmps.data(), omega.data(), 
-                           mod_wave_dir.data(), k_dot_x_p_phi.data(), time, 
-                           rho.data(), rhoU.data(), rhoE.data());
+         GridPointKernel<3>(kNumPts, kRhoBar, kPBar, kUBar.data(), kGamma,
+                           kNumWaves, rho_coeffs.data(), rhoV_coeffs.data(), 
+                           rhoE_coeffs.data(), wave_omegas.data(), 
+                           k_dot_x_p_phi.data(), time, rho.data(), 
+                           rhoU.data(), rhoE.data());
 
          // Check solutions
          CheckSolution(kCoords, rho, rhoU, rhoE, time, kNumWaves);

@@ -12,7 +12,7 @@ namespace jabber
 
 /**
  * @defgroup psd_group Power Spectral Density (PSD) Discretization
- * 
+ * @{
  * @brief Tools to compute the energy-conserved powers of a discrete set of
  * frequencies from a PSD.
  * 
@@ -28,7 +28,7 @@ namespace jabber
  * As outlined in Appendix B of Tam et al., 2010, "Continuation of the Near 
  * Acoustic Field of a Jet to the Far Field. Part I: Theory", a broadband
  * spectrum of acoustic waves can be formulated by discretizing the PSD
- * into a set of wave frequencies \f$f_k\f$ and ensuring energy conservation
+ * into a set of wave frequencies \f${f_k}\f$ and ensuring energy conservation
  * by setting their amplitudes according to the power within an interval 
  * \f$\Delta f_k\f$. Note that for a PSD with units \f$V^2/\text{Hz}\f$, after
  * computing a discrete set of powers and applying any transfer function, 
@@ -39,22 +39,21 @@ namespace jabber
  * V_k=\sqrt{2P_k}.
  * \f]
  * 
- * For an arbitrary discretization of frequencies in Jabber, the PSD must
+ * ## Continuous PSD Representation
+ * For an arbitrary discretization of frequencies in Jabber, the input PSD must
  * be represented in a continuous form, in which case this integral may then be
- * exactly evaluated for frequency bins. To support this, lightweight
- * classes are provided in @ref psd_exact_group to formulate a
- * continuous representation of a digitized or discrete PSD and then compute
- * "exact" powers. For general use cases, discretizations using quadrature on a 
- * provided discrete PSD are given in @ref psd_quad_group.
+ * exactly evaluated for each frequency bin. To support this, lightweight
+ * classes are provided to formulate a continuous representation of a digitized
+ * or discrete PSD.
  * 
- * ## Interval Method
- * @todo Finish
+ * ## Interval/Bin Determination
+ * After defining a continuous form of a PSD and selecting center frequencies 
+ * \f${f_k}\f$, the bounds (or interval) for a given center frequency must be
+ *  determined. See \ref Interval::Method for the options available.
  */
 
 /**
  * @brief Struct of Δf bin information for PSD discretization.
- * 
- * @ingroup psd_group
  */
 struct Interval
 {
@@ -71,6 +70,9 @@ public:
       /**
        * @brief Compute interval as midpoint **on a log10 scale** between
        * adjacent frequencies.
+       * 
+       * @details It is advised to use this if the discretization of
+       * frequencies are taken on a log scale.
        */
       MidpointLog10,
 
@@ -121,47 +123,6 @@ public:
    /// Δf
    double DeltaF() const { return f_right - f_left; }
 };
-
-/** @{
- * 
- * @defgroup psd_quad_group Quadrature-Based Discretization
- * @{
- *
- */
-
-
-/**
- * @brief Compute energy-conserved powers from a discrete PSD using a midpoint
- * Riemann sum.
- * 
- * @todo Manual input of min + max (integration bounds)
- * @todo Add unit test?
- * 
- * @details Specifically, this function very simply evaluates
- * 
- * \f[
- *    P_k=S(f_k)\Delta f_k,
- * \f]
- * where \f$\Delta f_k\f$ is determined by the \p method.
- * 
- * @param freqs         Input discrete center frequencies in ascending order.
- * @param psd           Input PSD evaluated at \p freqs, \f$S(f_k)\f$.
- * @param powers        Output powers.
- * @param method        Interval::Method enumerator.
- */
-void DiscretizePSDRiemann(std::span<const double> freqs,
-                           std::span<const double> psd,
-                           std::span<double> powers,
-                           Interval::Method method);
-
-/// @}
-// end of psd_quad_group
- 
-/**
- * @defgroup psd_exact_group Continuous PSD Representations
- * @{
- */
-
 
 /// Base abstract class for a PSD.
 class BasePSD
@@ -236,6 +197,9 @@ public:
 
 /**
  * @brief Piecewise log-log interpolation of discrete PSD data.
+ * 
+ * @details If a PSD is digitized from a log-log-scaled plot, this option is
+ * advised.
  */
 class PWLogLogPSD : public PWLogLog, public BasePSD
 {
@@ -266,9 +230,6 @@ public:
    
    using BasePSD::Discretize;
 };
-
-/// @}
-// end of psd_quad_group
 
 /// @}
 // end of psd_group

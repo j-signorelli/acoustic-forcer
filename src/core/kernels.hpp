@@ -7,6 +7,13 @@ namespace jabber
 {
 
 /**
+ * @defgroup kernels_group Compute Kernels
+ * @{
+ * 
+ */
+   
+
+/**
    * @brief Kernel function for evaluating perturbed base flow, with series
    * summation inner loop/vectorization over each gridpoint.
    * 
@@ -38,37 +45,39 @@ namespace jabber
    * @param U_bar            Base flow velocity.
    * @param gamma            Specific heat ratio.
    * @param num_waves        Number of acoustic waves to compute.
-   * @param wave_amps        Acoustic wave amplitudes, sized \p num_waves.
-   * @param wave_omegas      Acoustic wave angular frequencies, sized 
+   * @param rho_coeffs       \copybrief AcousticField::rho_coeffs Sized
    *                         \p num_waves.
-   * @param mod_wave_dirs    **Modified** acoustic wave normalized direction
-   *                         vectors -- For fast acoustic waves, this is simply
-   *                         just the normalized wave direction vector, 
-   *                         \f$\hat{k}\f$. For slow acoustic waves, this is
-   *                         the **inverted** normalized wave direction vector,
-   *                         \f$-\hat{k}\f$. This is dimensioned as \p TDim x 
-   *                         \p num_waves but flattened.
-   * @param k_dot_x_p_phi    \f$\vec{k}\cdot x+\phi\f$ term computed for all
-   *                         waves at all points, dimensioned as \p num_waves 
-   *                         x \p num_pts but flattened.
+   * @param rhoV_coeffs      \copybrief AcousticField::rhoV_coeffs Sized
+   *                         \p TDim x \p num_waves.
+   * @param rhoE_coeffs      \copybrief AcousticField::rhoE_coeffs Sized
+   *                         \p num_waves.
+   * @param wave_omegas      \copybrief AcousticField::wave_omegas Sized 
+   *                         \p num_waves.
+   * @param k_dot_x_p_phi    \copybrief AcousticField::k_dot_x_p_phi Sized
+   *                         \p num_waves x \p num_points with ordering 
+   *                         [wave][point].
    * @param t                Time.
    * @param rho              Output flow density to compute, sized \p num_pts.
-   * @param rhoV             Output flow momentum vector to compute,
-   *                         dimensioned as \p TDim x \p num_pts but flattened.
+   * @param rhoV             Output flow momentum vector to compute, sized
+   *                         \p TDim x \p num_pts with ordering [dim][point].
    * @param rhoE             Output flow energy to compute, sized \p num_pts.
 */
 template<std::size_t TDim>
-void ComputeKernel(const std::size_t num_pts, const double rho_bar,
+void GridPointKernel(const std::size_t num_pts, const double rho_bar,
                         const double p_bar, const double *U_bar, 
                         const double gamma, const int num_waves, 
-                        const double *wave_amps, 
+                        const double *rho_coeffs,
+                        const double *rhoV_coeffs,
+                        const double *rhoE_coeffs, 
                         const double *wave_omegas,
-                        const double *mod_wave_dirs,
                         const double *__restrict__ k_dot_x_p_phi,
                         const double t,
                         double *__restrict__ rho,
                         double *__restrict__ rhoV,
                         double *__restrict__ rhoE);
+
+/// @}
+// end of kernels_group
 
 } // namespace jabber
 

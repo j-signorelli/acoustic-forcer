@@ -5,8 +5,8 @@
 
 #include <jabber.hpp>
 #include <iostream>
-#include <concepts>
 #include <memory>
+
 namespace jabber_app
 {
 
@@ -18,6 +18,12 @@ void PrintBanner(std::ostream &out);
 
 /// Normalize the provided vector data
 void Normalize(std::span<const double> vec, std::span<double> norm_vec);
+
+/**
+ * @defgroup pproc_group Parameter Processing
+ * @{
+ * 
+ */
 
 /**
  * @brief All visitor options for each InputXY::Params, for initializing 
@@ -141,6 +147,9 @@ struct SourceVisitor
    void operator() (const Source::Params<WaveCSV> &op);
 };
 
+/// @}
+// end of pproc_group
+
 /**
  * @brief Initialize a \ref jabber::AcousticField object from user input and 
  * grid.
@@ -157,7 +166,7 @@ jabber::AcousticField InitializeAcousticField(const ConfigInput &conf,
 
 /**
  * @brief Extremely simple function to get subspan of data from \p global 
- * to \p local for basic MPI-partitioning. Data must be ordered in a SoA 
+ * to \p local for basic MPI-partitioning. Data must be ordered in a AoS 
  * format.
  * 
  * @tparam T         Type.

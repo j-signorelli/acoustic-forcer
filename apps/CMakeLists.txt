@@ -4,7 +4,7 @@ if (JABBER_BUILD_PARTICIPANT)
    find_package(PRECICE 3.1.2 REQUIRED CONFIG NAMES precice)
    message(STATUS "Found preCICE config: TRUE")
 
-   add_executable(jabber_participant participant.cpp)
+   add_executable(jabber_participant jabber_participant.cpp)
    set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY 
                                                    jabber_participant)
 
@@ -23,7 +23,7 @@ if (JABBER_BUILD_VIZ)
    find_package(MFEM 4.8 REQUIRED CONFIG)
    message(STATUS "Found MFEM config: TRUE")
 
-   add_executable(jabber_viz viz.cpp)
+   add_executable(jabber_viz jabber_viz.cpp)
    set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY 
                                                    jabber_viz)
 
@@ -40,7 +40,7 @@ endif()
 # Build Jabber profiler app
 if (JABBER_BUILD_PROFILER)
 
-   add_executable(jabber_profile profile.cpp)
+   add_executable(jabber_profile jabber_profile.cpp)
    set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY 
                                                    jabber_profile)
 
@@ -56,7 +56,7 @@ endif()
 # Build Jabber out app
 if (JABBER_BUILD_OUT)
 
-   add_executable(jabber_out out.cpp)
+   add_executable(jabber_out jabber_out.cpp)
    set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY 
                                                    jabber_out)
 
@@ -70,7 +70,7 @@ endif()
 # Build Jabber plot app
 if (JABBER_BUILD_PLOT)
 
-   add_executable(jabber_plot plot.cpp)
+   add_executable(jabber_plot jabber_plot.cpp)
    set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY 
                                                    jabber_plot)
 
@@ -83,7 +83,7 @@ endif()
 
 # Build Jabber PSD app
 if (JABBER_BUILD_PSD)
-   add_executable(jabber_psd psd.cpp)
+   add_executable(jabber_psd jabber_psd.cpp)
    set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY 
                                                    jabber_psd)
 

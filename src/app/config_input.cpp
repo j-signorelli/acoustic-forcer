@@ -368,7 +368,10 @@ void TOMLConfigInput::ParseSource
    {
       Source::Params<PSD> op;
 
-      op.dim_fac = in_val.at("ScaleFactor").as_floating();
+      if (in_val.contains("ScaleFactor"))
+      {
+         op.scale_fac = in_val.at("ScaleFactor").as_floating();
+      }
       op.phase_seed = in_val.at("PhaseSeed").as_integer();
       op.speed = *(in_val.at("Speed").as_string().data());
       

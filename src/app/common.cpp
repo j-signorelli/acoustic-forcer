@@ -132,7 +132,7 @@ void FunctionTypeVisitor::operator()
 void DiscMethodVisitor::operator()
    (const DiscMethod::Params<Uniform> &op)
 {
-   const double df = (max_freq - min_freq)/(freqs.size()-1);
+   const double df = (max_freq - min_freq)/(freqs.size()+1);
    for (std::size_t i = 0; i < freqs.size(); i++)
    {
       freqs[i] = min_freq + df*i;
@@ -142,7 +142,7 @@ void DiscMethodVisitor::operator()
 void DiscMethodVisitor::operator()
    (const DiscMethod::Params<UniformLog> &op)
 {
-   const double log_df = std::log10(max_freq/min_freq)/(freqs.size()-1);
+   const double log_df = std::log10(max_freq/min_freq)/(freqs.size()+1);
    const double log_min_freq = std::log10(min_freq);
    for (std::size_t i = 0; i < freqs.size(); i++)
    {
@@ -206,7 +206,11 @@ void TransferFunctionVisitor::operator()
    const double &gamma = base_flow_params.gamma;
    const double mach_bar = std::sqrt(gamma*p_bar/rho_bar);
 
-   LowFrequencyLimitTF(mach_bar, gamma, speed, powers);
+   const double chi_star = LowFrequencyLimitTF(mach_bar, gamma, speed);
+   for (std::size_t i = 0; i < freqs.size(); i++)
+   {
+      powers[i] /= chi_star;
+   }
 }
 
 void TransferFunctionVisitor::operator()
@@ -229,8 +233,22 @@ void TransferFunctionVisitor::operator()
    const double &gamma = base_flow_params.gamma;
    const double mach_bar = std::sqrt(gamma*p_bar/rho_bar);
 
-   FlowNormalFitTF(mach_bar, gamma, speed, op.shock_standoff_dist,
-                     freqs, powers);
+   const double chi_star = LowFrequencyLimitTF(mach_bar, gamma, speed);
+   const double f_s = 
+   [&]()
+   {
+      const double RT = p_bar/rho_bar;
+      const double RT_0 = RT*(1 + ((gamma-1.0)/2)*mach_bar*mach_bar);
+
+      const double c0 = std::sqrt(gamma*RT_0);
+
+      return c0/(2*op.shock_standoff_dist);
+   }();
+
+   for (std::size_t i = 0; i < freqs.size(); i++)
+   {
+      powers[i] /= FlowNormalFitTF(chi_star, f_s, freqs[i]);
+   }
 }
 
 void SourceVisitor::operator()
@@ -281,11 +299,12 @@ void SourceVisitor::operator()
                                           powers},
                   *op.tf_params);
    }
-   // Compute the amplitudes of each wave, with dimensionalization factor
+   // Compute the amplitudes of each wave + dimensionalize
    std::vector<double> amps(freqs.size());
    for (std::size_t i = 0; i < amps.size(); i++)
    {
-      amps[i] = std::sqrt(2*powers[i])*op.dim_fac;
+      amps[i] = std::sqrt(2*powers[i]*op.scale_fac.value_or(1.0))
+                  *base_flow_params.p;
    }
 
    // Compute the phases of each wave

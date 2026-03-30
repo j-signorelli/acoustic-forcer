@@ -6,11 +6,13 @@ namespace jabber
 {
 
 template<std::size_t TDim>
-void ComputeKernel(const std::size_t num_pts, const double rho_bar,
+void GridPointKernel(const std::size_t num_pts, const double rho_bar,
                      const double p_bar, const double *U_bar, 
                      const double gamma, const int num_waves, 
-                     const double *wave_amps, const double *wave_omegas,
-                     const double *mod_wave_dirs,
+                     const double *rho_coeffs,
+                     const double *rhoV_coeffs,
+                     const double *rhoE_coeffs,                     
+                     const double *wave_omegas,
                      const double *__restrict__ k_dot_x_p_phi,
                      const double t,
                      double *__restrict__ rho,
@@ -35,11 +37,6 @@ void ComputeKernel(const std::size_t num_pts, const double rho_bar,
       rhoE[i] = rhoE_init;
    }
 
-   const double c_infty = std::sqrt(gamma*p_bar/rho_bar);
-   const double c_infty_sq = c_infty*c_infty;
-   const double rho_bar_t_c_infty = rho_bar*c_infty;
-   const double gamma_m_1 = gamma-1.0;
-
    // Add contribution of each wave
 #ifdef JABBER_WITH_OPENMP
    #pragma omp parallel for reduction(+:rho[0:num_pts],\
@@ -48,9 +45,11 @@ void ComputeKernel(const std::size_t num_pts, const double rho_bar,
 #endif // JABBER_WITH_OPENMP
    for (int w = 0; w < num_waves; w++)
    {
-      const double rho_fac = wave_amps[w]/c_infty_sq;
-      const double rhoV_fac = wave_amps[w]/rho_bar_t_c_infty;
-      const double rhoE_fac = wave_amps[w]/gamma_m_1;
+      const double rho_coeff_w = rho_coeffs[w];
+      const double rhoV1_coeff_w = rhoV_coeffs[w];
+      const double rhoV2_coeff_w = TDim > 1 ? rhoV_coeffs[num_waves + w] : 0;
+      const double rhoV3_coeff_w = TDim > 2 ? rhoV_coeffs[2*num_waves + w] : 0;
+      const double rhoE_coeff_w = rhoE_coeffs[w];
       const double omt = wave_omegas[w]*t;
 
       const std::size_t w_offset = w*num_pts;
@@ -59,18 +58,17 @@ void ComputeKernel(const std::size_t num_pts, const double rho_bar,
       {
          const double cos_w = std::cos(k_dot_x_p_phi[w_offset + i] - omt);
 
-         rho[i] += rho_fac*cos_w;
-
-         rhoV[i] += rhoV_fac*cos_w*mod_wave_dirs[w];
+         rho[i] += rho_coeff_w*cos_w;
+         rhoV[i] += rhoV1_coeff_w*cos_w;
          if constexpr(TDim > 1)
          {
-            rhoV[num_pts + i] += rhoV_fac*cos_w*mod_wave_dirs[num_waves + w];
+            rhoV[num_pts + i] += rhoV2_coeff_w*cos_w;
          }
          if constexpr(TDim > 2)
          {
-            rhoV[2*num_pts + i] += rhoV_fac*cos_w*mod_wave_dirs[2*num_waves + w];
+            rhoV[2*num_pts + i] += rhoV3_coeff_w*cos_w;
          }
-         rhoE[i] += rhoE_fac*cos_w;
+         rhoE[i] += rhoE_coeff_w*cos_w;
 
       }
    }
@@ -109,10 +107,11 @@ void ComputeKernel(const std::size_t num_pts, const double rho_bar,
 }
 
 // Explicit instantiation for Dims 1-3
-template void ComputeKernel<1>(const std::size_t, const double,
+template void GridPointKernel<1>(const std::size_t, const double,
                                  const double, const double *, 
                                  const double, const int, 
                                  const double *, 
+                                 const double *,
                                  const double *,
                                  const double *,
                                  const double *__restrict__,
@@ -121,10 +120,11 @@ template void ComputeKernel<1>(const std::size_t, const double,
                                  double *__restrict__,
                                  double *__restrict__);
                                 
-template void ComputeKernel<2>(const std::size_t, const double,
+template void GridPointKernel<2>(const std::size_t, const double,
                                  const double, const double *, 
                                  const double, const int, 
                                  const double *, 
+                                 const double *,
                                  const double *,
                                  const double *,
                                  const double *__restrict__,
@@ -133,10 +133,11 @@ template void ComputeKernel<2>(const std::size_t, const double,
                                  double *__restrict__,
                                  double *__restrict__);
 
-template void ComputeKernel<3>(const std::size_t, const double,
+template void GridPointKernel<3>(const std::size_t, const double,
                                  const double, const double *, 
                                  const double, const int, 
                                  const double *, 
+                                 const double *,
                                  const double *,
                                  const double *,
                                  const double *__restrict__,
