@@ -9,11 +9,11 @@ namespace jabber
  * @defgroup tf_group Transfer Functions
  * @{
  * 
- * @details @todo \f$\chi=\frac{\frac{p'_{02}}{p_{02}}}{\frac{p'}{p_\infty}}\f$
+ * @details @todo \f$\chi=\frac{\left(\frac{p'_{02}}{p_{02}}\right)^2}{\left(\frac{p'}{\bar{p}}\right)^2}\f$
  */
 
 /**
- * @brief Apply the transfer function \f$\chi^*\f$, the analytical 
+ * @brief Compute the transfer function \f$\chi^*\f$, the analytical 
  * low-frequency limit form given in Equation 15 of Chaudhry and
  * Chandler, 2017.
  * 
@@ -21,27 +21,24 @@ namespace jabber
  * @param gamma         Specific heat ratio.
  * @param speed         Wave speed, 'S' for slow, 'F' for fast.
  * 
- * @param powers        Powers to apply transfer function to.
+ * @return \f$\chi^*\f$
  */
-void LowFrequencyLimitTF(double mach_bar, double gamma, char speed,
-                            std::span<double> powers);
+double LowFrequencyLimitTF(double mach_bar, double gamma, char speed);
 
 /**
- * @brief Apply the transfer function \f$\chi\f$ obtained via 
+ * @brief Compute the transfer function \f$\chi\f$ obtained via 
  * re-dimensionalization of a fit of the curve in Figure 14b of 
  * Chaudhry and Chandler, 2017.
  * 
- * @param mach_bar      Freestream Mach number.
- * @param gamma         Specific heat ratio.
- * @param speed         Wave speed, 'S' for slow, 'F' for fast.
- * @param delta         Shock standoff distance from pitot probe face.
- * @param freqs         Frequencies, associated with each power in \p powers.
+ * @param chi_star        Low frequency limit transfer function, 
+ *                        \f$\chi^*\f$. See \ref LowFrequencyLimitTF().
+ * @param f_s             Shock stand-off frequency, 
+ *                        \f$f_s=\frac{c_0}{2\Delta}\f$.
+ * @param freq            Frequency to evaluate transfer function at.
  * 
- * @param powers        Powers to apply transfer function to.
+ * @return \f$\chi(f)\f$
  */
-void FlowNormalFitTF(double mach_bar, double gamma, char speed, 
-                        double delta, std::span<const double> freqs,
-                        std::span<double> powers);
+double FlowNormalFitTF(double chi_star, double f_s, double freq);
 
 /// @}
 // end of tf_group

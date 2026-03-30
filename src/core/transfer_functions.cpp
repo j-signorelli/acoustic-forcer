@@ -6,19 +6,14 @@
 namespace jabber
 {
 
-void LowFrequencyLimitTF(double mach_bar, double gamma, char speed,
-                           std::span<double> powers)
+double LowFrequencyLimitTF(double mach_bar, double gamma, char speed)
 {
    const double sign = speed == 'S' ? -1 : 1;
    const double num = (mach_bar*mach_bar + sign*2.0*mach_bar - sign/mach_bar);
    const double denom = (gamma*mach_bar*mach_bar - (gamma - 1.0)/2.0);
    const double frac = num/denom;
 
-   const double chi = frac*frac;
-   for (double &power : powers)
-   {
-      power /= chi;
-   }
+   return frac*frac;
 }
 
 struct FlowNormalBezierFit
@@ -77,74 +72,61 @@ struct FlowNormalBezierFit
    }
 };
 
-void FlowNormalFitTF(double mach_bar, double gamma, char speed, 
-                        double delta, std::span<const double> freqs,
-                        std::span<double> powers)
+double FlowNormalFitTF(double chi_star, double f_s, double freq)
 {
-   const double chi_star = 
-      [&]() 
-      { 
-         double c = 1.0;
-         LowFrequencyLimitTF(mach_bar, gamma, speed, {&c,1});
-         return 1.0/c;
-      }();
+   const double &f_norm = freq/f_s;
+   if (f_norm < FlowNormalBezierFit::kfMin || 
+         f_norm > FlowNormalBezierFit::kfMax)
+   {
+      std::string err_string = 
+         std::format("Normalized frequency {} (non-normalized frequency {})"
+                     " must be within range [{},{}].",
+                     f_norm, freq, FlowNormalBezierFit::kfMin, 
+                     FlowNormalBezierFit::kfMax);
 
-   // Compute Bezier curve parameter t for each freq using Newton's method
+      throw std::invalid_argument(err_string);
+   }
+
+   // Compute Bezier curve parameter t for freq using Newton's method
    constexpr std::size_t kNumNewtonIt = 100;
    constexpr double kNewtonTol = 1e-12;
    constexpr std::size_t kMinNewtonIt = 10;
 
-   for (std::size_t i = 0; i < freqs.size(); i++)
+   double tn = 0.5;
+   double tnp1;
+   for (std::size_t n = 0; n < kNumNewtonIt; n++)
    {
-      const double &f_norm = freqs[i]/delta;
-      if (f_norm < FlowNormalBezierFit::kfMin || 
-            f_norm > FlowNormalBezierFit::kfMax)
+      tnp1 = tn - (FlowNormalBezierFit::EvalFreq(tn) - f_norm)
+                     / FlowNormalBezierFit::DEvalFreq(tn);
+      if (tnp1 < 0)
+      {
+         tnp1 = 0.0;
+      }
+      else if (tnp1 > 1)
+      {
+         tnp1 = 1.0;
+      }
+
+      // If converged, end loop
+      if (n >= kMinNewtonIt && std::abs(tnp1-tn) < kNewtonTol)
+      {
+         n = kNumNewtonIt;
+      }
+      else if (n + 1 == kNumNewtonIt)
       {
          std::string err_string = 
-            std::format("Normalized frequency {} (non-normalized frequency {})"
-                        " must be within range [{},{}].",
-                        f_norm, freqs[i], FlowNormalBezierFit::kfMin, 
-                        FlowNormalBezierFit::kfMax);
-
-         throw std::invalid_argument(err_string);
+            std::format("Unable to converge to Bezier parameter t for "
+                        "frequency {} (normalized frequency {})", 
+                        freq, f_norm);
+         throw std::logic_error(err_string);
       }
-
-      double tn = 0.5;
-      double tnp1;
-      for (std::size_t n = 0; n < kNumNewtonIt; n++)
+      else
       {
-         tnp1 = tn - (FlowNormalBezierFit::EvalFreq(tn) - f_norm)
-                        / FlowNormalBezierFit::DEvalFreq(tn);
-         if (tnp1 < 0)
-         {
-            tnp1 = 0.0;
-         }
-         else if (tnp1 > 1)
-         {
-            tnp1 = 1.0;
-         }
-
-         // If converged, apply transfer function
-         if (n >= kMinNewtonIt && std::abs(tnp1-tn) < kNewtonTol)
-         {
-            n = kNumNewtonIt;
-            powers[i] /= (FlowNormalBezierFit::EvalChi(tnp1)*chi_star);
-         }
-         else if (n + 1 == kNumNewtonIt)
-         {
-            std::string err_string = 
-               std::format("Unable to converge to Bezier parameter t for "
-                           "frequency {} (normalized frequency {})", 
-                           freqs[i], f_norm);
-            throw std::logic_error(err_string);
-         }
-         else
-         {
-            tn = tnp1;
-         }
+         tn = tnp1;
       }
-
    }
+
+   return FlowNormalBezierFit::EvalChi(tnp1)*chi_star;
 }
 
 } // namespace jabber

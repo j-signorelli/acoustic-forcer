@@ -202,7 +202,11 @@ void TransferFunctionVisitor::operator()
    const double &gamma = base_flow_params.gamma;
    const double mach_bar = std::sqrt(gamma*p_bar/rho_bar);
 
-   LowFrequencyLimitTF(mach_bar, gamma, speed, powers);
+   const double chi_star = LowFrequencyLimitTF(mach_bar, gamma, speed);
+   for (std::size_t i = 0; i < freqs.size(); i++)
+   {
+      powers[i] /= chi_star;
+   }
 }
 
 void TransferFunctionVisitor::operator()
@@ -225,8 +229,22 @@ void TransferFunctionVisitor::operator()
    const double &gamma = base_flow_params.gamma;
    const double mach_bar = std::sqrt(gamma*p_bar/rho_bar);
 
-   FlowNormalFitTF(mach_bar, gamma, speed, op.shock_standoff_dist,
-                     freqs, powers);
+   const double chi_star = LowFrequencyLimitTF(mach_bar, gamma, speed);
+   const double f_s = 
+   [&]()
+   {
+      const double RT = p_bar/rho_bar;
+      const double RT_0 = RT*(1 + ((gamma-1.0)/2)*mach_bar*mach_bar);
+
+      const double c0 = std::sqrt(gamma*RT_0);
+
+      return c0/(2*op.shock_standoff_dist);
+   }();
+
+   for (std::size_t i = 0; i < freqs.size(); i++)
+   {
+      powers[i] /= FlowNormalFitTF(chi_star, f_s, freqs[i]);
+   }
 }
 
 void SourceVisitor::operator()

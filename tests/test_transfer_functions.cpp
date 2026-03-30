@@ -11,18 +11,14 @@ namespace jabber_test
 
 TEST_CASE("Low-frequency limit", "[TransferFunctions]")
 {
-    std::array<double,1> power{1.0};
-
     SECTION("Slow")
     {
-        LowFrequencyLimitTF(6.0, 1.4, 'S', power);
-        const double chi_star = 1.0/power[0];
+        const double chi_star = LowFrequencyLimitTF(6.0, 1.4, 'S');
         CHECK_THAT(chi_star, WithinAbs(0.23175337604870483, 1e-14));
     }
     SECTION("Fast")
     {
-        LowFrequencyLimitTF(6.0, 1.4, 'F', power);
-        const double chi_star = 1.0/power[0];
+        const double chi_star = LowFrequencyLimitTF(6.0, 1.4, 'F');
         CHECK_THAT(chi_star, WithinAbs(0.907933119227385, 1e-14));
     }
 }
@@ -35,15 +31,10 @@ TEST_CASE("Flow-normal fit", "[TransferFunctions]")
 
     SECTION("Low-frequency limit")
     {
-        std::array<double,1> power_lfl{1.0};
-        
-        std::array<double,1> freq_lfl{0.0};
-        std::array<double,1> power_fnf{1.0};
+        const double chi_star = LowFrequencyLimitTF(mach, gamma, speed);
+        const double chi = FlowNormalFitTF(chi_star, 1.0, 0.0);
 
-        LowFrequencyLimitTF(mach, gamma, speed, power_lfl);
-        FlowNormalFitTF(mach, gamma, speed, 1.0, freq_lfl, power_fnf);
-
-        REQUIRE(power_lfl[0] == power_fnf[0]);
+        REQUIRE(chi == chi_star);
     }
 
     SECTION("Pre-computed from t")
@@ -60,31 +51,15 @@ TEST_CASE("Flow-normal fit", "[TransferFunctions]")
         {4.270193937297611 , 2.2363223163231556, 1.0444846389474434,
          1.28539563880403  , 4.411469866465641};
 
-        const double chi_star =
-        [&]()
-        {
-            double c = 1.0;
-            LowFrequencyLimitTF(mach, gamma, speed, {&c,1});
-            return 1.0/c;
-        }();
+        const double chi_star = LowFrequencyLimitTF(mach, gamma, speed);
 
-        const double delta = GENERATE(take(3,random(5e-6,1e-3)));
+        const double f_s = GENERATE(take(3,random(5e-6,1e-3)));
 
-
-        std::array<double, 5> freq_arr;
-        std::array<double, 5> chi_arr;
         for (std::size_t i = 0; i < 5; i++)
         {
-            freq_arr[i] = freq_nd_arr[i]*delta;
-            chi_arr[i] = 1.0;
-        }
-
-        
-        FlowNormalFitTF(mach, gamma, speed, delta, freq_arr, chi_arr);
-        
-        for (std::size_t i = 0; i < 5; i++)
-        {
-            CHECK_THAT((1.0/chi_arr[i])/chi_star, WithinAbs(chi_nd_arr[i], 1e-12));
+            const double chi = FlowNormalFitTF(chi_star, f_s, 
+                                                freq_nd_arr[i]*f_s);
+            CHECK_THAT(chi/chi_star, WithinAbs(chi_nd_arr[i], 1e-12));
         }
     }
 
