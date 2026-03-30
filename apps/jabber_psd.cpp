@@ -44,13 +44,10 @@ int main(int argc, char *argv[])
       ("o,noverlap", "Number of point overlap in segments. "
                      " Defaults to nperseg/2.", 
          cxxopts::value<std::size_t>())
-      ("f,factor", "Factor to multiply pressure perturbation by for "
-                   "any nondimensionalization or scaling of PSD.",
-         cxxopts::value<double>()->default_value("1.0"))
       ("w,write-psd-file", "Filename to write PSD data to (if included) as a CSV.",
          cxxopts::value<std::string>())
       ("r,write-press-file", "Filename to write pressure perturbation data to "
-                             "(if included) with factor applied.",
+                             "(if included).",
          cxxopts::value<std::string>())
       ("p,plot", "Generate a plot of the computed PSD data.")
       ("l,log", "Plot on a log-log scale.",
@@ -79,7 +76,6 @@ int main(int argc, char *argv[])
 
 
    const double dt = result["dt"].as<double>();
-   const double fac = result["factor"].as<double>();
    const std::size_t nt = result["num-timesteps"].as<std::size_t>();
    const std::size_t nperseg = result["nperseg"].as<std::size_t>();
    const std::size_t noverlap = (result.count("noverlap") == 0) ? nperseg/2
@@ -138,7 +134,7 @@ int main(int argc, char *argv[])
       // Compute pressure * window
       for (std::size_t w = 0; w < nperseg; w++)
       {
-         xw[w] = fac*p_prime[k*shift+w]*window[w];
+         xw[w] = p_prime[k*shift+w]*window[w];
       }
 
       // Compute DFT of each segment
@@ -189,7 +185,7 @@ int main(int argc, char *argv[])
       std::ofstream press_file(file_name);
       for (std::size_t i = 0; i < p_prime.size(); i++)
       {
-         press_file << std::format("{}\n", fac*p_prime[i]);
+         press_file << std::format("{}\n", p_prime[i]);
       }
    }
 
