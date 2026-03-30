@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
       ("c,config", "Config file.", cxxopts::value<std::string>())
       ("d,dt", "Timestep to use.", 
          cxxopts::value<double>()->default_value("3.72961861118742e-7"))
-      ("n,num-timesteps", "Number of timesteps to run to.", 
+      ("t,timesteps", "Number of timesteps to run to.", 
          cxxopts::value<std::size_t>()->default_value("1000000"))
       ("s,nperseg", "Number of points in each segment.",
          cxxopts::value<std::size_t>()->default_value("256"))
@@ -54,6 +54,9 @@ int main(int argc, char *argv[])
          cxxopts::value<bool>()->default_value("false"))
       ("i,input-psd", "Input PSD CSV file to plot computed PSD against",
          cxxopts::value<std::string>())
+      ("n,nondim", 
+         "Nondimensionalize the PSD using the input base flow pressure.",
+         cxxopts::value<bool>()->default_value("false"))
       ("h,help", "Print usage information.");
 
    cxxopts::ParseResult result = options.parse(argc, argv);
@@ -76,11 +79,12 @@ int main(int argc, char *argv[])
 
 
    const double dt = result["dt"].as<double>();
-   const std::size_t nt = result["num-timesteps"].as<std::size_t>();
+   const std::size_t nt = result["timesteps"].as<std::size_t>();
    const std::size_t nperseg = result["nperseg"].as<std::size_t>();
    const std::size_t noverlap = (result.count("noverlap") == 0) ? nperseg/2
                                     : result["noverlap"].as<std::size_t>();
-
+   const bool nd = result["nondim"].as<bool>();
+   
    if (nperseg > nt)
    {
       throw std::invalid_argument("nperseg must be less than nt!");
@@ -109,6 +113,10 @@ int main(int argc, char *argv[])
       field.Compute(time);
       time += dt;
       p_prime[i] = c_sq*(field.Density()[0] - conf.BaseFlow().rho);
+      if (nd)
+      {
+         p_prime[i] /= conf.BaseFlow().p;
+      }
    }
 
    const std::size_t shift = nperseg - noverlap;
