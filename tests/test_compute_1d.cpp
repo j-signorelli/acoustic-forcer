@@ -1,6 +1,7 @@
 #include "test_utils.hpp"
 
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_template_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
@@ -165,7 +166,10 @@ static void CheckSolution(std::span<const double> coords,
    }
 }
 
-TEST_CASE("1D flowfield computation via kernel", "[1D][Compute][Kernels]")
+TEMPLATE_TEST_CASE_SIG("1D flowfield computation via kernel", 
+                        "[1D][Compute][Kernels]",
+                        ((bool TGridInnerLoop), TGridInnerLoop), 
+                        true, false)
 {
    const std::vector<double> kCoords = 
             GENERATE_REF(take(1, chunk(kNumPts, 
@@ -209,7 +213,19 @@ TEST_CASE("1D flowfield computation via kernel", "[1D][Compute][Kernels]")
          
          for (std::size_t i = 0; i < kNumPts; i++)
          {
-            k_dot_x_p_phi[w*kNumPts + i] = k*kCoords[i] + kPhases[w];
+            const std::size_t idx = 
+            [&]()
+            {
+               if constexpr (TGridInnerLoop)
+               {
+                  return w*kNumPts + i;
+               }
+               else
+               {
+                  return i*kNumWaves + w;
+               }
+            }();
+            k_dot_x_p_phi[idx] = k*kCoords[i] + kPhases[w];
          }
       }
 
@@ -221,10 +237,11 @@ TEST_CASE("1D flowfield computation via kernel", "[1D][Compute][Kernels]")
       for (const double &time : kTimes)
       {
          // Compute
-         GridPointKernel<1>(kNumPts, kRhoBar, kPBar, &kUBar, kGamma, kNumWaves,
+         ComputeKernel<1, TGridInnerLoop>(kNumPts, kRhoBar, kPBar, &kUBar,
+                           kGamma, kNumWaves, time, 
                            rho_coeffs.data(), rhoV_coeffs.data(), 
                            rhoE_coeffs.data(), wave_omegas.data(), 
-                           k_dot_x_p_phi.data(), time, rho.data(), 
+                           k_dot_x_p_phi.data(), rho.data(), 
                            rhoU.data(), rhoE.data());
 
          // Check solutions

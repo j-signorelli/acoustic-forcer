@@ -70,6 +70,9 @@ public:
       /// Use grid-point axis in series summation inner-loop.
       GridPoint,
 
+      /// Use wave axis in series summation inner-loop.
+      Wave,
+      
       /// Number of Kernel enumerators.
       Size,
    };
