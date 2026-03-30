@@ -1,6 +1,7 @@
 #include "test_utils.hpp"
 
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_template_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
@@ -201,7 +202,10 @@ static void CheckSolution(std::span<const double> coords,
    }
 }
 
-TEST_CASE("3D flowfield computation via kernel", "[3D][Compute][Kernels]")
+TEMPLATE_TEST_CASE_SIG("3D flowfield computation via kernel", 
+                        "[3D][Compute][Kernels]",
+                        ((bool TGridInnerLoop), TGridInnerLoop), 
+                        true, false)
 {
    const std::vector<double> kCoords = 
             GENERATE_REF(take(1, chunk(kNumPts*3, 
@@ -250,7 +254,19 @@ TEST_CASE("3D flowfield computation via kernel", "[3D][Compute][Kernels]")
 
          for (std::size_t i = 0; i < kNumPts; i++)
          {
-            k_dot_x_p_phi[w*kNumPts + i] = k*(k_hat[0]*kCoords[i*3] 
+            const std::size_t idx = 
+            [&]()
+            {
+               if constexpr (TGridInnerLoop)
+               {
+                  return w*kNumPts + i;
+               }
+               else
+               {
+                  return i*kNumWaves + w;
+               }
+            }();
+            k_dot_x_p_phi[idx] = k*(k_hat[0]*kCoords[i*3] 
                                               + k_hat[1]*kCoords[i*3+1]
                                               + k_hat[2]*kCoords[i*3+2])
                                            + kPhases[w];
@@ -265,11 +281,11 @@ TEST_CASE("3D flowfield computation via kernel", "[3D][Compute][Kernels]")
       for (const double &time : kTimes)
       {
          // Compute
-         GridPointKernel<3>(kNumPts, kRhoBar, kPBar, kUBar.data(), kGamma,
-                           kNumWaves, rho_coeffs.data(), rhoV_coeffs.data(), 
-                           rhoE_coeffs.data(), wave_omegas.data(), 
-                           k_dot_x_p_phi.data(), time, rho.data(), 
-                           rhoU.data(), rhoE.data());
+         ComputeKernel<3, TGridInnerLoop>(kNumPts, kRhoBar, kPBar, kUBar.data(),
+                           kGamma, kNumWaves, time, rho_coeffs.data(), 
+                           rhoV_coeffs.data(), rhoE_coeffs.data(), 
+                           wave_omegas.data(), k_dot_x_p_phi.data(), 
+                           rho.data(), rhoU.data(), rhoE.data());
 
          // Check solutions
          CheckSolution(kCoords, rho, rhoU, rhoE, time, kNumWaves);
