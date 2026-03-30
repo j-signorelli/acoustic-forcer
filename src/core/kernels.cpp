@@ -20,25 +20,25 @@ void ComputeKernel(const std::size_t num_pts, const double rho_bar,
                         double *__restrict__ rhoE)
 {
    const double rhoE_init = p_bar/(gamma-1.0);
-   
-   for (std::size_t i = 0; i < num_pts; i++)
-   {
-      rho[i] = rho_bar;
-
-      rhoV[i] = U_bar[0];
-      if constexpr(TDim > 1)
-      {
-         rhoV[num_pts + i] = U_bar[1];
-      }
-      if constexpr(TDim > 2)
-      {
-         rhoV[2*num_pts + i] = U_bar[2];
-      }
-      rhoE[i] = rhoE_init;
-   }
 
    if constexpr (TGridInnerLoop)
    {
+      for (std::size_t i = 0; i < num_pts; i++)
+      {
+         rho[i] = rho_bar;
+
+         rhoV[i] = U_bar[0];
+         if constexpr(TDim > 1)
+         {
+            rhoV[num_pts + i] = U_bar[1];
+         }
+         if constexpr(TDim > 2)
+         {
+            rhoV[2*num_pts + i] = U_bar[2];
+         }
+         rhoE[i] = rhoE_init;
+      }
+
       // Add contribution of each wave
 #ifdef JABBER_WITH_OPENMP
       #pragma omp parallel for reduction(+:rho[0:num_pts],\
@@ -83,24 +83,40 @@ void ComputeKernel(const std::size_t num_pts, const double rho_bar,
       for (std::size_t i = 0; i < num_pts; i++)
       {
          const std::size_t i_offset = i*num_waves;
+         double rho_i = rho_bar;
+         double rhoV1_i = U_bar[0];
+         double rhoV2_i = TDim > 1 ? U_bar[1] : 0.0;
+         double rhoV3_i = TDim > 2 ? U_bar[2] : 0.0;
+         double rhoE_i = rhoE_init;
 
          for (int w = 0; w < num_waves; w++)
          {
             const double omt = wave_omegas[w]*t;
             const double cos_w = std::cos(k_dot_x_p_phi[i_offset + w] - omt);
 
-            rho[i] += rho_coeffs[w]*cos_w;
-            rhoV[i] += rhoV_coeffs[w]*cos_w;
+            rho_i += rho_coeffs[w]*cos_w;
+            rhoV1_i += rhoV_coeffs[w]*cos_w;
             if constexpr (TDim > 1)
             {
-               rhoV[num_pts + i] += rhoV_coeffs[num_waves + w];
+               rhoV2_i += rhoV_coeffs[num_waves + w];
             }
             if constexpr (TDim > 2)
             {
-               rhoV[2*num_pts + i] += rhoV_coeffs[2*num_waves + w];
+               rhoV3_i += rhoV_coeffs[2*num_waves + w];
             }
-            rhoE[i] += rhoE_coeffs[w]*cos_w;
+            rhoE_i += rhoE_coeffs[w]*cos_w;
          }
+         rho[i] = rho_i;
+         rhoV[i] = rhoV1_i;
+         if constexpr (TDim > 1)
+         {
+            rhoV[num_pts + i] = rhoV2_i;
+         }
+         if constexpr (TDim > 2)
+         {
+            rhoV[2*num_pts + i] = rhoV3_i;
+         }
+         rhoE[i] = rhoE_i;
       }
    }
 
