@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
       ("f,fields", "Fields to visualize with GLVis ('rho', 'rhoV', 'rhoE').",
                         cxxopts::value<std::vector<std::string>>()
                         ->default_value("rho,rhoV,rhoE"))
-      ("s,dt,timestep", "Timestep to use.", 
+      ("s,dt", "Timestep to use.", 
                         cxxopts::value<double>()->default_value("0.0"))
       ("t,timesteps", "Number of timesteps to run to.",
                         cxxopts::value<int>()->default_value("500"))
@@ -78,8 +78,8 @@ int main(int argc, char *argv[])
    const double extent = result["extent"].as<double>();
    const std::vector<std::string> fields = result["fields"]
                                              .as<std::vector<std::string>>();
-   const double timestep = result["timestep"].as<double>();
-   const int num_timesteps = result["num_timesteps"].as<int>();
+   const double timestep = result["dt"].as<double>();
+   const int num_timesteps = result["timesteps"].as<int>();
 
    // Parse config file
    std::string config_file = result["config"].as<std::string>();
