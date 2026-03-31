@@ -514,6 +514,7 @@ struct KernelType
    kNames = 
    {
       "GridPoint",      // jabber::AcousticField::Kernel::GridPoint
+      "Wave",           // jabber::AcousticField::Kernel::Wave
    };
 
 };

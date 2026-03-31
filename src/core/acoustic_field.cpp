@@ -117,22 +117,29 @@ void AcousticField::Finalize()
       const double k = kernel_args_.wave_omegas[w]/denom;
 
       // Compute + set k·x+φ
-      if (kernel_ == Kernel::GridPoint)
-      {
-         std::size_t w_offset = w*NumPoints();
-         for (std::size_t i = 0; i < NumPoints(); i++)
-         {  
-            kernel_args_.k_dot_x_p_phi[w_offset + i] = wave.phase;
-            for (int d = 0; d < Dim(); d++)
+      for (std::size_t i = 0; i < NumPoints(); i++)
+      {  
+         const std::size_t idx = 
+         [&]()
+         {
+            switch (kernel_)
             {
-               kernel_args_.k_dot_x_p_phi[w_offset + i] += 
-                                       wave.k_hat[d]*k*coords_[d][i];
+               case Kernel::GridPoint:
+                  return w*NumPoints() + i;
+                  break;
+               case Kernel::Wave:
+                  return i*NumWaves() + w;
+                  break;
+               default:
+                  throw std::logic_error("Unimplemented kernel type!");
             }
+         }();
+         kernel_args_.k_dot_x_p_phi[idx] = wave.phase;
+         for (int d = 0; d < Dim(); d++)
+         {
+            kernel_args_.k_dot_x_p_phi[idx] += 
+                                    wave.k_hat[d]*k*coords_[d][i];
          }
-      }
-      else
-      {
-         throw std::logic_error("Unimplemented kernel type!");
       }
    }
 
@@ -153,13 +160,24 @@ void AcousticField::Compute(double t)
          {
             if (kernel_ == Kernel::GridPoint)
             {
-               GridPointKernel<Dims>(NumPoints(), rho_bar_, p_bar_, 
-                                    U_bar_.data(), gamma_, NumWaves(), 
+               ComputeKernel<Dims, true>(NumPoints(), rho_bar_, p_bar_, 
+                                    U_bar_.data(), gamma_, NumWaves(), t,
                                     kernel_args_.rho_coeffs.data(),
                                     kernel_args_.rhoV_coeffs.data(),
                                     kernel_args_.rhoE_coeffs.data(), 
                                     kernel_args_.wave_omegas.data(), 
-                                    kernel_args_.k_dot_x_p_phi.data(), t, 
+                                    kernel_args_.k_dot_x_p_phi.data(), 
+                                    rho_.data(), rhoV_.data(), rhoE_.data());
+            }
+            else if (kernel_ == Kernel::Wave)
+            {
+               ComputeKernel<Dims, false>(NumPoints(), rho_bar_, p_bar_, 
+                                    U_bar_.data(), gamma_, NumWaves(), t,
+                                    kernel_args_.rho_coeffs.data(),
+                                    kernel_args_.rhoV_coeffs.data(),
+                                    kernel_args_.rhoE_coeffs.data(), 
+                                    kernel_args_.wave_omegas.data(), 
+                                    kernel_args_.k_dot_x_p_phi.data(), 
                                     rho_.data(), rhoV_.data(), rhoE_.data());
             }
             else

@@ -38,6 +38,9 @@ namespace jabber
    * 
    * 
    * @tparam TDim            Physical dimension.
+   * @tparam TGridInnerLoop  If true, use grid point axis in series
+   *                         summation inner loop. If false, use wave axis.
+   *                         This impacts vectorization.
    * 
    * @param num_pts          Number of physical points to evaluate at.
    * @param rho_bar          Base flow density.
@@ -45,6 +48,7 @@ namespace jabber
    * @param U_bar            Base flow velocity.
    * @param gamma            Specific heat ratio.
    * @param num_waves        Number of acoustic waves to compute.
+   * @param t                Time.
    * @param rho_coeffs       \copybrief AcousticField::rho_coeffs Sized
    *                         \p num_waves.
    * @param rhoV_coeffs      \copybrief AcousticField::rhoV_coeffs Sized
@@ -55,23 +59,23 @@ namespace jabber
    *                         \p num_waves.
    * @param k_dot_x_p_phi    \copybrief AcousticField::k_dot_x_p_phi Sized
    *                         \p num_waves x \p num_points with ordering 
-   *                         [wave][point].
-   * @param t                Time.
+   *                         [wave][point] for \p TGridInnerLoop true or
+   *                         [point][wave] for \p TGridInnerLoop false.
    * @param rho              Output flow density to compute, sized \p num_pts.
    * @param rhoV             Output flow momentum vector to compute, sized
    *                         \p TDim x \p num_pts with ordering [dim][point].
    * @param rhoE             Output flow energy to compute, sized \p num_pts.
 */
-template<std::size_t TDim>
-void GridPointKernel(const std::size_t num_pts, const double rho_bar,
+template<std::size_t TDim, bool TGridInnerLoop>
+void ComputeKernel(const std::size_t num_pts, const double rho_bar,
                         const double p_bar, const double *U_bar, 
-                        const double gamma, const int num_waves, 
-                        const double *rho_coeffs,
-                        const double *rhoV_coeffs,
-                        const double *rhoE_coeffs, 
-                        const double *wave_omegas,
-                        const double *__restrict__ k_dot_x_p_phi,
+                        const double gamma, const int num_waves,
                         const double t,
+                        const double *__restrict__ rho_coeffs,
+                        const double *__restrict__ rhoV_coeffs,
+                        const double *__restrict__ rhoE_coeffs, 
+                        const double *__restrict__ wave_omegas,
+                        const double *__restrict__ k_dot_x_p_phi,
                         double *__restrict__ rho,
                         double *__restrict__ rhoV,
                         double *__restrict__ rhoE);
