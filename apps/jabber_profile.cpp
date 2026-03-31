@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
       ("c,config", "Config file.", cxxopts::value<std::string>())
       ("d,dim", "Grid dimension (1,2,3).", 
                         cxxopts::value<int>()->default_value("3"))
-      ("n,num_points", "Total number of grid points.",
+      ("n,num-points", "Total number of grid points.",
                         cxxopts::value<std::size_t>()->default_value("100"))
       ("e,extent", "Grid extent in each direction (such that domain is "
                      "[0,extent]^dim).",

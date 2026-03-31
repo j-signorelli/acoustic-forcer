@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
       ("c,config", "Config file.", cxxopts::value<std::string>())
       ("d,dim", "Grid dimension (1,2,3).", 
                         cxxopts::value<int>()->default_value("2"))
-      ("n,num_points", "Number grid points in each dimension.",
+      ("n,num-points", "Number grid points in each dimension.",
                         cxxopts::value<std::size_t>()->default_value("100"))
       ("e,extent", "Grid extent in each direction (such that domain is "
                      "[0,extent]^dim).",
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
                         ->default_value("rho,rhoV,rhoE"))
       ("s,dt,timestep", "Timestep to use.", 
                         cxxopts::value<double>()->default_value("0.0"))
-      ("t,nt,num_timesteps", "Number of timesteps to run to.",
+      ("t,timesteps", "Number of timesteps to run to.",
                         cxxopts::value<int>()->default_value("500"))
       ("h,help", "Print usage information.");
 

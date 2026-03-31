@@ -29,9 +29,8 @@ int main(int argc, char *argv[])
 
    // Option parser:
    cxxopts::Options options("jabber_psd", 
-      "Compute and plot a PSD from a probe of the exact "
-      "flowfield computed by Jabber using Welch's method. Any "
-      " PSD source terms are additionally included in the plot.");
+      "Compute a PSD from a probe of the exact flowfield computed "
+      "by Jabber using Welch's method.");
 
    options.add_options()
       ("c,config", "Config file.", cxxopts::value<std::string>())
@@ -42,7 +41,7 @@ int main(int argc, char *argv[])
       ("s,nperseg", "Number of points in each segment.",
          cxxopts::value<std::size_t>()->default_value("256"))
       ("o,noverlap", "Number of point overlap in segments. "
-                     " Defaults to nperseg/2.", 
+                     " Defaults to nperseg/2 (50%)", 
          cxxopts::value<std::size_t>())
       ("w,write-psd-file", "Filename to write PSD data to (if included) as a CSV.",
          cxxopts::value<std::string>())
