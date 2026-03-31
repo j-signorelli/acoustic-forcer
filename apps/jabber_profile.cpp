@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
    }
 
    const int dim = result["dim"].as<int>();
-   const std::size_t num_pts_total = result["num_points"].as<std::size_t>();
+   const std::size_t num_pts_total = result["num-points"].as<std::size_t>();
    const double extent = result["extent"].as<double>();
    const int passes = result["passes"].as<int>();
    const int warmup_passes = result["warmup"].as<int>();
