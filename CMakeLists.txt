@@ -69,6 +69,9 @@ target_sources(jabber
 
 # Install jabber
 include(GNUInstallDirs)
+
+message(STATUS "Install directory: ${CMAKE_INSTALL_PREFIX}")
+
 # From: https://stackoverflow.com/questions/17511496/how-to-create-a-shared-library-with-cmake
 install(TARGETS jabber
    EXPORT jabberTargets
