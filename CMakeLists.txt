@@ -53,18 +53,16 @@ if (JABBER_ENABLE_MPI)
    add_compile_definitions(JABBER_WITH_MPI)
 endif()
 
-# Build Jabber library
-add_subdirectory(src/core)
-
-# If building any apps
+# If building app library
 if (JABBER_BUILD_APP_LIB)
    add_compile_definitions(JABBER_WITH_APP)
 
    # Add TOML11 -- required for app library
    add_subdirectory(externals/toml11)
-
-   add_subdirectory(src/app)
 endif()
+
+# Build Jabber library
+add_subdirectory(src)
 
 # If building apps
 if (JABBER_BUILD_PARTICIPANT 
@@ -99,8 +97,12 @@ get_property(JABBER_TARGETS GLOBAL PROPERTY JABBER_TARGETS_PROPERTY)
 # From: https://stackoverflow.com/questions/17511496/how-to-create-a-shared-library-with-cmake
 include(GNUInstallDirs)
 install(TARGETS ${JABBER_TARGETS}
+   EXPORT JabberTargets
    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-   FILE_SET jabber_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jabber
-   FILE_SET jabber_app_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jabber_app)
+   FILE_SET main_header DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jabber
+   FILE_SET core_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jabber/core
+   FILE_SET app_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jabber/app)
+
+include(CMakePackageConfigHelpers)

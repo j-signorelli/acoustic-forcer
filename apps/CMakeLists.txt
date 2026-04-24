@@ -10,8 +10,7 @@ if (JABBER_BUILD_PARTICIPANT)
 
    target_link_libraries(jabber_participant PRIVATE 
                                  compiler_flag_requirements
-                                 libjabber
-                                 libjabber_app
+                                 jabber
                                  cxxopts::cxxopts
                                  precice::precice)
 endif()
@@ -29,8 +28,7 @@ if (JABBER_BUILD_VIZ)
 
    target_link_libraries(jabber_viz PRIVATE 
                                  compiler_flag_requirements
-                                 libjabber
-                                 libjabber_app
+                                 jabber
                                  cxxopts::cxxopts
                                  mfem)
 
@@ -46,8 +44,7 @@ if (JABBER_BUILD_PROFILER)
 
    target_link_libraries(jabber_profile PRIVATE 
                                        compiler_flag_requirements
-                                       libjabber
-                                       libjabber_app
+                                       jabber
                                        cxxopts::cxxopts)
 
 endif()
@@ -62,8 +59,7 @@ if (JABBER_BUILD_OUT)
 
    target_link_libraries(jabber_out PRIVATE 
                                        compiler_flag_requirements
-                                       libjabber
-                                       libjabber_app
+                                       jabber
                                        cxxopts::cxxopts)
 endif()
 
@@ -76,8 +72,7 @@ if (JABBER_BUILD_PLOT)
 
    target_link_libraries(jabber_plot PRIVATE 
                                        compiler_flag_requirements
-                                       libjabber
-                                       libjabber_app
+                                       jabber
                                        cxxopts::cxxopts)
 endif()
 
@@ -89,8 +84,7 @@ if (JABBER_BUILD_PSD)
 
    target_link_libraries(jabber_psd PRIVATE 
                                        compiler_flag_requirements
-                                       libjabber
-                                       libjabber_app
+                                       jabber
                                        cxxopts::cxxopts)
    target_include_directories(jabber_psd PRIVATE
                      ${CMAKE_SOURCE_DIR}/externals/pocketfft)

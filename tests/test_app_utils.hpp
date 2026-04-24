@@ -9,7 +9,7 @@
 #include <catch2/matchers/catch_matchers_vector.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include <jabber_app.hpp>
+#include <jabber.hpp>
 
 #include <optional>
 
@@ -29,7 +29,7 @@ template<typename T>
 T::ParamsVariant GetRandomParams
    (const typename T::Option &option=random_option<typename T::Option>().get())
 {
-   using namespace jabber_app;
+   using namespace jabber::app;
    using namespace Catch::Generators;
 
    using ParamsVariant = typename T::ParamsVariant;
@@ -308,7 +308,7 @@ template<typename T>
 std::string TOMLWriteParams
    (const typename T::ParamsVariant &opv, bool inline_table=false)
 {
-   using namespace jabber_app;
+   using namespace jabber::app;
 
    std::map<std::string, std::string> out_params;
 
@@ -473,7 +473,7 @@ void TestParamsEqual
    (const typename T::ParamsVariant &opv1,
       const typename T::ParamsVariant &opv2)
 {
-   using namespace jabber_app;
+   using namespace jabber::app;
    using namespace Catch::Matchers;
 
    using Option = typename T::Option;

@@ -4,7 +4,6 @@
  */
 
 #include <jabber.hpp>
-#include <jabber_app.hpp>
 #include <cxxopts.hpp>
 #include <mfem.hpp>
 
@@ -13,7 +12,7 @@
 #include <regex>
 
 using namespace jabber;
-using namespace jabber_app;
+using namespace jabber::app;
 using namespace mfem;
 
 /**

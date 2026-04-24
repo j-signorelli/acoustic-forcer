@@ -8,15 +8,15 @@
 #include <algorithm>
 #include <type_traits>
 
-using namespace jabber;
-
 // Helper type for the std::visit
 // (https://en.cppreference.com/w/cpp/utility/variant/visit)
 template<class... Ts>
 struct overloads : Ts... { using Ts::operator()...; };
 
 
-namespace jabber_app
+namespace jabber
+{
+namespace app
 {
 
 void PrintBanner(std::ostream &out)
@@ -360,4 +360,5 @@ AcousticField InitializeAcousticField(const ConfigInput &conf,
 
 }                                        
 
-} // namespace jabber_app
+} // namespace app
+} // namespace jabber
