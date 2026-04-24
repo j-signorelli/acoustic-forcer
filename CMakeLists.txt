@@ -2,10 +2,6 @@ cmake_minimum_required(VERSION 3.13)
 
 project(jabber LANGUAGES CXX VERSION 1.0.0)
 
-# Create interface library for compiler flag requirements (requiring C++20)
-add_library(compiler_flag_requirements INTERFACE)
-target_compile_features(compiler_flag_requirements INTERFACE cxx_std_20)
-
 # Main Jabber compiler options:
 option(JABBER_BUILD_PARTICIPANT 
    "Build Jabber preCICE participant app (requires preCICE)." OFF)
@@ -105,4 +101,8 @@ install(TARGETS ${JABBER_TARGETS}
    FILE_SET core_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jabber/core
    FILE_SET app_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jabber/app)
 
+install(EXPORT JabberTargets
+   FILE JabberTargets.cmake
+   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/jabber)
+   
 include(CMakePackageConfigHelpers)
