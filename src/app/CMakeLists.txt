@@ -11,4 +11,4 @@ target_sources(jabber
          common.hpp
          app.hpp)
 
-target_link_libraries(jabber PRIVATE toml11::toml11)                                      
+target_link_libraries(jabber PRIVATE $<BUILD_INTERFACE:toml11::toml11>)
