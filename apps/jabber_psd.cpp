@@ -6,8 +6,7 @@
  * implementation of Welch's method.
  */
 
-#include <jabber.hpp>
-#include <jabber_app.hpp>
+#include <jabber/jabber.hpp>
 #include <cxxopts.hpp>
 #include <pocketfft_hdronly.h>
 
@@ -17,7 +16,7 @@
 #include <fstream>
 
 using namespace jabber;
-using namespace jabber_app;
+using namespace jabber::app;
 
 double HammingWindow(std::size_t N, std::size_t n);
 

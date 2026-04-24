@@ -8,8 +8,7 @@
  * @todo EMPHASIZE IMPORTANCE OF THIS -- computing acoustic forcing every timestep by fluid solver is super expensive
  */
 
-#include <jabber.hpp>
-#include <jabber_app.hpp>
+#include <jabber/jabber.hpp>
 #include <cxxopts.hpp>
 #include <precice/precice.hpp>
 
@@ -28,7 +27,7 @@
 #endif
 
 using namespace jabber;
-using namespace jabber_app;
+using namespace jabber::app;
 
 int main(int argc, char *argv[])
 {

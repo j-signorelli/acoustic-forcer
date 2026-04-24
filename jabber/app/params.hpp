@@ -1,6 +1,8 @@
 #ifndef JABBER_APP_PARAMS
 #define JABBER_APP_PARAMS
 
+#include "../core/core.hpp"
+
 #include <cstdint>
 #include <vector>
 #include <string>
@@ -8,9 +10,9 @@
 #include <array>
 #include <optional>
 
-#include <jabber.hpp>
-
-namespace jabber_app
+namespace jabber
+{
+namespace app
 {
 /**
  * @defgroup params_group All Parameters/Settings
@@ -167,7 +169,7 @@ struct FunctionType
  */
 struct IntervalType
 {
-   using Option = jabber::Interval::Method;
+   using Option = Interval::Method;
 
    using enum Option;
 
@@ -175,8 +177,8 @@ struct IntervalType
                         static_cast<std::size_t>(Size)>
    kNames = 
    {
-      "Midpoint",      // jabber::Interval::Method::Midpoint
-      "MidpointLog",   // jabber::Interval::Method::MidpointLog10
+      "Midpoint",      // Interval::Method::Midpoint
+      "MidpointLog",   // Interval::Method::MidpointLog10
    };
 
 };
@@ -389,7 +391,7 @@ struct Source
       /// Power spectral density (PSD).
       PSD,
 
-      /// Read in CSV file of Wave data (output from \ref jabber::WriteWaves()).
+      /// Read in CSV file of Wave data (output from \ref WriteWaves()).
       WaveCSV,
 
       /// Number of SourceOptions.
@@ -469,7 +471,7 @@ struct Source
       std::size_t num_waves;
 
       /// Interval method to use for frequency bins.
-      jabber::Interval::Method int_method;
+      Interval::Method int_method;
 
       /// Frequency discretization method parameters.
       DiscMethod::ParamsVariant disc_params;
@@ -490,7 +492,7 @@ struct Source
    template<>
    struct Params<WaveCSV>
    {
-      /// Wave CSV file (output from \ref jabber::WriteWaves()).
+      /// Wave CSV file (output from \ref WriteWaves()).
       std::string file;
    };
 
@@ -505,7 +507,7 @@ struct Source
  */
 struct KernelType
 {
-   using Option = jabber::AcousticField::Kernel;
+   using Option = AcousticField::Kernel;
 
    using enum Option;
 
@@ -513,8 +515,8 @@ struct KernelType
                   static_cast<std::size_t>(Size)>
    kNames = 
    {
-      "GridPoint",      // jabber::AcousticField::Kernel::GridPoint
-      "Wave",           // jabber::AcousticField::Kernel::Wave
+      "GridPoint",      // AcousticField::Kernel::GridPoint
+      "Wave",           // AcousticField::Kernel::Wave
    };
 
 };
@@ -527,7 +529,7 @@ struct CompParams
    double t0;
 
    /// Kernel type.
-   jabber::AcousticField::Kernel kernel;
+   AcousticField::Kernel kernel;
 };
 
 // ----------------------------------------------------------------------------
@@ -556,6 +558,8 @@ struct PreciceParams
 /// @}
 // end of params_group
 
-} // namespace jabber_app
+} // namespace app
+
+} // namespace jabber
 
 #endif // JABBER_APP_PARAMS

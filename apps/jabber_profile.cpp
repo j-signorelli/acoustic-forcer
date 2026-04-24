@@ -4,8 +4,7 @@
  * and grid.
  */
 
-#include <jabber.hpp>
-#include <jabber_app.hpp>
+#include <jabber/jabber.hpp>
 #include <cxxopts.hpp>
 
 #ifdef JABBER_WITH_MPI
@@ -26,7 +25,7 @@
 #endif
 
 using namespace jabber;
-using namespace jabber_app;
+using namespace jabber::app;
 
 // Define duration type alias
 using dur_t = std::chrono::duration<double, std::micro>;

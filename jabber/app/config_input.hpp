@@ -7,7 +7,9 @@
 #include <format>
 #include <sstream>
 
-namespace jabber_app
+namespace jabber
+{
+namespace app
 {
 
 /**
@@ -201,6 +203,8 @@ public:
 /// @}
 // end of config_group
 
-} // namespace jabber_app
+} // namespace app
+
+} // namespace jabber
 
 #endif // JABBER_APP_CONFIG
