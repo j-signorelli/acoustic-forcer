@@ -93,7 +93,7 @@ get_property(JABBER_TARGETS GLOBAL PROPERTY JABBER_TARGETS_PROPERTY)
 # From: https://stackoverflow.com/questions/17511496/how-to-create-a-shared-library-with-cmake
 include(GNUInstallDirs)
 install(TARGETS ${JABBER_TARGETS}
-   EXPORT JabberTargets
+   EXPORT jabberTargets
    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -101,8 +101,21 @@ install(TARGETS ${JABBER_TARGETS}
    FILE_SET core_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jabber/core
    FILE_SET app_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jabber/app)
 
-install(EXPORT JabberTargets
-   FILE JabberTargets.cmake
+install(EXPORT jabberTargets
+   FILE "jabber-targets.cmake"
    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/jabber)
    
 include(CMakePackageConfigHelpers)
+configure_package_config_file("cmake/jabber-config.cmake.in"
+   "jabber-config.cmake"
+   INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/jabber)
+
+write_basic_package_version_file(
+  ${CMAKE_CURRENT_BINARY_DIR}/jabber-config-version.cmake
+  VERSION ${PROJECT_VERSION}
+  COMPATIBILITY SameMajorVersion)
+
+install(FILES 
+   ${CMAKE_CURRENT_BINARY_DIR}/jabber-config.cmake
+   ${CMAKE_CURRENT_BINARY_DIR}/jabber-config-version.cmake
+   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/jabber)

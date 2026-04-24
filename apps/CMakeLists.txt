@@ -9,7 +9,6 @@ if (JABBER_BUILD_PARTICIPANT)
                                                    jabber_participant)
 
    target_link_libraries(jabber_participant PRIVATE 
-                                 compiler_flag_requirements
                                  jabber
                                  cxxopts::cxxopts
                                  precice::precice)
@@ -27,7 +26,6 @@ if (JABBER_BUILD_VIZ)
                                                    jabber_viz)
 
    target_link_libraries(jabber_viz PRIVATE 
-                                 compiler_flag_requirements
                                  jabber
                                  cxxopts::cxxopts
                                  mfem)
@@ -43,7 +41,6 @@ if (JABBER_BUILD_PROFILER)
                                                    jabber_profile)
 
    target_link_libraries(jabber_profile PRIVATE 
-                                       compiler_flag_requirements
                                        jabber
                                        cxxopts::cxxopts)
 
@@ -58,7 +55,6 @@ if (JABBER_BUILD_OUT)
                                                    jabber_out)
 
    target_link_libraries(jabber_out PRIVATE 
-                                       compiler_flag_requirements
                                        jabber
                                        cxxopts::cxxopts)
 endif()
@@ -71,7 +67,6 @@ if (JABBER_BUILD_PLOT)
                                                    jabber_plot)
 
    target_link_libraries(jabber_plot PRIVATE 
-                                       compiler_flag_requirements
                                        jabber
                                        cxxopts::cxxopts)
 endif()
@@ -83,7 +78,6 @@ if (JABBER_BUILD_PSD)
                                                    jabber_psd)
 
    target_link_libraries(jabber_psd PRIVATE 
-                                       compiler_flag_requirements
                                        jabber
                                        cxxopts::cxxopts)
    target_include_directories(jabber_psd PRIVATE
