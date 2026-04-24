@@ -7,7 +7,7 @@
 #include <catch2/matchers/catch_matchers_vector.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <catch2/generators/catch_generators_range.hpp>
-#include <jabber.hpp>
+#include <jabber/jabber.hpp>
 
 #include <functional>
 

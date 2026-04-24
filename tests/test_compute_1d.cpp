@@ -5,7 +5,7 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include <jabber.hpp>
+#include <jabber/jabber.hpp>
 
 #ifdef JABBER_WITH_OPENMP
 #include <omp.h>
