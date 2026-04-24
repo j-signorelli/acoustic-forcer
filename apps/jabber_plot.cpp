@@ -3,7 +3,7 @@
  * @brief Generate a plot of the final wave spectra from a config file.
  */
 
-#include <jabber.hpp>
+#include <jabber/jabber.hpp>
 #include <cxxopts.hpp>
 
 #include <iostream>

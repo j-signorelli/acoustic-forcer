@@ -3,7 +3,7 @@
  * @brief Visualizer of acoustic field from config file using MFEM w/ GLVis.
  */
 
-#include <jabber.hpp>
+#include <jabber/jabber.hpp>
 #include <cxxopts.hpp>
 #include <mfem.hpp>
 

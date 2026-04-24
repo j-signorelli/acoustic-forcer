@@ -6,7 +6,7 @@
  * implementation of Welch's method.
  */
 
-#include <jabber.hpp>
+#include <jabber/jabber.hpp>
 #include <cxxopts.hpp>
 #include <pocketfft_hdronly.h>
 

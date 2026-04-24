@@ -4,7 +4,7 @@
  * and grid.
  */
 
-#include <jabber.hpp>
+#include <jabber/jabber.hpp>
 #include <cxxopts.hpp>
 
 #ifdef JABBER_WITH_MPI
