@@ -538,20 +538,27 @@ struct CompParams
 struct PreciceParams
 {
 
+   struct Interface
+   {
+      /// Name of mesh to get coordinates from for computation onto.
+      std::string fluid_mesh_name;
+
+      /**
+       * @brief Mesh access region, defined according to 
+       * precice::Participant::setMeshAccessRegion()
+       */
+      std::vector<double> mesh_access_region;
+   };
+
    /// Jabber participant name.
    std::string participant_name;
 
    /// Address to preCICE config file.
    std::string config_file;
 
-   /// Name of mesh to get coordinates from for computation onto.
-   std::string fluid_mesh_name;
+   /// Vector of all interfaces to read.
+   std::vector<Interface> interfaces_;
 
-   /**
-    * @brief Mesh access region, defined according to 
-    * precice::Participant::setMeshAccessRegion()
-    */
-   std::vector<double> mesh_access_region;
 };
 
 // ----------------------------------------------------------------------------

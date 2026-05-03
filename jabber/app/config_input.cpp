@@ -144,11 +144,12 @@ void ConfigInput::PrintPreciceParams(std::ostream &out) const
                         label_width);
       out << WriteParam("Configuration File", precice_->config_file,
                         label_width);
-      out << WriteParam("Fluid Mesh Name", precice_->fluid_mesh_name, 
-                        label_width);
-      out << WriteParam("Mesh Access Region", 
-                        OutRealVec(precice_->mesh_access_region),
-                        label_width);
+      // TODO:
+      // out << WriteParam("Fluid Mesh Name", precice_->fluid_mesh_name, 
+      //                   label_width);
+      // out << WriteParam("Mesh Access Region", 
+      //                   OutRealVec(precice_->mesh_access_region),
+      //                   label_width);
       out << std::endl;
    }
 }
@@ -424,9 +425,17 @@ void TOMLConfigInput::ParsePrecice
    op.participant_name = in_val.at("ParticipantName")
                                              .as_string();
    op.config_file = in_val.at("ConfigFile").as_string();
-   op.fluid_mesh_name = in_val.at("FluidMeshName").as_string();
-   op.mesh_access_region = 
-         toml::get<std::vector<double>>(in_val.at("MeshAccessRegion"));
+
+   // Loop over all interfaces
+   toml::array in_interfaces = in_val.at("Interfaces").as_array();
+   for (const toml::value &in_interface : in_interfaces)
+   {
+      PreciceParams::Interface interface;
+      interface.fluid_mesh_name = in_interface.at("FluidMeshName").as_string();
+      interface.mesh_access_region = 
+         toml::get<std::vector<double>>(in_interface.at("MeshAccessRegion"));
+      op.interfaces_.emplace_back(interface);
+   }
 }
 
 TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)

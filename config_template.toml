@@ -71,5 +71,12 @@ Kernel="GridPoint"
 [preCICE]
 ParticipantName="Jabber"
 ConfigFile="../precice-config.xml"
+
+[[preCICE.Interfaces]]
+FluidMeshName="ForcingSponge"
 MeshAccessRegion=[-0.01,1.01, -0.01,1.01]
-FluidMeshName="InletSponge"
+
+
+[[preCICE.Interfaces]]
+FluidMeshName="InletBC"
+MeshAccessRegion=[-0.01,1.01, -0.01,1.01]
