@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.13)
 
 project(jabber LANGUAGES CXX VERSION 1.0.0)
 
+add_library(compiler_flag_requirements)
+add_subdirectory(cxx20)
+
 # Main Jabber compiler options:
 option(JABBER_BUILD_PARTICIPANT 
    "Build Jabber preCICE participant app (requires preCICE)." OFF)
@@ -56,6 +59,7 @@ endif()
 
 # Create the jabber library
 add_library(jabber)
+target_link_libraries(jabber PRIVATE compiler_flag_requirements)
 set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY jabber)
 target_compile_features(jabber PUBLIC cxx_std_20)
 add_subdirectory(jabber)
