@@ -11,7 +11,7 @@ add_executable(unit-tests
 
 set(dependencies Catch2::Catch2WithMain jabber)
 
-target_link_libraries(unit-tests PRIVATE ${dependencies})
+target_link_libraries(unit-tests PRIVATE ${dependencies} fmt::fmt)
 
 
 include(CTest)

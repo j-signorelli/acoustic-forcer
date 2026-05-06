@@ -29,7 +29,7 @@ TEST_CASE("TOMLConfigInput::ParseBaseFlow", "[App][TOMLConfigInput]")
    const double kGamma = GENERATE(take(1,random(0.1, 1.5)));
 
    const std::string base_flow_str = 
-   std::format(R"(
+   fmt::format(R"(
                rho={}
                p={}
                U={}
@@ -87,7 +87,7 @@ TEST_CASE("TOMLConfigInput::ParseComputation", "[App][TOMLConfigInput]")
                                  GENERATE(options<AcousticField::Kernel>());
 
    const std::string comp_str = 
-      std::format(R"(
+      fmt::format(R"(
                      t0={}
                      Kernel='{}'
                   )", kT0, 
@@ -108,7 +108,7 @@ TEST_CASE("TOMLConfigInput::ParsePrecice", "[App][TOMLConfigInput]")
    const std::vector<double> kMeshRegion = {-0.01, 1.01, -1.01, 1.01};
 
    const std::string precice_str = 
-      std::format(R"(
+      fmt::format(R"(
                      ParticipantName="{}"
                      ConfigFile="{}"
                      MeshAccessRegion=[{},{},{},{}]

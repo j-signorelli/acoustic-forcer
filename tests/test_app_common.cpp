@@ -104,7 +104,7 @@ TEST_CASE("GetRankPartition", "[App][Common]")
 //          std::ofstream file(file_name);
 //          for (std::size_t i = 0; i < kN; i++)
 //          {
-//             file << std::format("{},{}", x[i], y[i]) << std::endl;
+//             file << fmt::format("{},{}", x[i], y[i]) << std::endl;
 //          }
 
 //          ip.file = file_name;

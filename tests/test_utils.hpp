@@ -1,6 +1,8 @@
 #ifndef JABBER_TEST_UTILS
 #define JABBER_TEST_UTILS
 
+#include <fmt/core.h>
+#include <fmt/chrono.h>
 #include <catch2/generators/catch_generators_all.hpp>
 namespace jabber_test
 {

@@ -292,11 +292,11 @@ std::string TOMLWriteValue(const T &val)
    else if constexpr (std::same_as<T, char> || std::same_as<T, std::string> || 
                         std::same_as<T, std::string_view>)
    {
-      out_str += std::format("'{}'", val);
+      out_str += fmt::format("'{}'", val);
    }
    else
    {
-      out_str += std::format("{}", val);
+      out_str += fmt::format("{}", val);
    }
    return out_str;
 }
