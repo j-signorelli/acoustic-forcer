@@ -4,7 +4,6 @@
 #include "params.hpp"
 
 #include <iostream>
-#include <format.hpp>
 #include <sstream>
 #include <optional>
 
@@ -28,24 +27,11 @@ class ConfigInput
 {
 private:
    /// Get string of double \p f.
-   static std::string OutReal(double f)
-   {
-      return std::format("{}", f);
-   }
+   static std::string OutReal(double f);
 
    /// Get string of double vector \p vec.
    static std::string OutRealVec(const std::vector<double> &vec, 
-                                    const std::string_view delim=", ")
-   {
-      std::stringstream ss;
-      ss << "[";
-      for (int i = 0; i < vec.size(); i++)
-      {
-         ss << OutReal(vec[i]) 
-               << ((i+1 == vec.size()) ? "]" : delim);
-      }
-      return ss.str();
-   }
+                                    const std::string_view delim=", ");
 
    /**
     * @brief Convenient string generator for writing parameter information to 
@@ -53,11 +39,7 @@ private:
     */
    static std::string WriteParam(const std::string_view param_name, 
                                     const std::string_view value,
-                                    int param_width, int left_margin=8)
-   {
-      return std::format("{:<{}}{:<{}}= {}\n", "", left_margin, param_name,
-                                                   param_width, value);
-   }
+                                    int param_width, int left_margin=8);
 
 protected:
 

@@ -21,6 +21,33 @@ namespace jabber
 namespace app
 {
 
+
+std::string ConfigInput::OutReal(double f)
+{
+   return std::format("{}", f);
+}
+
+std::string OutRealVec(const std::vector<double> &vec, 
+                                    const std::string_view delim=", ")
+{
+   std::stringstream ss;
+   ss << "[";
+   for (int i = 0; i < vec.size(); i++)
+   {
+      ss << OutReal(vec[i]) 
+            << ((i+1 == vec.size()) ? "]" : delim);
+   }
+   return ss.str();
+}
+
+std::string WriteParam(const std::string_view param_name, 
+                                    const std::string_view value,
+                                    int param_width, int left_margin)
+{
+   return std::format("{:<{}}{:<{}}= {}\n", "", left_margin, param_name,
+                                                param_width, value);
+}
+
 void ConfigInput::PrintBaseFlowParams(std::ostream &out) const
 {
    out << "Base Flow" << std::endl;
