@@ -59,7 +59,17 @@ endif()
 
 # Create the jabber library
 add_library(jabber)
-target_link_libraries(jabber PRIVATE compiler_flag_requirements)
+find_package(fmt QUIET)
+if (NOT fmt_FOUND)
+   include(FetchContent)
+   FetchContent_Declare(
+   fmt
+   GIT_REPOSITORY https://github.com/fmtlib/fmt
+   GIT_TAG        e69e5f977d458f2650bb346dadf2ad30c5320281) # 10.2.1
+   FetchContent_MakeAvailable(fmt)
+endif()
+target_link_libraries(jabber PRIVATE fmt::fmt)
+
 set_property(GLOBAL APPEND PROPERTY JABBER_TARGETS_PROPERTY jabber)
 target_compile_features(jabber PUBLIC cxx_std_20)
 add_subdirectory(jabber)
@@ -77,7 +87,7 @@ include(GNUInstallDirs)
 message(STATUS "Install directory: ${CMAKE_INSTALL_PREFIX}")
 
 # From: https://stackoverflow.com/questions/17511496/how-to-create-a-shared-library-with-cmake
-install(TARGETS jabber
+install(TARGETS jabber 
    EXPORT jabberTargets
    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

@@ -37,7 +37,7 @@ if (JABBER_BUILD_PROFILER)
    target_link_libraries(jabber_profile PRIVATE 
                                        jabber
                                        cxxopts::cxxopts
-                                       compiler_flag_requirements)   
+                                       fmt::fmt)   
    list(APPEND JABBER_APP_TARGETS jabber_profile)
 endif()
 
@@ -59,7 +59,7 @@ if (JABBER_BUILD_PLOT)
    target_link_libraries(jabber_plot PRIVATE 
                                        jabber
                                        cxxopts::cxxopts
-                                       compiler_flag_requirements)
+                                       fmt::fmt)
    list(APPEND JABBER_APP_TARGETS jabber_plot)                                       
 endif()
 
@@ -69,7 +69,7 @@ if (JABBER_BUILD_PSD)
    target_link_libraries(jabber_psd PRIVATE 
                                        jabber
                                        cxxopts::cxxopts
-                                       compiler_flag_requirements)
+                                       fmt::fmt)
    target_include_directories(jabber_psd PRIVATE
                      ${CMAKE_SOURCE_DIR}/externals/pocketfft)
    list(APPEND JABBER_APP_TARGETS jabber_psd)

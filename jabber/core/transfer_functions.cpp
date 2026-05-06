@@ -1,7 +1,8 @@
 #include "transfer_functions.hpp"
 
 #include <random>
-#include <format.hpp>
+#include <fmt/core.h>
+#include <fmt/chrono.h>
 
 namespace jabber
 {
@@ -79,7 +80,7 @@ double FlowNormalFitTF(double chi_star, double f_s, double freq)
          f_norm > FlowNormalBezierFit::kfMax)
    {
       std::string err_string = 
-         std::format("Normalized frequency {} (non-normalized frequency {})"
+         fmt::format("Normalized frequency {} (non-normalized frequency {})"
                      " must be within range [{},{}].",
                      f_norm, freq, FlowNormalBezierFit::kfMin, 
                      FlowNormalBezierFit::kfMax);
@@ -115,7 +116,7 @@ double FlowNormalFitTF(double chi_star, double f_s, double freq)
       else if (n + 1 == kNumNewtonIt)
       {
          std::string err_string = 
-            std::format("Unable to converge to Bezier parameter t for "
+            fmt::format("Unable to converge to Bezier parameter t for "
                         "frequency {} (normalized frequency {})", 
                         freq, f_norm);
          throw std::logic_error(err_string);

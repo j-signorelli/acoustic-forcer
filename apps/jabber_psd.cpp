@@ -15,6 +15,9 @@
 #include <regex>
 #include <fstream>
 
+#include <fmt/core.h>
+#include <fmt/chrono.h>
+
 using namespace jabber;
 using namespace jabber::app;
 
@@ -179,7 +182,7 @@ int main(int argc, char *argv[])
       std::ofstream psd_file(file_name);
       for (std::size_t i = 0; i < nperseg/2+1; i++)
       {
-         psd_file << std::format("{},{}\n", freqs[i], psd[i]);
+         psd_file << fmt::format("{},{}\n", freqs[i], psd[i]);
       }
    }
 
@@ -191,7 +194,7 @@ int main(int argc, char *argv[])
       std::ofstream press_file(file_name);
       for (std::size_t i = 0; i < p_prime.size(); i++)
       {
-         press_file << std::format("{}\n", p_prime[i]);
+         press_file << fmt::format("{}\n", p_prime[i]);
       }
    }
 
@@ -220,7 +223,7 @@ int main(int argc, char *argv[])
       std::fprintf(gnuplot, "\n");
       for (std::size_t i = 0; i < freqs.size(); i++)
       {
-         std::fprintf(gnuplot, "%s", std::format("{} {}\n", 
+         std::fprintf(gnuplot, "%s", fmt::format("{} {}\n", 
                                           freqs[i], psd[i]).c_str());
       }
       std::fprintf(gnuplot, "e\n");
@@ -236,7 +239,7 @@ int main(int argc, char *argv[])
          psd_in(input);
          for (std::size_t i = 0; i < in_freqs.size(); i++)
          {
-            std::fprintf(gnuplot, "%s", std::format("{} {}\n", 
+            std::fprintf(gnuplot, "%s", fmt::format("{} {}\n", 
                                              in_freqs[i], in_psd[i]).c_str());
          }
          std::fprintf(gnuplot, "e\n");

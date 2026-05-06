@@ -17,6 +17,9 @@
 #include <chrono>
 #include <random>
 
+#include <fmt/core.h>
+#include <fmt/chrono.h>
+
 /// Simple macro for enclosing code section to occur only for rank 0
 #ifdef JABBER_WITH_MPI
    #define ROOT if (rank == 0)
@@ -274,7 +277,7 @@ int main(int argc, char *argv[])
 
       for (const int &r : r_idxs)
       {
-         std::cout << std::format("Rank {:>3}:   {:<10} with {} points", 
+         std::cout << fmt::format("Rank {:>3}:   {:<10} with {} points", 
                                     r, dur_t(all_rank_data[r].local_ave),
                                     all_rank_data[r].num_pts)
                    << std::endl;

@@ -8,6 +8,9 @@
 #include <algorithm>
 #include <type_traits>
 
+#include <fmt/core.h>
+#include <fmt/chrono.h>
+
 // Helper type for the std::visit
 // (https://en.cppreference.com/w/cpp/utility/variant/visit)
 template<class... Ts>
@@ -71,7 +74,7 @@ void InputXYVisitor::operator()
    std::ifstream is(op.file);
    if (!is.is_open())
    {
-      throw std::invalid_argument(std::format("Cannot find XY-data CSV file "
+      throw std::invalid_argument(fmt::format("Cannot find XY-data CSV file "
                                               "'{}'.", op.file));
    }
    for (std::string line; std::getline(is, line);)

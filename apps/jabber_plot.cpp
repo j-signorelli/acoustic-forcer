@@ -11,6 +11,9 @@
 #include <regex>
 #include <fstream>
 
+#include <fmt/core.h>
+#include <fmt/chrono.h>
+
 using namespace jabber;
 using namespace jabber::app;
 
@@ -87,7 +90,7 @@ int main(int argc, char *argv[])
    std::fprintf(gnuplot, "plot '-' with points pt 5\n");
    for (std::size_t i = 0; i < freqs.size(); i++)
    {
-      std::fprintf(gnuplot, "%s", std::format("{} {}\n", 
+      std::fprintf(gnuplot, "%s", fmt::format("{} {}\n", 
                                        freqs[i], amps[i]).c_str());
    }
    std::fprintf(gnuplot, "e\n");

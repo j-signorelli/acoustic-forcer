@@ -3,7 +3,8 @@
 #include <toml.hpp>
 
 #include <iomanip>
-#include <format.hpp>
+#include <fmt/core.h>
+#include <fmt/chrono.h>
 #include <algorithm>
 
 // Helper type for the std::visit
@@ -24,7 +25,7 @@ namespace app
 
 std::string ConfigInput::OutReal(double f)
 {
-   return std::format("{}", f);
+   return fmt::format("{}", f);
 }
 
 std::string OutRealVec(const std::vector<double> &vec, 
@@ -44,7 +45,7 @@ std::string WriteParam(const std::string_view param_name,
                                     const std::string_view value,
                                     int param_width, int left_margin)
 {
-   return std::format("{:<{}}{:<{}}= {}\n", "", left_margin, param_name,
+   return fmt::format("{:<{}}{:<{}}= {}\n", "", left_margin, param_name,
                                                 param_width, value);
 }
 
@@ -96,17 +97,17 @@ void ConfigInput::PrintSourceParams(std::ostream &out) const
 
          // Assemble data such that each wave is on newline
          std::string amplitudes_str = OutRealVec(waves.amps, 
-                                             std::format(",\n\t{:<{}}", 
+                                             fmt::format(",\n\t{:<{}}", 
                                                          "", 
                                                          label_width+3));
 
          std::string freqs_str = OutRealVec(waves.freqs, 
-                                             std::format(",\n\t{:<{}}", 
+                                             fmt::format(",\n\t{:<{}}", 
                                                          "", 
                                                          label_width+3));
 
          std::string phases_str = OutRealVec(waves.phases, 
-                                             std::format(",\n\t{:<{}}", 
+                                             fmt::format(",\n\t{:<{}}", 
                                                          "", 
                                                          label_width+3));
 
@@ -115,7 +116,7 @@ void ConfigInput::PrintSourceParams(std::ostream &out) const
          {
             dirs_str += OutRealVec(waves.directions[i]) + 
                         (i+1 == waves.directions.size() ? "]" :
-                           std::format("\n\t{:<{}}", "", label_width+3));
+                           fmt::format("\n\t{:<{}}", "", label_width+3));
 
          }
          std::string speeds_str = "[";
@@ -123,7 +124,7 @@ void ConfigInput::PrintSourceParams(std::ostream &out) const
          {
             speeds_str += waves.speeds[i] + 
                            ((i+1 == waves.speeds.size()) ? "]\n" :
-                              std::format(",\n\t{:<{}}", "", label_width+3));
+                              fmt::format(",\n\t{:<{}}", "", label_width+3));
          }
          out << WriteParam("Type", Source::kNames[name_i], label_width);
          out << WriteParam("Amplitudes", amplitudes_str, label_width);
@@ -208,7 +209,7 @@ T::Option GetOption(const std::string &name)
 
    if (it == T::kNames.end())
    {
-      throw std::invalid_argument(std::format("Invalid input argument: {}",
+      throw std::invalid_argument(fmt::format("Invalid input argument: {}",
                                               name));
    }
    else

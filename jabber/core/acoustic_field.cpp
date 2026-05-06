@@ -4,7 +4,8 @@
 #include <math.h>
 #include <numeric>
 #include <iostream>
-#include <format.hpp>
+#include <fmt/core.h>
+#include <fmt/chrono.h>
 #include <string>
 #include <ranges>
 
@@ -15,13 +16,13 @@ void WriteWaves(std::span<const Wave> waves, std::ostream &out)
 {
    for (std::size_t i = 0; i < waves.size(); i++)
    {
-      out << std::format("{},{},{},{}", waves[i].amplitude,
+      out << fmt::format("{},{},{},{}", waves[i].amplitude,
                                           waves[i].frequency,
                                           waves[i].phase, 
                                           waves[i].speed);
       for (std::size_t d = 0; d < waves[i].k_hat.size(); d++)
       {
-         out << std::format(",{}", waves[i].k_hat[d]);
+         out << fmt::format(",{}", waves[i].k_hat[d]);
          out << (d+1==waves[i].k_hat.size() ? "\n" : "");
       }
    }
