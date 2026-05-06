@@ -8,8 +8,6 @@
 #include <algorithm>
 #include <type_traits>
 
-using namespace jabber;
-
 // Helper type for the std::visit
 // (https://en.cppreference.com/w/cpp/utility/variant/visit)
 template<class... Ts>
@@ -20,7 +18,9 @@ template<class... Ts>
 overloads(Ts...) -> overloads<Ts...>;
 #endif
 
-namespace jabber_app
+namespace jabber
+{
+namespace app
 {
 
 void PrintBanner(std::ostream &out)
@@ -204,7 +204,20 @@ void TransferFunctionVisitor::operator()
    const double &p_bar = base_flow_params.p;
    const double &rho_bar = base_flow_params.rho;
    const double &gamma = base_flow_params.gamma;
-   const double mach_bar = std::sqrt(gamma*p_bar/rho_bar);
+   const double c_bar = std::sqrt(gamma*p_bar/rho_bar);
+
+   const double vel_bar = 
+   [&]()
+   {
+      double mag_sq = 0.0;
+      for (int d = 0; d < base_flow_params.U.size(); d++)
+      {
+         const double &v = base_flow_params.U[d];
+         mag_sq += v*v;
+      }
+      return std::sqrt(mag_sq);
+   }();
+   const double mach_bar = vel_bar/c_bar;
 
    const double chi_star = LowFrequencyLimitTF(mach_bar, gamma, speed);
    for (std::size_t i = 0; i < freqs.size(); i++)
@@ -365,4 +378,5 @@ AcousticField InitializeAcousticField(const ConfigInput &conf,
 
 }                                        
 
-} // namespace jabber_app
+} // namespace app
+} // namespace jabber

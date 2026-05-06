@@ -16,7 +16,9 @@ template<class... Ts>
 overloads(Ts...) -> overloads<Ts...>;
 #endif
 
-namespace jabber_app
+namespace jabber
+{
+namespace app
 {
 
 void ConfigInput::PrintBaseFlowParams(std::ostream &out) const
@@ -476,4 +478,5 @@ TOMLConfigInput::TOMLConfigInput(std::string config_file, std::ostream *out)
    }
 }
 
+} // namespace app
 } // namespace jabber

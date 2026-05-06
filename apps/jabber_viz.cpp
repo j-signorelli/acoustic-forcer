@@ -3,8 +3,7 @@
  * @brief Visualizer of acoustic field from config file using MFEM w/ GLVis.
  */
 
-#include <jabber.hpp>
-#include <jabber_app.hpp>
+#include <jabber/jabber.hpp>
 #include <cxxopts.hpp>
 #include <mfem.hpp>
 
@@ -13,7 +12,7 @@
 #include <regex>
 
 using namespace jabber;
-using namespace jabber_app;
+using namespace jabber::app;
 using namespace mfem;
 
 /**
