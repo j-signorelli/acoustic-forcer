@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.13)
 
 project(jabber LANGUAGES CXX VERSION 1.0.0)
 
-add_library(compiler_flag_requirements)
-add_subdirectory(cxx20)
-
 # Main Jabber compiler options:
 option(JABBER_BUILD_PARTICIPANT 
    "Build Jabber preCICE participant app (requires preCICE)." OFF)

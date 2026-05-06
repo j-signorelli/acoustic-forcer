@@ -28,8 +28,8 @@ std::string ConfigInput::OutReal(double f)
    return fmt::format("{}", f);
 }
 
-std::string OutRealVec(const std::vector<double> &vec, 
-                                    const std::string_view delim=", ")
+std::string ConfigInput::OutRealVec(const std::vector<double> &vec, 
+                                    const std::string_view delim)
 {
    std::stringstream ss;
    ss << "[";
@@ -41,7 +41,7 @@ std::string OutRealVec(const std::vector<double> &vec,
    return ss.str();
 }
 
-std::string WriteParam(const std::string_view param_name, 
+std::string ConfigInput::WriteParam(const std::string_view param_name, 
                                     const std::string_view value,
                                     int param_width, int left_margin)
 {
