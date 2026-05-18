@@ -17,49 +17,155 @@ namespace jabber
 namespace app
 {
 
-/// Get string of double \p f.
-std::string OutReal(double f)
-{
-   return std::format("{}", f);
-}
+/// Simple type trait for std::vector.
+template<typename T>
+struct is_std_vector : std::false_type {};
 
-/// Get string of double vector \p vec.
-std::string OutRealVec(const std::vector<double> &vec, 
-                        const std::string_view delim=", ")
+template<typename... VArgs>
+struct is_std_vector<std::vector<VArgs...>> : std::true_type {};
+
+/// Get string form of \p val.
+template<typename T>
+std::string ToString(T val)
 {
-   std::stringstream ss;
-   ss << "[";
-   for (int i = 0; i < vec.size(); i++)
+   std::string out_str;
+
+   // If it's a vector... 
+   if constexpr (is_std_vector<T>::value)
    {
-      ss << OutReal(vec[i]) 
-            << ((i+1 == vec.size()) ? "]" : delim);
+      out_str += "[";
+
+      constexpr int kMaxSize = 4;
+      static_assert(kMaxSize > 2);
+
+      if (val.size() > kMaxSize)
+      {
+         // Print first and last elements only if size > kMaxSize
+         out_str += ToString(val.front()) + ",...," + ToString(val.back());
+      }
+      else
+      {
+         for (int w = 0; w < val.size(); w++)
+         {
+            out_str += ToString(val[w]);
+            out_str += (w+1==val.size() ? "" : ",");
+         }
+      }
+      out_str += "]";
    }
-   return ss.str();
+   else
+   {
+      out_str += std::format("{}", val);
+   }
+
+   return out_str;
 }
 
-/**
- * @brief Convenient string generator for writing parameter information to 
- * console.
- */
-std::string WriteParam(const std::string_view param_name, 
-                                 const std::string_view value,
-                                 int param_width, int left_margin=8)
+/// Simple param-value struct for printing.
+struct PV
 {
-   return std::format("{:<{}}{:<{}}= {}\n", "", left_margin, param_name,
-                                                param_width, value);
+   std::string param;
+   std::string value;
+};
+
+/// Helper for printing parameter information.
+std::string PrintParams
+   (const std::vector<PV> &params,
+      int tab_level=1)
+{
+   // Get the size of the largest key
+   int max_width = 0;
+   for (const PV &pv : params)
+   {
+      const int width = pv.param.size();
+      if (width > max_width)
+      {
+         max_width = width;
+      }
+   }
+   max_width++;
+
+   // Print all params
+   std::stringstream out_ss;
+   for (const PV &pv : params)
+   {  
+      out_ss << std::format("{:<{}}{:<{}}= {}", "", 3*tab_level, pv.param,
+                           max_width, pv.value) << std::endl;
+   }
+
+   return out_ss.str();
 }
 
 void ConfigInput::PrintBaseFlowParams(std::ostream &out) const
 {
    out << "Base Flow" << std::endl;
-   constexpr int label_width = 7;
-   out << WriteParam("rho", OutReal(base_flow_.rho), label_width);
-   out << WriteParam("p", OutReal(base_flow_.p), label_width);
-   out << WriteParam("U", OutRealVec(base_flow_.U), label_width);
-   out << WriteParam("gamma", OutReal(base_flow_.gamma), label_width);
-   out << std::endl;
+   const std::vector<PV> params
+   ({  
+      {"rho",     ToString(base_flow_.rho)},
+      {"p",       ToString(base_flow_.p)},
+      {"U",       ToString(base_flow_.U)},
+      {"gamma",   ToString(base_flow_.gamma)}
+   });
+
+
+   out << PrintParams(params) << std::endl;
 }
 
+/// Helper name-getter for variant-parameter types.
+template<typename T>
+std::string GetName(const typename T::Option &option)
+{
+   return std::string(T::kNames[static_cast<std::size_t>(option)]);
+}
+
+struct PrintSourceVisitor
+{
+   using enum Source::Option;
+   
+   std::string operator()(const Source::Params<SingleWave> &op)
+   {
+      const std::vector<PV> params
+      ({
+         {"Type",       GetName<Source>(SingleWave)},
+         {"Amplitude",  ToString(op.amp)},
+         {"Frequency",  ToString(op.freq)},
+         {"Direction",  ToString(op.direction)},
+         {"Phase",      ToString(op.phase)},
+         {"Speed",      ToString(op.speed)}
+      });
+      return PrintParams(params);
+   }
+
+   std::string operator()(const Source::Params<WaveSpectrum> &op)
+   {
+      const std::vector<PV> params
+      ({
+         {"Type",       GetName<Source>(WaveSpectrum)},
+         {"Amplitudes",  ToString(op.amps)},
+         {"Frequencies",  ToString(op.freqs)},
+         {"Directions",  ToString(op.directions)},
+         {"Phases",      ToString(op.phases)},
+         {"Speeds",      ToString(op.speeds)}
+      });
+      return PrintParams(params);
+   }
+
+   std::string operator()(const Source::Params<PSD> &op)
+   {
+      return "";
+   }
+
+   std::string operator()(const Source::Params<WaveCSV> &op)
+   {
+      const std::vector<PV> params
+      ({
+         {"Type",       GetName<Source>(WaveSpectrum)},
+         {"File",       op.file}
+      });
+      
+      return PrintParams(params);
+   }
+};
 
 
 void ConfigInput::PrintSourceParams(std::ostream &out) const
@@ -68,92 +174,9 @@ void ConfigInput::PrintSourceParams(std::ostream &out) const
    using enum Source::Option;
 
    out << "Sources" << std::endl;
-
    for (const Source::ParamsVariant &source : sources_)
    {
-      std::visit(
-      overloads
-      {
-      [&out](const Source::Params<SingleWave> &wave)
-      {
-         std::size_t name_i 
-                        = static_cast<std::size_t>(SingleWave);
-                        
-         constexpr int label_width = 11;
-
-         out << WriteParam("Type", Source::kNames[name_i], label_width);
-         out << WriteParam("Amplitude", OutReal(wave.amp), label_width);
-         out << WriteParam("Frequency", OutReal(wave.freq), label_width);
-         out << WriteParam("Direction", OutRealVec(wave.direction), 
-                                                            label_width);
-         out << WriteParam("Phase", OutReal(wave.phase), label_width);
-         out << WriteParam("Speed", std::string(&wave.speed), label_width);
-         out << std::endl;
-      },
-      [&out](const Source::Params<WaveSpectrum> &waves)
-      {
-         std::size_t name_i = 
-                        static_cast<std::size_t>(WaveSpectrum);
-         
-         constexpr int label_width = 13;
-
-         // Assemble data such that each wave is on newline
-         std::string amplitudes_str = OutRealVec(waves.amps, 
-                                             std::format(",\n\t{:<{}}", 
-                                                         "", 
-                                                         label_width+3));
-
-         std::string freqs_str = OutRealVec(waves.freqs, 
-                                             std::format(",\n\t{:<{}}", 
-                                                         "", 
-                                                         label_width+3));
-
-         std::string phases_str = OutRealVec(waves.phases, 
-                                             std::format(",\n\t{:<{}}", 
-                                                         "", 
-                                                         label_width+3));
-
-         std::string dirs_str = "[";
-         for (int i = 0; i < waves.directions.size(); i++)
-         {
-            dirs_str += OutRealVec(waves.directions[i]) + 
-                        (i+1 == waves.directions.size() ? "]" :
-                           std::format("\n\t{:<{}}", "", label_width+3));
-
-         }
-         std::string speeds_str = "[";
-         for (int i = 0; i < waves.speeds.size(); i++)
-         {
-            speeds_str += waves.speeds[i] + 
-                           ((i+1 == waves.speeds.size()) ? "]\n" :
-                              std::format(",\n\t{:<{}}", "", label_width+3));
-         }
-         out << WriteParam("Type", Source::kNames[name_i], label_width);
-         out << WriteParam("Amplitudes", amplitudes_str, label_width);
-         out << WriteParam("Frequencies", freqs_str, label_width);
-         out << WriteParam("Directions", dirs_str, label_width);
-         out << WriteParam("Phases", phases_str, label_width);
-         out << WriteParam("Speeds", speeds_str, label_width);
-         out << std::endl;
-      },
-      [&out](const Source::Params<PSD> &waves)
-      {
-         constexpr int label_width = 13;
-
-         /// @todo: Finish this
-         out << "Unimplemented verbose output for source type" << std::endl;
-      },
-      [&out](const Source::Params<WaveCSV> &waves)
-      {
-         constexpr int label_width = 7;
-
-         std::size_t name_i = 
-                        static_cast<std::size_t>(WaveSpectrum);
-         out << WriteParam("Type", Source::kNames[name_i], label_width);
-         out << WriteParam("File", waves.file, label_width);
-         out << std::endl;
-      }
-      }, source);
+      out << std::visit(PrintSourceVisitor{}, source) << std::endl;
    }
 }
 
@@ -161,30 +184,30 @@ void ConfigInput::PrintCompParams(std::ostream &out) const
 {
    out << "Computation" << std::endl;
 
-   constexpr int label_width = 7;
-   out << WriteParam("t0", OutReal(comp_.t0), label_width);
-   out << WriteParam("Kernel", 
-                  KernelType::kNames[static_cast<std::size_t>(comp_.kernel)],
-                  label_width);
-   out << std::endl;
+   const std::vector<PV> params
+   ({  
+      {"t0",      ToString(comp_.t0)},
+      {"Kernel",  GetName<KernelType>(comp_.kernel)}
+   });
+
+   out << PrintParams(params) << std::endl;
 }
 
 void ConfigInput::PrintPreciceParams(std::ostream &out) const
 {
    if (precice_.has_value())
    {
-      constexpr int label_width = 20;
       out << "preCICE" << std::endl;
-      out << WriteParam("Participant Name", precice_->participant_name, 
-                        label_width);
-      out << WriteParam("Configuration File", precice_->config_file,
-                        label_width);
-      out << WriteParam("Fluid Mesh Name", precice_->fluid_mesh_name, 
-                        label_width);
-      out << WriteParam("Mesh Access Region", 
-                        OutRealVec(precice_->mesh_access_region),
-                        label_width);
-      out << std::endl;
+
+      const std::vector<PV> params
+      ({  
+         {"Participant Name",   precice_->participant_name},
+         {"Config File",        precice_->config_file},
+         {"Fluid Mesh Name",    precice_->fluid_mesh_name},
+         {"Mesh Access Region", ToString(precice_->mesh_access_region)}
+      });
+      
+      out << PrintParams(params) << std::endl;
    }
 }
 
