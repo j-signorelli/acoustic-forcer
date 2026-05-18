@@ -17,6 +17,8 @@ namespace jabber
 namespace app
 {
 
+static const int kTabSize = 3;
+
 /// Simple type trait for std::vector.
 template<typename T>
 struct is_std_vector : std::false_type {};
@@ -60,6 +62,11 @@ std::string ToString(T val)
 
    return out_str;
 }
+ 
+std::string PrintTabbed(const std::string &str, int tab_level)
+{
+   return std::format("{:<{}}{}", "", tab_level*kTabSize, str);
+}
 
 /// Simple param-value struct for printing.
 struct PV
@@ -89,8 +96,9 @@ std::string PrintParams
    std::stringstream out_ss;
    for (const PV &pv : params)
    {  
-      out_ss << std::format("{:<{}}{:<{}}= {}", "", 3*tab_level, pv.param,
-                           max_width, pv.value) << std::endl;
+      out_ss << PrintTabbed(std::format("{:<{}}= {}", pv.param,
+                                       max_width, pv.value),  tab_level)
+               << std::endl;
    }
 
    return out_ss.str();
@@ -118,10 +126,123 @@ std::string GetName(const typename T::Option &option)
    return std::string(T::kNames[static_cast<std::size_t>(option)]);
 }
 
+/// Print InputXY params visitor.
+struct PrintInputXYVisitor
+{
+   using enum InputXY::Option;
+
+   const int &tab_level;
+
+   std::string operator()(const InputXY::Params<Here> &op)
+   {
+      const std::vector<PV> params
+      ({
+         {"Type", GetName<InputXY>(Here)},
+         {"X",    ToString(op.x)},
+         {"Y",    ToString(op.y)},
+      });
+      return PrintParams(params, tab_level);
+   }
+
+   std::string operator()(const InputXY::Params<FromCSV> &op)
+   {
+      const std::vector<PV> params
+      ({
+         {"Type", GetName<InputXY>(FromCSV)},
+         {"File", ToString(op.file)},
+      });
+      return PrintParams(params, tab_level);
+   }
+};
+
+/// Print FunctionType params visitor.
+struct PrintFunctionTypeVisitor
+{
+   using enum FunctionType::Option;
+
+   const int &tab_level;
+
+   template<FunctionType::Option O>
+   std::string operator()(const FunctionType::Params<O> &op)
+   {
+      std::string out_str;
+
+      const std::vector<PV> params
+      ({
+         {"Type", GetName<FunctionType>(O)}
+      });
+      out_str += PrintParams(params, tab_level);
+      out_str += PrintTabbed("InputXY\n", tab_level);
+      out_str += std::visit(PrintInputXYVisitor{tab_level+1}, 
+                                    op.input_xy);
+      return out_str;
+   }
+};
+
+struct PrintDiscMethodVisitor
+{
+  using enum DiscMethod::Option;
+  
+  const int &tab_level;
+
+  template<DiscMethod::Option O>
+  std::string operator()(const DiscMethod::Params<O> &op)
+  {
+      if constexpr (O == Uniform || O == UniformLog)
+      {
+         const std::vector<PV> params
+         ({
+            {"Type", GetName<DiscMethod>(O)}
+         });
+         return PrintParams(params, tab_level);
+      }
+      else // else Random or RandomLog
+      {
+         const std::vector<PV> params
+         ({
+            {"Type", GetName<DiscMethod>(O)},
+            {"Seed", ToString(op.seed)}
+         });
+         return PrintParams(params, tab_level);
+      }
+  }
+};
+
+struct PrintDirectionVisitor
+{
+   using enum Direction::Option;
+
+   const int &tab_level;
+
+   std::string operator()(const Direction::Params<Constant> &op)
+   {
+      const std::vector<PV> params
+      ({
+         {"Type", GetName<Direction>(Constant)},
+         {"Vector", ToString(op.direction)}
+      });
+      return PrintParams(params, tab_level);
+   }
+
+   std::string operator()(const Direction::Params<RandomXYAngle> &op)
+   {
+      const std::vector<PV> params
+      ({
+         {"Type", GetName<Direction>(RandomXYAngle)},
+         {"Min Angle", ToString(op.min_angle)},
+         {"Max Angle", ToString(op.max_angle)},
+         {"Seed", ToString(op.seed)},
+      });
+      return PrintParams(params, tab_level);
+   }
+};
+
 struct PrintSourceVisitor
 {
    using enum Source::Option;
    
+   const int tab_level = 1;
+
    std::string operator()(const Source::Params<SingleWave> &op)
    {
       const std::vector<PV> params
@@ -133,26 +254,55 @@ struct PrintSourceVisitor
          {"Phase",      ToString(op.phase)},
          {"Speed",      ToString(op.speed)}
       });
-      return PrintParams(params);
+      return PrintParams(params, tab_level);
    }
 
    std::string operator()(const Source::Params<WaveSpectrum> &op)
    {
       const std::vector<PV> params
       ({
-         {"Type",       GetName<Source>(WaveSpectrum)},
+         {"Type",        GetName<Source>(WaveSpectrum)},
          {"Amplitudes",  ToString(op.amps)},
-         {"Frequencies",  ToString(op.freqs)},
+         {"Frequencies", ToString(op.freqs)},
          {"Directions",  ToString(op.directions)},
          {"Phases",      ToString(op.phases)},
          {"Speeds",      ToString(op.speeds)}
       });
-      return PrintParams(params);
+      return PrintParams(params, tab_level);
    }
 
    std::string operator()(const Source::Params<PSD> &op)
    {
-      return "";
+      std::string out_str;
+
+      const std::vector<PV> params
+      ({
+         {"Type",          GetName<Source>(PSD)},
+         {"Scale Factor",  ToString(op.scale_fac.value_or(1.0))},
+         {"Phase Seed",    ToString(op.phase_seed)},
+         {"Speed",         ToString(op.speed)}
+      });
+      out_str += PrintParams(params, tab_level);
+      out_str += PrintTabbed("Discretization\n", tab_level);
+
+      const std::vector<PV> disc_params
+      ({
+         {"Min",        ToString(op.min_disc_freq)},
+         {"N",          ToString(op.num_waves)},
+         {"Interval",   GetName<IntervalType>(op.int_method)},
+      });
+      out_str += PrintParams(disc_params, tab_level+1);
+      out_str += PrintTabbed("Method\n", tab_level+1);
+      out_str += std::visit(PrintDiscMethodVisitor{tab_level+2},
+                              op.disc_params);
+      out_str += PrintTabbed("Input PSD\n", tab_level);
+      out_str += std::visit(PrintFunctionTypeVisitor{tab_level+1},
+                              op.input_psd);
+      out_str += PrintTabbed("Direction\n", tab_level);
+      out_str += std::visit(PrintDirectionVisitor{tab_level+1}, 
+                              op.dir_params);
+
+      return out_str;
    }
 
    std::string operator()(const Source::Params<WaveCSV> &op)
@@ -163,7 +313,7 @@ struct PrintSourceVisitor
          {"File",       op.file}
       });
       
-      return PrintParams(params);
+      return PrintParams(params, tab_level);
    }
 };
 
