@@ -17,13 +17,15 @@ namespace jabber
 namespace app
 {
 
-std::string ConfigInput::OutReal(double f)
+/// Get string of double \p f.
+std::string OutReal(double f)
 {
    return std::format("{}", f);
 }
 
-std::string ConfigInput::OutRealVec(const std::vector<double> &vec, 
-                        const std::string_view delim)
+/// Get string of double vector \p vec.
+std::string OutRealVec(const std::vector<double> &vec, 
+                        const std::string_view delim=", ")
 {
    std::stringstream ss;
    ss << "[";
@@ -35,9 +37,13 @@ std::string ConfigInput::OutRealVec(const std::vector<double> &vec,
    return ss.str();
 }
 
-std::string ConfigInput::WriteParam(const std::string_view param_name, 
-                                    const std::string_view value,
-                                    int param_width, int left_margin)
+/**
+ * @brief Convenient string generator for writing parameter information to 
+ * console.
+ */
+std::string WriteParam(const std::string_view param_name, 
+                                 const std::string_view value,
+                                 int param_width, int left_margin=8)
 {
    return std::format("{:<{}}{:<{}}= {}\n", "", left_margin, param_name,
                                                 param_width, value);
