@@ -288,6 +288,7 @@ struct PrintSourceVisitor
       const std::vector<PV> disc_params
       ({
          {"Min",        ToString(op.min_disc_freq)},
+         {"Max",        ToString(op.max_disc_freq)},
          {"N",          ToString(op.num_waves)},
          {"Interval",   GetName<IntervalType>(op.int_method)},
       });
