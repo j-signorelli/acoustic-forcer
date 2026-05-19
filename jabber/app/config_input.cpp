@@ -67,7 +67,7 @@ std::string ToString(T val)
 /// Print \p str tabbed at level \p tab_level.
 std::string PrintTabbed(const std::string &str, int tab_level)
 {
-   return std::format("{:<{}}{}", "", tab_level*kTabSize, str);
+   return std::format("{:<{}}- {}", "", tab_level*kTabSize, str);
 }
 
 /// Simple param-value struct for printing.
