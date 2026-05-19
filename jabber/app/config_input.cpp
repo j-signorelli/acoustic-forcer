@@ -241,6 +241,49 @@ struct PrintDirectionVisitor
    }
 };
 
+/// Print TransferFunction params visitor.
+struct PrintTransferFunctionVisitor
+{
+   using enum TransferFunction::Option;
+
+   const int &tab_level;
+
+   std::string operator()(const TransferFunction::Params<LowFrequencyLimit> &op)
+   {
+      const std::vector<PV> params
+      ({
+         {"Type", GetName<TransferFunction>(LowFrequencyLimit)}
+      });
+      return PrintParams(params, tab_level);
+   }
+
+   std::string operator()(const TransferFunction::Params<Input> &op)
+   {
+      std::string out_str;
+
+      const std::vector<PV> params
+      ({
+         {"Type", GetName<TransferFunction>(Input)}
+      });
+      out_str += PrintParams(params, tab_level);
+      out_str += PrintTabbed("Input TF", tab_level);
+      out_str += std::visit(PrintFunctionTypeVisitor{tab_level+1},
+                              op.input_tf);
+      return out_str;
+   }
+
+   std::string operator()(const TransferFunction::Params<FlowNormalFit> &op)
+   {
+      const std::vector<PV> params
+      ({
+         {"Type", GetName<TransferFunction>(FlowNormalFit)},
+         {"Shock Standoff Distance", ToString(op.shock_standoff_dist)}
+      });
+
+      return PrintParams(params, tab_level);
+   }
+};
+
 /// Print Source params visitor.
 struct PrintSourceVisitor
 {
@@ -307,6 +350,12 @@ struct PrintSourceVisitor
       out_str += PrintTabbed("Direction\n", tab_level);
       out_str += std::visit(PrintDirectionVisitor{tab_level+1}, 
                               op.dir_params);
+      if (op.tf_params.has_value())
+      {
+         out_str += PrintTabbed("Transfer Function\n", tab_level);
+         out_str += std::visit(PrintTransferFunctionVisitor{tab_level+1},
+                                 op.tf_params.value());
+      }
 
       return out_str;
    }
