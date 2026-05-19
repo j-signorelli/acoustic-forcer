@@ -174,7 +174,7 @@ struct PrintFunctionTypeVisitor
          {"Type", GetName<FunctionType>(O)}
       });
       out_str += PrintParams(params, tab_level);
-      out_str += PrintTabbed("InputXY\n", tab_level);
+      out_str += PrintTabbed("Input XY\n", tab_level);
       out_str += std::visit(PrintInputXYVisitor{tab_level+1}, 
                                     op.input_xy);
       return out_str;
