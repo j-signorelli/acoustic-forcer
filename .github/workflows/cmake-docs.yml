@@ -17,7 +17,11 @@ jobs:
       shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-  
+    
+    - name: Get Doxygen
+      run: sudo apt install doxygen
+
+
     - name: Checkout w/ submodules
       uses: actions/checkout@v4
       with:
