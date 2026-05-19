@@ -17,6 +17,7 @@ namespace jabber
 namespace app
 {
 
+/// Tab size used.
 static const int kTabSize = 3;
 
 /// Simple type trait for std::vector.
@@ -62,7 +63,8 @@ std::string ToString(T val)
 
    return out_str;
 }
- 
+
+/// Print \p str tabbed at level \p tab_level.
 std::string PrintTabbed(const std::string &str, int tab_level)
 {
    return std::format("{:<{}}{}", "", tab_level*kTabSize, str);
@@ -179,6 +181,7 @@ struct PrintFunctionTypeVisitor
    }
 };
 
+/// Print DiscMethod params visitor.
 struct PrintDiscMethodVisitor
 {
   using enum DiscMethod::Option;
@@ -208,6 +211,7 @@ struct PrintDiscMethodVisitor
   }
 };
 
+/// Print Direction params visitor.
 struct PrintDirectionVisitor
 {
    using enum Direction::Option;
@@ -237,6 +241,7 @@ struct PrintDirectionVisitor
    }
 };
 
+/// Print Source params visitor.
 struct PrintSourceVisitor
 {
    using enum Source::Option;
@@ -317,7 +322,6 @@ struct PrintSourceVisitor
       return PrintParams(params, tab_level);
    }
 };
-
 
 void ConfigInput::PrintSourceParams(std::ostream &out) const
 {
