@@ -218,11 +218,11 @@ struct PrintDirectionVisitor
 
    const int &tab_level;
 
-   std::string operator()(const Direction::Params<Constant> &op)
+   std::string operator()(const Direction::Params<Single> &op)
    {
       const std::vector<PV> params
       ({
-         {"Type", GetName<Direction>(Constant)},
+         {"Type", GetName<Direction>(Single)},
          {"Vector", ToString(op.direction)}
       });
       return PrintParams(params, tab_level);
@@ -536,9 +536,9 @@ void TOMLConfigInput::ParseDirection
    Direction::Option option = 
                      GetOption<Direction>(in_val.at("Type").as_string());
 
-   if (option == Constant)
+   if (option == Single)
    {
-      Direction::Params<Constant> op;
+      Direction::Params<Single> op;
       op.direction = toml::get<std::vector<double>>(in_val.at("Vector"));
       opv = op;
    }

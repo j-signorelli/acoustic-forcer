@@ -170,7 +170,7 @@ void DiscMethodVisitor::operator()
 }
 
 void DirectionVisitor::operator()
-   (const Direction::Params<Constant> &op)
+   (const Direction::Params<Single> &op)
 {
    for (std::size_t i = 0; i < k_hats.size(); i++)
    {
