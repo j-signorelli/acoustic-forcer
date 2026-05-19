@@ -263,8 +263,8 @@ struct Direction
 {
    enum class Option : std::uint8_t
    {
-      /// Constant direction.
-      Constant,
+      /// Single direction for all waves.
+      Single,
 
       /// Random angle in XY-plane from x-axis for each wave.
       RandomXYAngle,
@@ -279,7 +279,7 @@ struct Direction
                         static_cast<std::size_t>(Size)>
    kNames = 
    {
-      "Constant",         // Constant
+      "Single",           // Single
       "RandomXYAngle",    // RandomXYAngle
    };
 
@@ -287,7 +287,7 @@ struct Direction
    struct Params;
 
    template<>
-   struct Params<Constant>
+   struct Params<Single>
    {
       /// Wavenumber vector direction, can be non-normalized.
       std::vector<double> direction;
@@ -312,7 +312,7 @@ struct Direction
       int seed;
    };
 
-   using ParamsVariant = std::variant<Params<Constant>, Params<RandomXYAngle>>;
+   using ParamsVariant = std::variant<Params<Single>, Params<RandomXYAngle>>;
 
 };
 
