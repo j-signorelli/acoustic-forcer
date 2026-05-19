@@ -48,4 +48,4 @@ jobs:
         -S ${{ github.workspace }}
 
     - name: Build Docs
-      run: make docs
+      run: make ${{ steps.strings.outputs.build-output-dir }}/docs
