@@ -266,7 +266,7 @@ struct PrintTransferFunctionVisitor
          {"Type", GetName<TransferFunction>(Input)}
       });
       out_str += PrintParams(params, tab_level);
-      out_str += PrintTabbed("Input TF", tab_level);
+      out_str += PrintTabbed("Input TF\n", tab_level);
       out_str += std::visit(PrintFunctionTypeVisitor{tab_level+1},
                               op.input_tf);
       return out_str;
