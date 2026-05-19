@@ -1,4 +1,4 @@
-name: CMake Docs Generation on Linux
+name: Checks
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-docs:
+  documentation:
     runs-on: ubuntu-latest
 
     steps:
@@ -47,7 +47,7 @@ jobs:
         -DJABBER_BUILD_DOCS=ON
         -S ${{ github.workspace }}
 
-    - name: Build Docs
+    - name: Build docs
       run: |
           cd ${{ steps.strings.outputs.build-output-dir }}
           make docs
