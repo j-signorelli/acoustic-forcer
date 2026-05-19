@@ -89,7 +89,7 @@ struct DiscMethodVisitor
 
 /**
  * @brief All visitor options for each Direction::Params, for initializing
- * wave directional vectors in \p k_hats.
+ * wavenumber vector directions in \p k_hats.
  * 
  */
 struct DirectionVisitor
